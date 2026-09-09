@@ -5,9 +5,8 @@ Changelog. **Nativo de ponta a ponta — sem WebView.** As telas são SwiftUI e
 evoluem pelo próprio pacote; a API pública já está preparada para autenticação
 assinada no backend, sem prender a implementação a uma versão web.
 
-> Escopo desta versão: leitura de conteúdo público e envio de feedback através
-> das Edge Functions públicas do UAPP. Cobrança, comentários e votação nativa
-> entram depois, sem quebrar a API abaixo.
+> Escopo desta versão: leitura paginada de conteúdo público, envio de feedback,
+> votos, curtidas e comentários moderados através das Edge Functions públicas.
 
 ## Instalação (Swift Package Manager)
 
@@ -52,6 +51,9 @@ let items = try await client.feedback()
 let columns = try await client.roadmap()
 let entries = try await client.changelog()
 let id = try await client.submitFeedback(title: "Bug no login", body: "…")
+try await client.setReaction(itemId: items[0].id, kind: .vote, enabled: true)
+let comments = try await client.comments(itemId: items[0].id)
+try await client.submitComment(itemId: items[0].id, body: "Também preciso")
 ```
 
 Ou embuta as `View`s diretamente:
@@ -62,8 +64,9 @@ UAPPFeedbackScreen(client: try UAPPKit.makeClient(), mode: .roadmap)
 
 ## Identificação de usuários finais
 
-`identify(userId:)` associa o feedback enviado a um `app_end_user` no UAPP —
-uma entidade **separada** de qualquer conta no painel. Nenhuma conta é criada.
+`identify(userId:)` fornece os dados opcionais do autor. O backend associa as
+ações a um `app_end_user` pela instalação UUID do SDK — entidade **separada**
+de qualquer conta no painel. Nenhuma conta é criada.
 
 Para identificação verificável (evitar spoofing de `userId`), gere um token no
 seu backend e passe um `signatureProvider` no `setup`:
@@ -82,7 +85,8 @@ futuro; o contrato já está pronto.
 - O pacote **não** contém segredos. Só o `projectId` público e o host.
 - Todo tráfego vai para as Edge Functions públicas do UAPP (`/functions/v1/...`),
   que só devolvem conteúdo marcado como público e nunca dados internos.
-- `submitFeedback` cria itens **não publicados**; a moderação acontece no painel.
+- `submitFeedback` e `submitComment` criam itens pendentes; a moderação acontece no painel.
+- Uma instalação UUID estável é criada por app e enviada com chaves de idempotência; nenhum segredo fica no pacote.
 
 ## Arquitetura
 

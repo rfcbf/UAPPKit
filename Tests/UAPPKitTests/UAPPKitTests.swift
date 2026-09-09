@@ -66,10 +66,11 @@ final class UAPPClientTests: XCTestCase {
                 .queryItems ?? []
             XCTAssertTrue(query.contains(URLQueryItem(name: "slug", value: "meu-app")))
             XCTAssertTrue(query.contains(URLQueryItem(name: "resource", value: "feedback")))
+            XCTAssertNotNil(request.value(forHTTPHeaderField: "x-uapp-installation-id"))
             let body = """
             {"ok":true,"project":{"slug":"meu-app"},"items":[
-              {"id":"1","title":"Modo escuro","body":null,"vote_count":12,"comment_count":3}
-            ]}
+              {"id":"1","title":"Modo escuro","body":null,"vote_count":12,"like_count":4,"public_comment_count":3,"category":"feature","priority":80,"viewer_voted":true,"viewer_liked":false}
+            ],"nextCursor":"cursor-2"}
             """
             return (200, Data(body.utf8))
         }
@@ -78,6 +79,8 @@ final class UAPPClientTests: XCTestCase {
         XCTAssertEqual(items.count, 1)
         XCTAssertEqual(items.first?.title, "Modo escuro")
         XCTAssertEqual(items.first?.voteCount, 12)
+        XCTAssertEqual(items.first?.likeCount, 4)
+        XCTAssertEqual(items.first?.commentCount, 3)
     }
 
     func testHTTPErrorSurfacesMessage() async {
@@ -107,13 +110,54 @@ final class UAPPClientTests: XCTestCase {
             ) as! [String: Any]
             XCTAssertEqual(payload["slug"] as? String, "meu-app")
             XCTAssertEqual(payload["title"] as? String, "Bug no login")
-            XCTAssertEqual(payload["externalId"] as? String, "user-123")
+            XCTAssertNotNil(UUID(uuidString: payload["installationId"] as? String ?? ""))
+            XCTAssertEqual(payload["category"] as? String, "feature")
+            XCTAssertNotNil(request.value(forHTTPHeaderField: "idempotency-key"))
             return (201, Data(#"{"ok":true,"id":"fb-1"}"#.utf8))
         }
         await client.setIdentity(UAPPIdentity(userId: "user-123"))
 
         let id = try await client.submitFeedback(title: "Bug no login")
         XCTAssertEqual(id, "fb-1")
+    }
+
+    func testVoteUsesInteractionEndpointAndIdempotencyKey() async throws {
+        let client = makeClient { request in
+            XCTAssertTrue(request.url!.path.hasSuffix("/public-feedback-interact"))
+            XCTAssertNotNil(request.value(forHTTPHeaderField: "idempotency-key"))
+            let payload = try! JSONSerialization.jsonObject(
+                with: request.httpBody ?? Data()
+            ) as! [String: Any]
+            XCTAssertEqual(payload["itemId"] as? String, "feedback-1")
+            XCTAssertEqual(payload["action"] as? String, "vote")
+            XCTAssertEqual(payload["enabled"] as? Bool, true)
+            return (200, Data(#"{"ok":true,"enabled":true}"#.utf8))
+        }
+
+        try await client.setReaction(
+            itemId: "feedback-1",
+            kind: .vote,
+            enabled: true
+        )
+    }
+
+    func testCommentsDecodePublishedCommunityContent() async throws {
+        let client = makeClient { request in
+            let query = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)!
+                .queryItems ?? []
+            XCTAssertTrue(query.contains(URLQueryItem(name: "resource", value: "comments")))
+            XCTAssertTrue(query.contains(URLQueryItem(name: "itemId", value: "feedback-1")))
+            let body = """
+            {"ok":true,"comments":[
+              {"id":"comment-1","body":"Também preciso","parentCommentId":null,"likeCount":2,"createdAt":"2026-09-07T12:00:00Z","authorKind":"community","viewerLiked":true}
+            ],"nextCursor":null}
+            """
+            return (200, Data(body.utf8))
+        }
+
+        let page = try await client.comments(itemId: "feedback-1")
+        XCTAssertEqual(page.comments.first?.likeCount, 2)
+        XCTAssertEqual(page.comments.first?.authorKind, .community)
     }
 
     func testInvalidBodyThrowsInvalidResponse() async {
