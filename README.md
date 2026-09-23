@@ -23,15 +23,17 @@ No Xcode, escolha **File → Add Package Dependencies…** e informe:
 https://github.com/rfcbf/UAPPKit
 ```
 
-Selecione a versão desejada e adicione o produto `UAPPKit` ao target do
-aplicativo. Em outro `Package.swift`:
+Até a primeira release versionada, selecione a branch `main` no Xcode e adicione
+o produto `UAPPKit` ao target do aplicativo. Em outro `Package.swift`, use:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/rfcbf/UAPPKit", from: "0.1.0")
+    .package(url: "https://github.com/rfcbf/UAPPKit", branch: "main")
 ]
 ```
 
+Quando uma release `0.1.0` for publicada, consumidores que preferem versões
+estáveis poderão trocar por `.package(url: "https://github.com/rfcbf/UAPPKit", from: "0.1.0")`.
 Em seguida, declare `UAPPKit` nas dependências do target consumidor.
 
 ## Configuração e telas nativas
