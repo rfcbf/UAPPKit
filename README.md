@@ -1,101 +1,169 @@
 # UAPPKit
 
-SDK Swift para integrar aplicativos Apple ao UAPP: Feedback, Roadmap e
-Changelog. **Nativo de ponta a ponta — sem WebView.** As telas são SwiftUI e
-evoluem pelo próprio pacote; a API pública já está preparada para autenticação
-assinada no backend, sem prender a implementação a uma versão web.
+SDK Swift para adicionar experiências nativas de Feedback, Roadmap e Changelog
+do UAPP a aplicativos Apple. A interface usa SwiftUI e não incorpora conteúdo
+em uma WebView.
 
-> Escopo desta versão: leitura paginada de conteúdo público, envio de feedback,
-> votos, curtidas e comentários moderados através das Edge Functions públicas.
+O pacote oferece um cliente HTTP assíncrono para leitura de conteúdo público,
+envio de feedback, reações e comentários. Não tem dependências externas.
 
-## Instalação (Swift Package Manager)
+## Requisitos
+
+- Swift 5.9 ou posterior.
+- iOS 16 ou posterior, incluindo iPadOS.
+- macOS 13 ou posterior para usar o cliente e as views SwiftUI.
+
+O pacote não declara suporte a watchOS, tvOS ou visionOS.
+
+## Instalação pelo Swift Package Manager
+
+No Xcode, escolha **File → Add Package Dependencies…** e informe:
+
+```text
+https://github.com/rfcbf/UAPPKit
+```
+
+Selecione a versão desejada e adicione o produto `UAPPKit` ao target do
+aplicativo. Em outro `Package.swift`:
 
 ```swift
-// Package.swift
 dependencies: [
-    .package(url: "https://github.com/renatoferraz/uapp", from: "0.1.0")
-    // ou, durante o desenvolvimento:
-    // .package(path: "../uapp/packages/UAPPKit")
+    .package(url: "https://github.com/rfcbf/UAPPKit", from: "0.1.0")
 ]
 ```
 
-Adicione `UAPPKit` como dependência do seu target.
+Em seguida, declare `UAPPKit` nas dependências do target consumidor.
 
-Plataformas: iOS 16+, macOS 13+. Sem dependências externas.
-
-## Uso
+## Configuração e telas nativas
 
 ```swift
+import SwiftUI
 import UAPPKit
 
-// No arranque do app:
-UAPPKit.setup(projectId: "meu-app") // = public_slug configurado no UAPP
+@main
+struct ExampleApp: App {
+    init() {
+        UAPPKit.setup(projectId: "meu-app")
+    }
 
-// Quando você souber quem é o usuário final (opcional):
-UAPPKit.identify(userId: "user-123", email: "pessoa@exemplo.com")
-
-// Abrir as telas nativas (iOS):
-try UAPPKit.showFeedback()
-try UAPPKit.showRoadmap()
-try UAPPKit.showChangelog()
-
-// Logout do usuário final:
-UAPPKit.reset()
-```
-
-### Sem apresentação automática (ex.: macOS ou UI própria)
-
-```swift
-let client = try UAPPKit.makeClient()
-let items = try await client.feedback()
-let columns = try await client.roadmap()
-let entries = try await client.changelog()
-let id = try await client.submitFeedback(title: "Bug no login", body: "…")
-try await client.setReaction(itemId: items[0].id, kind: .vote, enabled: true)
-let comments = try await client.comments(itemId: items[0].id)
-try await client.submitComment(itemId: items[0].id, body: "Também preciso")
-```
-
-Ou embuta as `View`s diretamente:
-
-```swift
-UAPPFeedbackScreen(client: try UAPPKit.makeClient(), mode: .roadmap)
-```
-
-## Identificação de usuários finais
-
-`identify(userId:)` fornece os dados opcionais do autor. O backend associa as
-ações a um `app_end_user` pela instalação UUID do SDK — entidade **separada**
-de qualquer conta no painel. Nenhuma conta é criada.
-
-Para identificação verificável (evitar spoofing de `userId`), gere um token no
-seu backend e passe um `signatureProvider` no `setup`:
-
-```swift
-UAPPKit.setup(projectId: "meu-app") {
-    try await minhaAPI.uappSignature() // string opaca gerada no servidor
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+        }
+    }
 }
 ```
 
-O token vai no header `x-uapp-signature`. A verificação server-side é um passo
-futuro; o contrato já está pronto.
+O `projectId` é o identificador público do projeto (`public_slug`) configurado
+no UAPP. Em iOS, os métodos abaixo apresentam telas SwiftUI nativas a partir do
+view controller ativo:
 
-## Segurança
+```swift
+try UAPPKit.showFeedback()
+try UAPPKit.showRoadmap()
+try UAPPKit.showChangelog()
+```
 
-- O pacote **não** contém segredos. Só o `projectId` público e o host.
-- Todo tráfego vai para as Edge Functions públicas do UAPP (`/functions/v1/...`),
-  que só devolvem conteúdo marcado como público e nunca dados internos.
-- `submitFeedback` e `submitComment` criam itens pendentes; a moderação acontece no painel.
-- Uma instalação UUID estável é criada por app e enviada com chaves de idempotência; nenhum segredo fica no pacote.
+Também é possível incorporar a view na navegação do próprio aplicativo:
 
-## Arquitetura
+```swift
+NavigationStack {
+    UAPPFeedbackScreen(
+        client: try UAPPKit.makeClient(),
+        mode: .roadmap
+    )
+}
+```
 
-Veja [`docs/uappkit.md`](../../docs/uappkit.md) no repositório para o contrato
-com o backend e as decisões de design.
+## Cliente para interface própria
 
-## Testes
+`UAPPClient` pode ser usado sem apresentação automática. Seus métodos são
+assíncronos:
 
-```bash
-cd packages/UAPPKit
+```swift
+let client = try UAPPKit.makeClient()
+let feedbackPage = try await client.feedbackPage(limit: 20)
+let columns = try await client.roadmap()
+let entries = try await client.changelog()
+let commentPage = try await client.comments(itemId: "feedback-id")
+
+let submittedId = try await client.submitFeedback(
+    title: "Melhorar o fluxo de login",
+    body: "Seria útil manter a sessão ativa.",
+    category: .improvement
+)
+
+try await client.setReaction(
+    itemId: "feedback-id",
+    kind: .vote,
+    enabled: true
+)
+
+try await client.submitComment(
+    itemId: "feedback-id",
+    body: "Também seria útil para mim."
+)
+```
+
+As páginas de feedback e comentários incluem `nextCursor` para paginação. As
+reações disponíveis são voto e curtida. Comentários enviados entram em
+moderação.
+
+## Identidade opcional
+
+É possível associar ações a uma identidade fornecida pelo aplicativo:
+
+```swift
+UAPPKit.identify(
+    userId: "user-123",
+    email: "pessoa@example.com",
+    displayName: "Pessoa"
+)
+
+// Ao encerrar a sessão do usuário:
+UAPPKit.reset()
+```
+
+Essa identidade representa um usuário final do aplicativo e não cria nem
+autentica uma conta no painel UAPP.
+
+Para fornecer uma assinatura obtida no servidor do integrador:
+
+```swift
+UAPPKit.setup(projectId: "meu-app") {
+    try await minhaAPI.obterAssinaturaUAPP()
+}
+```
+
+O token é enviado no header `x-uapp-signature` como Bearer. O backend atual
+ainda não valida esse token; portanto, ele não deve ser tratado como controle
+de autorização ativo.
+
+## Segurança e privacidade
+
+- `projectId` e host identificam o projeto e não são segredos.
+- Não coloque chaves administrativas, segredos Supabase, tokens APNs ou
+  credenciais Apple no aplicativo.
+- As operações usam endpoints públicos do UAPP, que devem retornar somente
+  conteúdo público. O backend aplica publicação, visibilidade, moderação e
+  limites de envio.
+- O SDK cria e persiste um UUID de instalação por projeto em `UserDefaults`
+  para identificar reações e dar suporte a chaves de idempotência.
+- `identify` envia os dados opcionais informados pelo aplicativo em ações de
+  feedback. Use-o somente conforme a política de privacidade e consentimento
+  do seu aplicativo.
+
+Mais detalhes estão em [`Documentation/Architecture.md`](Documentation/Architecture.md),
+[`Documentation/Decisions.md`](Documentation/Decisions.md) e
+[`Documentation/Roadmap.md`](Documentation/Roadmap.md).
+
+## Desenvolvimento
+
+```sh
+swift package dump-package
+swift build
 swift test
 ```
+
+Consulte [`AGENTS.md`](AGENTS.md) para as instruções de contribuição e
+[`CHANGELOG.md`](CHANGELOG.md) para alterações por versão.
