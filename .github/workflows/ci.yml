@@ -1,36 +1,50 @@
-name: Swift Package CI
+name: CI
 
 on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
   workflow_dispatch:
 
-permissions:
-  contents: read
-
 jobs:
-  test-macos:
-    runs-on: macos-14
+  validate:
+    runs-on: macos-15
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Show Swift version
-        run: swift --version
+      - name: Install tooling
+        run: brew install swiftformat swiftlint xcodegen
+
+      - name: Check formatting
+        run: swiftformat . --lint
+
+      - name: Lint
+        run: swiftlint lint --strict
 
       - name: Validate package manifest
         run: swift package dump-package
 
-      - name: Build debug
-        run: swift build
+      - name: Build and test package
+        run: |
+          swift build
+          swift build -c release
+          swift test --enable-code-coverage
 
-      - name: Build release
-        run: swift build -c release
+      - name: Check SDK coverage
+        run: bash Scripts/check-coverage.sh
 
-      - name: Run tests
-        run: swift test
+      - name: Regenerate demo project
+        working-directory: .Examples/UAPPKitDemo
+        run: xcodegen generate
 
-      - name: Build iOS Simulator target
-        run: xcodebuild -scheme UAPPKit -destination 'generic/platform=iOS Simulator' build
+      - name: Check generated project is current
+        run: git diff --exit-code -- .Examples/UAPPKitDemo/UAPPKitDemo.xcodeproj/project.pbxproj
+
+      - name: Build demo for iOS Simulator
+        run: >-
+          xcodebuild -quiet
+          -project .Examples/UAPPKitDemo/UAPPKitDemo.xcodeproj
+          -scheme UAPPKitDemo
+          -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO
+          build

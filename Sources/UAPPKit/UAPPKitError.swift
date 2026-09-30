@@ -10,19 +10,27 @@ public enum UAPPKitError: Error, Equatable, Sendable {
     case invalidResponse
     /// Falha de transporte (rede indisponível, timeout, etc.).
     case transport(String)
+    /// O projeto configurado ainda não possui um destino de avaliação na App Store.
+    case appStoreURLUnavailable
+    /// O sistema não conseguiu abrir o destino da App Store.
+    case appStoreURLCouldNotOpen
 }
 
 extension UAPPKitError: LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .notConfigured:
-            return "UAPPKit não configurado. Chame UAPPKit.setup(projectId:) primeiro."
+            "UAPPKit não configurado. Chame UAPPKit.setup(projectId:) primeiro."
         case let .http(status, message):
-            return "UAPP respondeu \(status)\(message.map { ": \($0)" } ?? "")."
+            "UAPP respondeu \(status)\(message.map { ": \($0)" } ?? "")."
         case .invalidResponse:
-            return "Resposta do UAPP em formato inesperado."
+            "Resposta do UAPP em formato inesperado."
         case let .transport(detail):
-            return "Falha de comunicação com o UAPP: \(detail)."
+            "Falha de comunicação com o UAPP: \(detail)."
+        case .appStoreURLUnavailable:
+            "O projeto configurado ainda não possui um link de avaliação na App Store."
+        case .appStoreURLCouldNotOpen:
+            "Não foi possível abrir a App Store neste dispositivo."
         }
     }
 }

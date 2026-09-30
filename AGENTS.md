@@ -3,16 +3,42 @@
 ## Estrutura
 
 - `Sources/UAPPKit/`: biblioteca pública Swift.
-- `Tests/UAPPKitTests/`: testes XCTest sem rede externa.
+- `Tests/UAPPKitTests/`: testes unitários em Swift Testing, sem rede externa.
 - `Documentation/`: arquitetura, decisões e roadmap público do pacote.
 - `.github/workflows/`: validação contínua em macOS.
 
 ## Desenvolvimento e validação
 
-Use Swift tools 5.9 como mínimo do manifesto. Antes de enviar uma alteração,
-execute `swift package dump-package`, `swift build` e `swift test` em macOS com
-Xcode. A CI também compila o produto de release e testa os destinos macOS e iOS
-Simulator declarados.
+Use Swift tools 6.0 e linguagem Swift 6. Antes de enviar uma alteração,
+execute `swift package dump-package`, `swift build`, `swift test`,
+`swiftformat . --lint` e `swiftlint lint --strict` em macOS com Xcode.
+
+Instale SwiftFormat, SwiftLint e XcodeGen com
+`brew install swiftformat swiftlint xcodegen`. Para aplicar o estilo antes de
+validar, execute `swiftformat .`.
+
+## Testes unitários
+
+- Use exclusivamente Swift Testing (`import Testing`, `@Test`, `#expect`,
+  `#require` e `Issue.record`). Não use XCTest, `XCTestCase` ou asserções
+  `XCT*`.
+- Organize os testes por unidade testada: por exemplo,
+  `UAPPClientTests.swift`, `UAPPModelsTests.swift`,
+  `UAPPAboutScreenTests.swift` e `UAPPReviewsScreenTests.swift`. Não concentre
+  toda a suíte em um único arquivo.
+- Mantenha `TestSupport.swift` apenas para doubles e helpers compartilhados,
+  como `StubTransport`, recorder de requisições e fixtures pequenas.
+- Todo teste de rede deve injetar um `UAPPTransport` falso. Os testes devem ser
+  determinísticos, sem depender de internet, credenciais, estado remoto ou
+  serviços externos.
+- Toda alteração de comportamento público deve incluir ou atualizar testes da
+  unidade correspondente, cobrindo sucesso, erro e campos opcionais quando
+  aplicável.
+- A cobertura mínima exigida é 80% de linhas no código de produção. Rode
+  `swift test --enable-code-coverage` e depois `bash Scripts/check-coverage.sh`.
+  O verificador exclui somente arquivos gerados, o ponto de entrada dos testes
+  e os próprios arquivos em `Tests/`; as telas SwiftUI e a internacionalização
+  também fazem parte da cobertura exigida.
 
 Não adicione dependências externas sem necessidade documentada. Mudanças no
 contrato HTTP devem permanecer alinhadas aos endpoints públicos do UAPP e aos

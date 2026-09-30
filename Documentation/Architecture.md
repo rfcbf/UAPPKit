@@ -3,7 +3,7 @@
 ## Objetivo e escopo atual
 
 UAPPKit é um Swift Package para integrar aplicativos Apple às experiências
-públicas de Feedback, Roadmap e Changelog do serviço UAPP. A interface é
+públicas de Feedback, Roadmap, Changelog, avaliações da App Store e Sobre do UAPP. A interface é
 SwiftUI nativa, sem `WKWebView` nem `SFSafariViewController`.
 
 O pacote oferece leitura de conteúdo publicado, paginação de feedback e
@@ -16,18 +16,38 @@ ou sincronização automática do changelog.
 | Arquivo | Responsabilidade |
 | --- | --- |
 | `UAPPKit.swift` | Ponto de entrada global `@MainActor`: configuração, identidade, criação do cliente e apresentação de telas SwiftUI no iOS. |
-| `UAPPConfiguration.swift` | Configuração imutável (`projectId`, host, `signatureProvider`) e identidade opcional do usuário final. |
-| `UAPPClient.swift` | `actor` que acessa os endpoints públicos, conserva identidade e identificador de instalação. |
+| `UAPPConfiguration.swift` | Configuração imutável (`projectId`, host, locale e `signatureProvider`) e identidade opcional do usuário final. |
+| `UAPPClient.swift` | `actor` que acessa os endpoints públicos, conserva identidade, locale e identificador de instalação. |
+| `UAPPLocalization.swift` | Catálogo de idiomas suportados, preferência do hospedeiro e seleção temporária isolada nas telas nativas. |
+| `UAPPTranslation.swift` | Exibe a biografia no idioma de origem e oferece tradução sob demanda pelo framework Apple Translation. |
 | `UAPPTransport.swift` | Protocolo substituível `UAPPTransport` e implementação `URLSessionTransport`. |
 | `UAPPModels.swift` | Modelos públicos e estruturas internas para decodificar as respostas. |
 | `UAPPFeedbackScreen.swift` | Views SwiftUI para Feedback, Roadmap, Changelog, envio de feedback e comentários. |
+| `UAPPReviewsScreen.swift` / `UAPPAboutScreen.swift` | Telas nativas para avaliações públicas da App Store e Sobre do aplicativo. |
+| `UAPPDeveloperAboutScreen.swift` | Tela separada para o perfil público do desenvolvedor, seus apps e redes sociais. |
+| `UAPPAboutConfiguration.swift` / `UAPPAboutComponents.swift` | Metadados automáticos do bundle, conteúdo institucional parametrizável e componentes visuais das telas Sobre. |
 | `UAPPKitError.swift` | Erros tipados de configuração, transporte, resposta HTTP e decodificação. |
 
 ## Configuração e identidade
 
-`projectId` é o `public_slug` do projeto no UAPP. O host padrão está definido
-no código como `https://app.uapp.com`; `setup` permite substituí-lo. Não há
-chave de API ou credencial administrativa no SDK.
+`projectId` é o `public_slug` do projeto no UAPP. O host padrão aponta para a
+URL pública do projeto Supabase de produção; `setup` permite substituí-lo,
+como ao usar DEV. Não há chave de API ou credencial administrativa no SDK.
+
+O tema é configurado globalmente em `UAPPKit.setup` por `UAPPTheme`, com
+paletas opcionais para light e dark. O tema padrão usa cores semânticas do
+sistema Apple e as telas escolhem a paleta conforme o `ColorScheme` ativo.
+`buttonText` permite controlar o contraste do rótulo em botões preenchidos;
+quando omitido, usa branco.
+
+A tela Sobre do aplicativo usa o ícone, o nome e a versão do bundle do
+aplicativo hospedeiro. Descrição curta, seu idioma original, site, suporte,
+política de privacidade, termos de uso e licença são recebidos por
+`UAPPAboutConfiguration`; em sistemas compatíveis, a descrição é traduzida pela
+Translation framework da Apple para o idioma escolhido na sheet. Já
+`showDeveloperAbout()` apresenta o perfil público remoto em uma tela separada.
+Ambas são apresentadas como `pageSheet` no iOS usando somente o detent grande,
+mantendo as cores do tema configurado no `UAPPKit.setup`.
 
 `identify` recebe dados opcionais de usuário final. Eles são distintos das
 contas do painel UAPP e podem ser enviados em submissões de feedback. `reset`
@@ -41,6 +61,15 @@ reconhecer reações da instalação e compor chaves de idempotência.
 envia o valor em `x-uapp-signature` com prefixo Bearer. A verificação desse
 token pelo backend ainda não está ativa; a assinatura não oferece hoje uma
 garantia de autenticação ou autorização.
+
+### Localização
+
+Os textos da interface são mantidos em `Resources/Localizable.xcstrings`, com
+Português (Brasil) como idioma de origem. `setup(locale:)` aceita o locale
+inicial do aplicativo hospedeiro; sem esse valor, o SDK deriva a preferência do
+locale atual do sistema. A preferência selecionada dentro do UAPPKit é salva em
+`UserDefaults` e aplicada ao ambiente SwiftUI de cada apresentação. As
+requisições HTTP também enviam o idioma atual em `Accept-Language`.
 
 ## Contrato HTTP
 
@@ -65,16 +94,59 @@ assinatura é incluído quando há provider configurado.
   comentários, categoria, prioridade e estado das reações da instalação.
 - **roadmap:** status visíveis no roadmap e itens publicados agrupados por
   status. O SDK ordena colunas pela posição e não apresenta status ocultos.
-- **changelog:** entradas publicadas. O modelo público atual expõe `title`,
-  `slug`, `bodyMarkdown` e `publishedAt`. Campos adicionais da resposta do
-  servidor são ignorados e não há filtros Swift para plataforma, versão,
-  build, categoria ou datas.
+- **changelog:** entradas publicadas com `title`, `slug`, `bodyMarkdown`,
+  `version`, `build`, `platform`, `sections`, `releasedAt` e `publishedAt`.
+  `UAPPClient.changelog` e `changelogPage` aceitam filtros opcionais por
+  categoria (`new`, `improved`, `fixed`, `security`), plataforma (`all`,
+  `ios`, `ipados`, `macos`, `watchos`, `tvos`, `visionos`), versão, build e
+  datas inclusivas `from`/`to` no formato `YYYY-MM-DD`. A página retorna um
+  cursor para continuar a leitura e a contagem total quando fornecida.
+  `descriptionMarkdown` (`description_md`) separa a descrição geral dos itens;
+  cada `UAPPChangelogSection` aceita `imageURL` (`image_url`) HTTPS opcional.
+  A apresentação ordena por posição, preservando a ordem original nos empates.
+  Respostas antigas usam `bodyMarkdown` como conteúdo e não repetem as seções.
+  A lista mostra resumos de três linhas, imagens em 40:21 sem recortar e itens
+  sem imagem agrupados por categoria. O detalhe mostra cada imagem seguida do
+  texto completo, na ordem dos itens. A pesquisa filtra as páginas carregadas.
+  `UAPPChangelogConfiguration` controla a reprodução automática, desativada por
+  padrão e pausada fora da tela, em segundo plano, com VoiceOver ou Reduzir Movimento.
 - **comments:** conteúdo público de comunidade para um item, incluindo cursor
   de paginação e estado de curtida da instalação.
+- **reviews:** avaliações da App Store/TestFlight sincronizadas no UAPP para o
+  aplicativo e expostas quando o módulo está público. O UAPP continua sendo a
+  origem e o local de gestão dessas avaliações; o SDK só as consulta. A tela
+  carrega páginas de 20 com `reviewsPage(limit:cursor:)`, preserva o conteúdo
+  quando uma página falha e oferece nova tentativa. O contrato inclui
+  `response_body` opcional e `nextCursor`; `reviews(limit:)` permanece compatível.
+- **about:** nome, imagem e biografia do desenvolvedor, outros apps e links
+  sociais opcionais publicados nas configurações do app no UAPP.
+
+Os metadados públicos do projeto também podem conter `appStoreURL` (ou
+`appStoreUrl`) e `appleAppId`. Quando presentes, `showAbout` exibe a ação
+“Avaliar o app” e `openAppStoreReview()` abre o fluxo de avaliação do app
+configurado, sem depender de uma URL informada manualmente pelo aplicativo
+hospedeiro.
+
+`UAPPAboutConfiguration.showsChangelog` controla a ação opcional “Changelog”
+dentro do Sobre do app. Quando habilitada, ela abre a mesma tela nativa de
+Changelog em uma sheet grande, usando o cliente do projeto configurado.
+`UAPPAboutConfiguration.changelogConfiguration` é repassada a essa tela,
+preservando as opções de reprodução automática e intervalo do carrossel.
+Ela também define `pageSize`, usado em todas as requisições do changelog,
+incluindo retries: padrão 10, ajustado à faixa de 1 a 50.
+O parâmetro é aditivo e seu padrão mantém a reprodução manual.
+`UAPPAboutConfiguration.showsAppStoreReview` controla, da mesma forma, a
+visibilidade da ação “Avaliar o app” na App Store.
 
 Uma resposta HTTP não 2xx resulta em `UAPPKitError.http`, com status e uma
 mensagem quando o servidor a fornece. Respostas inválidas produzem
 `UAPPKitError.invalidResponse`.
+
+Quando o recurso solicitado não está disponível, o serviço responde com um
+403 genérico (`Conteúdo não público.`), sem distinguir conteúdo privado de
+módulo oculto. A resposta pode incluir apenas os metadados públicos `slug` e
+`primaryColor`; o cliente os conserva em `currentProject()` para personalizar
+a apresentação nativa mesmo nesse estado.
 
 ### Escrita
 
@@ -85,6 +157,16 @@ mensagem quando o servidor a fornece. Respostas inválidas produzem
   retirada de curtida ou comentário. Também inclui installation ID,
   identificador do item e chave de idempotência. Comentários podem incluir
   comentário pai e nome de exibição e entram em moderação.
+
+Reviews são somente leitura no SDK. Sua sincronização e disponibilidade pública
+são controladas no UAPP. A tela Sobre também é somente leitura; campos que não
+forem preenchidos no UAPP não são exibidos.
+
+A biografia do desenvolvedor usa a tradução cadastrada no UAPP quando ela
+existe para o idioma selecionado. Sem uma versão cadastrada, aparece no idioma
+padrão da biografia e a pessoa pode pedir uma tradução pelo Apple Translation.
+Nenhuma tradução é iniciada automaticamente. Esse recurso está disponível a
+partir do iOS 18 e macOS 15.
 
 O serviço deve validar escopo, publicação, visibilidade e conteúdo. O SDK não
 contém nem substitui as regras de autorização do backend.
@@ -106,3 +188,26 @@ modelos, modos de tela, protocolo de transporte e erros.
 - macOS 13 ou posterior: cliente e views SwiftUI; a apresentação automática
   de view controller é condicionada a UIKit e não existe no macOS.
 - watchOS, tvOS e visionOS não são declarados como destinos suportados.
+
+## Adaptação ao iPhone Duo
+
+As telas do UAPPKit são SwiftUI nativas e devem permanecer adaptáveis ao iPhone
+Duo sem conhecer o modelo do dispositivo. O pacote usa listas, navegação e
+toolbars do sistema, respeita safe areas e não deve usar `UIScreen.main`,
+orientação fixa ou métricas globais para decidir o layout. A tela interna pode
+oferecer mais espaço, mas mantém a mesma hierarquia e funcionalidade da tela
+externa.
+
+O pacote continua com deployment target iOS 16. APIs específicas do Duo, como
+regiões reservadas, arrangements, observação da dobradiça, múltiplas cenas ou
+câmeras frontal interna/externa, só devem ser adicionadas em um app hospedeiro
+quando o caso de uso exigir e com a disponibilidade de plataforma apropriada.
+O app hospedeiro é responsável por validar as telas no simulador iPhone Duo do
+Device Hub, incluindo abertura, fechamento, dobra, rotação e Split View. O
+portfólio mantém uma referência compartilhada de requisitos e checklist; este
+pacote não depende desse checkout privado para compilar ou funcionar.
+
+O app de demonstração usa uma decisão única para escolher entre dois painéis
+(`ArrangementView` em iOS 27.1+) e uma lista completa de configuração seguida
+pelos atalhos. Assim, o conteúdo secundário continua acessível em uma coluna
+sem aparecer duas vezes quando os painéis estão lado a lado.

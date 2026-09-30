@@ -17,17 +17,23 @@ public struct UAPPConfiguration: Sendable {
     /// forma verificável. Quando `nil`, a identificação é apenas informativa.
     public let signatureProvider: UAPPSignatureProvider?
 
+    /// Locale inicial usado para a interface e enviado ao serviço público.
+    /// Quando `nil`, o UAPPKit usa a preferência do aplicativo/sistema.
+    public let localeIdentifier: String?
+
     public init(
         projectId: String,
         host: URL = UAPPConfiguration.defaultHost,
-        signatureProvider: UAPPSignatureProvider? = nil
+        signatureProvider: UAPPSignatureProvider? = nil,
+        locale: Locale? = nil
     ) {
         self.projectId = projectId
         self.host = host
+        localeIdentifier = locale?.identifier
         self.signatureProvider = signatureProvider
     }
 
-    public static let defaultHost = URL(string: "https://app.uapp.com")!
+    public static let defaultHost = URL(string: "https://qyjxwtvfmrkfcvisipke.supabase.co")!
 
     /// Endpoint das Edge Functions públicas derivado do host.
     var functionsBaseURL: URL {

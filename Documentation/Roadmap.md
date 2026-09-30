@@ -5,12 +5,16 @@
 UAPPKit cobre leitura de conteúdo público, submissão de feedback, reações,
 comentários moderados e views SwiftUI para Feedback, Roadmap e Changelog.
 Não há cache local ou modo offline, notificações push, uploads de screenshot,
-captura automática de versão/build, filtros de changelog na API Swift, nem
-localização completa da interface.
+captura automática de versão/build ou tradução automática do conteúdo dinâmico
+publicado pelo projeto.
 
-A interface atual contém textos em Português do Brasil. A documentação de
-design do produto maior prevê suporte a português e inglês; isso continua como
-requisito futuro e não é uma capacidade atual do UAPPKit.
+A interface nativa já usa um String Catalog com seleção manual de idioma,
+preferência inicial derivada do app hospedeiro e persistência da escolha do
+usuário. Conteúdo vindo do UAPP, como títulos e descrições publicados, continua
+sendo exibido no idioma em que foi cadastrado no painel. Na tela Sobre, a
+biografia usa primeiro a tradução cadastrada no UAPP; se ela não existir para
+o idioma selecionado, pode ser traduzida sob demanda pelo framework Apple
+Translation.
 
 ## Direção futura do kit Apple
 
@@ -38,8 +42,8 @@ antes de serem declarados compatíveis.
 
 - ativar e documentar verificação server-side das assinaturas;
 - adicionar cache local e fallback offline para leitura;
-- ampliar o modelo de changelog para metadados estruturados e filtros;
-- enriquecer as telas nativas e localizar seus textos;
+- permitir filtros adicionais e refinamentos de paginação para o changelog;
+- enriquecer as telas nativas e ampliar a cobertura de localização;
 - avaliar upload de screenshots com consentimento, limites e remoção de
   metadados antes do envio;
 - planejar notificações push somente com desenho de backend e armazenamento

@@ -1,0 +1,31 @@
+included:
+  - Sources
+  - Tests
+  - Examples/UAPPKitDemo/Sources
+
+excluded:
+  - .build
+  - DerivedData
+  - Examples/UAPPKitDemo/UAPPKitDemo.xcodeproj
+
+only_rules:
+  - trailing_whitespace
+  - unused_import
+  - vertical_whitespace
+  - file_length
+  - type_body_length
+  - function_body_length
+
+file_length:
+  warning: 500
+  error: 800
+
+type_body_length:
+  warning: 300
+  error: 500
+
+function_body_length:
+  warning: 80
+  error: 120
+
+reporter: "github-actions-logging"

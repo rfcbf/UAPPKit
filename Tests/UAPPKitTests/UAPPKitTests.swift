@@ -1,174 +1,148 @@
-import XCTest
+import Foundation
+import Testing
 @testable import UAPPKit
 
-/// Transporte falso: responde com JSON fixo por caminho de URL.
-struct StubTransport: UAPPTransport {
-    var handler: @Sendable (URLRequest) -> (Int, Data)
+#if canImport(UIKit) && canImport(SwiftUI)
+import UIKit
 
-    func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
-        let (status, data) = handler(request)
-        let response = HTTPURLResponse(
-            url: request.url!,
-            statusCode: status,
-            httpVersion: nil,
-            headerFields: nil
-        )!
-        return (data, response)
+@MainActor
+private final class PresentationProbeViewController: UIViewController {
+    private(set) var presentedViewControllerCount = 0
+    private(set) var lastPresentedViewController: UIViewController?
+
+    override func present(
+        _ viewController: UIViewController,
+        animated _: Bool,
+        completion: (() -> Void)? = nil
+    ) {
+        presentedViewControllerCount += 1
+        lastPresentedViewController = viewController
+        completion?()
     }
 }
+#endif
 
-final class UAPPConfigurationTests: XCTestCase {
-    func testFunctionsBaseURLDerivesFromHost() {
-        let config = UAPPConfiguration(
-            projectId: "meu-app",
-            host: URL(string: "https://exemplo.uapp.com")!
-        )
-        XCTAssertEqual(
-            config.functionsBaseURL.absoluteString,
-            "https://exemplo.uapp.com/functions/v1"
-        )
-    }
-
-    func testIdentityEncodesTraits() throws {
-        let identity = UAPPIdentity(
-            userId: "u1",
-            email: "u1@example.test",
-            traits: ["plan": "pro"]
-        )
-        let data = try JSONEncoder().encode(identity)
-        let json = try XCTUnwrap(
-            JSONSerialization.jsonObject(with: data) as? [String: Any]
-        )
-        XCTAssertEqual(json["userId"] as? String, "u1")
-        XCTAssertEqual((json["traits"] as? [String: String])?["plan"], "pro")
-    }
-}
-
-final class UAPPClientTests: XCTestCase {
-    private func makeClient(
-        handler: @escaping @Sendable (URLRequest) -> (Int, Data)
-    ) -> UAPPClient {
-        let config = UAPPConfiguration(
-            projectId: "meu-app",
-            host: URL(string: "https://exemplo.uapp.com")!
-        )
-        return UAPPClient(
-            configuration: config,
-            transport: StubTransport(handler: handler)
-        )
-    }
-
-    func testFeedbackBuildsQueryAndDecodes() async throws {
-        let client = makeClient { request in
-            let url = request.url!
-            XCTAssertTrue(url.path.hasSuffix("/functions/v1/public-feedback"))
-            let query = URLComponents(url: url, resolvingAgainstBaseURL: false)!
-                .queryItems ?? []
-            XCTAssertTrue(query.contains(URLQueryItem(name: "slug", value: "meu-app")))
-            XCTAssertTrue(query.contains(URLQueryItem(name: "resource", value: "feedback")))
-            XCTAssertNotNil(request.value(forHTTPHeaderField: "x-uapp-installation-id"))
-            let body = """
-            {"ok":true,"project":{"slug":"meu-app"},"items":[
-              {"id":"1","title":"Modo escuro","body":null,"vote_count":12,"like_count":4,"public_comment_count":3,"category":"feature","priority":80,"viewer_voted":true,"viewer_liked":false}
-            ],"nextCursor":"cursor-2"}
-            """
-            return (200, Data(body.utf8))
-        }
-
-        let items = try await client.feedback()
-        XCTAssertEqual(items.count, 1)
-        XCTAssertEqual(items.first?.title, "Modo escuro")
-        XCTAssertEqual(items.first?.voteCount, 12)
-        XCTAssertEqual(items.first?.likeCount, 4)
-        XCTAssertEqual(items.first?.commentCount, 3)
-    }
-
-    func testHTTPErrorSurfacesMessage() async {
-        let client = makeClient { _ in
-            (403, Data(#"{"error":"Conteúdo não público."}"#.utf8))
-        }
+@Suite(.serialized)
+struct UAPPKitTests {
+    @Test("UAPPKit exige configuração antes de criar cliente e aceita setup/reset")
+    @MainActor
+    func appKitConfigurationLifecycle() async throws {
+        UAPPKit.reset()
         do {
-            _ = try await client.feedback()
-            XCTFail("esperava erro")
-        } catch let UAPPKitError.http(status, message) {
-            XCTAssertEqual(status, 403)
-            XCTAssertEqual(message, "Conteúdo não público.")
+            _ = try UAPPKit.makeClient()
+            Issue.record("makeClient deveria exigir setup")
         } catch {
-            XCTFail("erro inesperado: \(error)")
+            #expect(error as? UAPPKitError == .notConfigured)
         }
+
+        #if canImport(UIKit) && canImport(SwiftUI)
+        let presentations: [@MainActor () throws -> Void] = [
+            { try UAPPKit.showFeedback() },
+            { try UAPPKit.showRoadmap() },
+            { try UAPPKit.showChangelog() },
+            { try UAPPKit.showReviews(pageSize: 10) },
+            { try UAPPKit.showAbout() }
+        ]
+        for presentation in presentations {
+            do {
+                try presentation()
+                Issue.record("a apresentação deveria exigir setup")
+            } catch {
+                #expect(error as? UAPPKitError == .notConfigured)
+            }
+        }
+        #endif
+
+        let demoURL = try #require(URL(string: "https://demo.example"))
+        UAPPKit.setup(projectId: "demo", host: demoURL)
+        let client = try UAPPKit.makeClient()
+        UAPPKit.identify(userId: "user", email: "user@example.test", displayName: "User", traits: ["tier": "pro"])
+        for _ in 0 ..< 100 {
+            if await client.currentIdentity()?.userId == "user" {
+                break
+            }
+            await Task.yield()
+        }
+        #expect(await client.currentIdentity()?.userId == "user")
+        UAPPKit.reset()
+        for _ in 0 ..< 100 {
+            if await client.currentIdentity() == nil {
+                break
+            }
+            await Task.yield()
+        }
+        #expect(await client.currentIdentity() == nil)
     }
 
-    func testSubmitFeedbackSendsIdentityAndProjectHeader() async throws {
-        let client = makeClient { request in
-            XCTAssertEqual(request.httpMethod, "POST")
-            XCTAssertEqual(
-                request.value(forHTTPHeaderField: "x-uapp-project"),
-                "meu-app"
-            )
-            let payload = try! JSONSerialization.jsonObject(
-                with: request.httpBody ?? Data()
-            ) as! [String: Any]
-            XCTAssertEqual(payload["slug"] as? String, "meu-app")
-            XCTAssertEqual(payload["title"] as? String, "Bug no login")
-            XCTAssertNotNil(UUID(uuidString: payload["installationId"] as? String ?? ""))
-            XCTAssertEqual(payload["category"] as? String, "feature")
-            XCTAssertNotNil(request.value(forHTTPHeaderField: "idempotency-key"))
-            return (201, Data(#"{"ok":true,"id":"fb-1"}"#.utf8))
+    @Test("UAPPKit expõe a preferência de idioma e atualiza o locale")
+    @MainActor
+    func appKitLocaleLifecycle() async {
+        let defaults = UserDefaults.standard
+        let key = UAPPKit.localePreferenceKey
+        let previousValue = defaults.object(forKey: key)
+        defer {
+            if let previousValue {
+                defaults.set(previousValue, forKey: key)
+            } else {
+                defaults.removeObject(forKey: key)
+            }
+            UAPPKit.reset()
         }
-        await client.setIdentity(UAPPIdentity(userId: "user-123"))
 
-        let id = try await client.submitFeedback(title: "Bug no login")
-        XCTAssertEqual(id, "fb-1")
+        defaults.removeObject(forKey: key)
+        UAPPKit.setLocale(Locale(identifier: "en-US"))
+        #expect(defaults.string(forKey: key) == "en")
+
+        UAPPKit.setLocale(Locale(identifier: "de-DE"))
+        await Task.yield()
+        #expect(defaults.string(forKey: key) == "de")
+
+        UAPPKit.setLocale(Locale(identifier: "language-that-does-not-exist"))
+        await Task.yield()
+        #expect(defaults.string(forKey: key) == "pt-BR")
     }
 
-    func testVoteUsesInteractionEndpointAndIdempotencyKey() async throws {
-        let client = makeClient { request in
-            XCTAssertTrue(request.url!.path.hasSuffix("/public-feedback-interact"))
-            XCTAssertNotNil(request.value(forHTTPHeaderField: "idempotency-key"))
-            let payload = try! JSONSerialization.jsonObject(
-                with: request.httpBody ?? Data()
-            ) as! [String: Any]
-            XCTAssertEqual(payload["itemId"] as? String, "feedback-1")
-            XCTAssertEqual(payload["action"] as? String, "vote")
-            XCTAssertEqual(payload["enabled"] as? Bool, true)
-            return (200, Data(#"{"ok":true,"enabled":true}"#.utf8))
+    #if canImport(UIKit) && canImport(SwiftUI)
+    @Test("UAPPKit apresenta uma tela nativa pelo presenter disponível")
+    @MainActor
+    func appKitPresentsNativeScreen() throws {
+        let presenter = PresentationProbeViewController()
+        let previousProvider = UAPPKit.presenterProvider
+        defer {
+            UAPPKit.presenterProvider = previousProvider
+            UAPPKit.reset()
         }
 
-        try await client.setReaction(
-            itemId: "feedback-1",
-            kind: .vote,
-            enabled: true
+        let host = try #require(URL(string: "https://presentation.example"))
+        UAPPKit.presenterProvider = { presenter }
+        UAPPKit.setup(projectId: "presentation-test", host: host)
+
+        try UAPPKit.showAbout()
+
+        #expect(presenter.presentedViewControllerCount == 1)
+        #expect(presenter.lastPresentedViewController?.modalPresentationStyle == .pageSheet)
+        #expect(presenter.lastPresentedViewController?.sheetPresentationController?.detents.count == 1)
+        #expect(presenter.lastPresentedViewController?.sheetPresentationController?.detents.first?.identifier == .large)
+    }
+
+    @Test("UAPPKit não falha quando não há presenter ativo")
+    @MainActor
+    func appKitPresentationWithoutActivePresenterIsSafe() throws {
+        defer {
+            UAPPKit.reset()
+        }
+
+        let host = try #require(URL(string: "https://no-presenter.example"))
+        UAPPKit.setup(
+            projectId: "no-presenter-test",
+            host: host
         )
-    }
 
-    func testCommentsDecodePublishedCommunityContent() async throws {
-        let client = makeClient { request in
-            let query = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)!
-                .queryItems ?? []
-            XCTAssertTrue(query.contains(URLQueryItem(name: "resource", value: "comments")))
-            XCTAssertTrue(query.contains(URLQueryItem(name: "itemId", value: "feedback-1")))
-            let body = """
-            {"ok":true,"comments":[
-              {"id":"comment-1","body":"Também preciso","parentCommentId":null,"likeCount":2,"createdAt":"2026-09-07T12:00:00Z","authorKind":"community","viewerLiked":true}
-            ],"nextCursor":null}
-            """
-            return (200, Data(body.utf8))
-        }
-
-        let page = try await client.comments(itemId: "feedback-1")
-        XCTAssertEqual(page.comments.first?.likeCount, 2)
-        XCTAssertEqual(page.comments.first?.authorKind, .community)
+        try UAPPKit.showFeedback()
+        try UAPPKit.showRoadmap()
+        try UAPPKit.showChangelog()
+        try UAPPKit.showReviews(pageSize: 20)
+        try UAPPKit.showAbout()
     }
-
-    func testInvalidBodyThrowsInvalidResponse() async {
-        let client = makeClient { _ in (200, Data("not json".utf8)) }
-        do {
-            _ = try await client.changelog()
-            XCTFail("esperava erro")
-        } catch UAPPKitError.invalidResponse {
-            // esperado
-        } catch {
-            XCTFail("erro inesperado: \(error)")
-        }
-    }
+    #endif
 }
