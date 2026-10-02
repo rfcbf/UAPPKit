@@ -21,6 +21,7 @@ extension ContentView {
         projectSlug = slug
         supabaseServer = serverString
         UAPPKit.setup(projectId: slug, host: server, theme: configuredTheme)
+        account.configure(projectId: slug, host: server)
 
         if showSuccessMessage {
             showStatus(localized("demo.configuration_saved"), success: true)
@@ -56,9 +57,44 @@ extension ContentView {
         }
     }
 
+    @MainActor
+    func openFeedback() {
+        guard saveConfiguration(showSuccessMessage: false) else { return }
+        Task {
+            await account.refreshSession()
+            do {
+                if account.session == nil, account.hasProfile {
+                    try await UAPPKit.showFeedback(identity: account.identity, accessTokenProvider: nil)
+                } else {
+                    try await UAPPKit.showFeedback(identity: account.identity, authentication: account.authentication)
+                }
+            } catch {
+                showStatus(error.localizedDescription, success: false)
+            }
+        }
+    }
+
+    @MainActor
+    func openRoadmap() {
+        guard saveConfiguration(showSuccessMessage: false) else { return }
+        Task {
+            await account.refreshSession()
+            do {
+                if account.session == nil, account.hasProfile {
+                    try await UAPPKit.showRoadmap(identity: account.identity, accessTokenProvider: nil)
+                } else {
+                    try await UAPPKit.showRoadmap(identity: account.identity, authentication: account.authentication)
+                }
+            } catch {
+                showStatus(error.localizedDescription, success: false)
+            }
+        }
+    }
+
     func showStatus(_ message: String, success: Bool) {
         statusMessage = message
         statusIsSuccess = success
+        isShowingStatus = true
     }
 
     func localized(_ key: String) -> String {

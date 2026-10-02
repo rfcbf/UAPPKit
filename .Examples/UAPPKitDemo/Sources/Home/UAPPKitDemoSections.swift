@@ -2,9 +2,9 @@ import SwiftUI
 import UAPPKit
 
 extension ContentView {
-    var configurationForm: some View {
+    var homeForm: some View {
         Form {
-            configurationSections
+            homeSections
         }
         .modifier(DemoFormLayout(isSecondary: false))
     }
@@ -17,7 +17,139 @@ extension ContentView {
     }
 
     @ViewBuilder
-    var configurationSections: some View {
+    var homeSections: some View {
+        Section {
+            if let session = account.session {
+                Button {
+                    accountDestination = .user
+                } label: {
+                Label {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(session.identity.displayName.map { UAPPDisplayName.abbreviated($0) } ?? session.identity.email
+                             ?? account.text("Sua conta", "Your account", languageIdentifier))
+                            .font(.headline)
+                            .foregroundStyle(Color.primary)
+                            .accessibilityLabel(Text(session.identity.displayName ?? session.identity.email
+                                ?? account.text("Sua conta", "Your account", languageIdentifier)))
+                        if let email = session.identity.email, email != session.identity.displayName {
+                            Text(email).font(.subheadline).foregroundStyle(Color.primary)
+                        }
+                    }
+                } icon: {
+                    if let avatarURL = session.identity.avatarURL {
+                        UAPPCachedImage(url: avatarURL) { phase in
+                            if let image = phase.image {
+                                image.resizable().scaledToFill()
+                            } else if phase.error != nil {
+                                Image(systemName: "person.crop.circle.badge.checkmark")
+                                    .resizable().scaledToFit()
+                            } else {
+                                UAPPImageLoadingPlaceholder()
+                            }
+                        }
+                        .frame(width: 44, height: 44)
+                        .clipShape(Circle())
+                        .accessibilityHidden(true)
+                    } else {
+                        Image(systemName: "person.crop.circle.badge.checkmark")
+                    }
+                }
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(Color.primary)
+                .disabled(account.isSigningOut)
+            } else {
+                if account.hasProfile, let identity = account.identity {
+                    Button {
+                        account.error = nil
+                        accountDestination = .profile
+                    } label: {
+                        Label {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(identity.displayName.map { UAPPDisplayName.abbreviated($0) }
+                                     ?? account.text("Seu perfil", "Your profile", languageIdentifier))
+                                    .font(.headline)
+                                    .accessibilityLabel(Text(identity.displayName
+                                        ?? account.text("Seu perfil", "Your profile", languageIdentifier)))
+                                if let email = identity.email, !email.isEmpty {
+                                    Text(email).font(.subheadline)
+                                }
+                                Text(account.text("Perfil local · sem login", "Local profile · without sign-in", languageIdentifier))
+                                    .font(.footnote)
+                                    .foregroundStyle(.secondary)
+                            }
+                        } icon: {
+                            Image(systemName: "person.crop.circle")
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Color.primary)
+                }
+                Button {
+                    guard saveConfiguration(showSuccessMessage: false) else { return }
+                    account.error = nil
+                    accountDestination = .connect
+                } label: {
+                    Label(account.text("Conectar", "Connect", languageIdentifier), systemImage: "person.badge.key")
+                }
+            }
+            if let error = account.error {
+                Text(error).font(.footnote).foregroundStyle(.secondary)
+            }
+            if account.session == nil, !account.hasProfile {
+                Button {
+                    account.error = nil
+                    accountDestination = .profile
+                } label: {
+                    Label(account.text("Preencher perfil", "Fill in profile", languageIdentifier), systemImage: "person.crop.circle")
+                }
+            }
+        } header: {
+            Text(account.text("Seu perfil", "Your profile", languageIdentifier))
+        } footer: {
+            if account.session != nil {
+                Text(account.text(
+                    "Para testar com um perfil preenchido manualmente, toque na sua conta e desconecte primeiro.",
+                    "To test with a manually filled profile, tap your account and sign out first.",
+                    languageIdentifier
+                ))
+            } else if account.hasProfile {
+                Text(account.text(
+                    "Você está usando um perfil local salvo neste aparelho. Toque no perfil para editar ou conecte uma conta para autenticar sua participação.",
+                    "You are using a local profile saved on this device. Tap your profile to edit it or connect an account to authenticate your participation.",
+                    languageIdentifier
+                ))
+            } else {
+                Text(account.text(
+                    "Conecte uma conta ou preencha um perfil sem login.",
+                    "Connect an account or fill in a profile without signing in.",
+                    languageIdentifier
+                ))
+            }
+        }
+        Section {
+            NavigationLink {
+                configurationScreen
+            } label: {
+                Label(localized("demo.configuration"), systemImage: "gearshape")
+            }
+        } header: {
+            Text(verbatim: localized("demo.configuration"))
+        }
+    }
+
+    var configurationScreen: some View {
+        Form {
+            settingsSections
+        }
+        .modifier(DemoFormLayout(isSecondary: false))
+        .navigationTitle(localized("demo.configuration"))
+        .navigationBarTitleDisplayMode(.inline)
+        .modifier(PersistentNavigationBar())
+    }
+
+    @ViewBuilder
+    var settingsSections: some View {
         Section {
             DemoLanguageMenu(
                 title: localized("demo.language"),
@@ -43,45 +175,6 @@ extension ContentView {
             Text(verbatim: localized("demo.configuration"))
         } footer: {
             Text(verbatim: localized("demo.configuration.footer"))
-        }
-
-        Section {
-            Button(localized("demo.save_configuration")) {
-                _ = saveConfiguration()
-            }
-            .disabled(!canSave)
-
-            Button {
-                testConnection()
-            } label: {
-                HStack {
-                    Text(verbatim: localized("demo.test_connection"))
-                    Spacer()
-                    if isTestingConnection {
-                        ProgressView()
-                    }
-                }
-            }
-            .disabled(!canSave || isTestingConnection)
-        }
-
-        if let statusMessage {
-            Section {
-                VStack(spacing: 8) {
-                    UAPPMascotIllustration(
-                        state: statusIsSuccess ? .success : .connectionError
-                    )
-
-                    Label(
-                        statusMessage,
-                        systemImage: statusIsSuccess
-                            ? "checkmark.circle.fill"
-                            : "exclamationmark.triangle.fill"
-                    )
-                    .foregroundStyle(statusIsSuccess ? .green : .orange)
-                }
-                .frame(maxWidth: .infinity)
-            }
         }
 
         Section {
@@ -131,12 +224,74 @@ extension ContentView {
             Text(verbatim: localized("demo.theme.footer"))
         }
         .animation(.easeInOut(duration: 0.2), value: appearance)
+
+        Section {
+            HStack(spacing: 12) {
+                Button {
+                    _ = saveConfiguration()
+                } label: {
+                    Text(verbatim: localized("demo.save_configuration"))
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                }
+                .disabled(!canSave || isTestingConnection)
+
+                Button {
+                    testConnection()
+                } label: {
+                    HStack(spacing: 8) {
+                        if isTestingConnection { ProgressView() }
+                        Text(verbatim: localized("demo.test_connection"))
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                }
+                .disabled(!canSave || isTestingConnection)
+            }
+            .multilineTextAlignment(.center)
+            .buttonStyle(.borderedProminent)
+        }
+
+    }
+
+    var configurationStatusSheet: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20) {
+                    UAPPMascotIllustration(
+                        state: statusIsSuccess ? .success : .connectionError
+                    )
+                    if let statusMessage {
+                        Label(
+                            statusMessage,
+                            systemImage: statusIsSuccess
+                                ? "checkmark.circle.fill"
+                                : "exclamationmark.triangle.fill"
+                        )
+                        .foregroundStyle(statusIsSuccess ? .green : .orange)
+                        .multilineTextAlignment(.center)
+                        .accessibilityAddTraits(.updatesFrequently)
+                    }
+                }
+                .padding(24)
+                .frame(maxWidth: 440)
+                .frame(maxWidth: .infinity)
+            }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button { isShowingStatus = false } label: {
+                        Image(systemName: "xmark")
+                    }
+                    .accessibilityLabel(Text(account.text("Fechar", "Close", languageIdentifier)))
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
     }
 
     func screensSection() -> some View {
         Section {
             Button {
-                present { try UAPPKit.showFeedback() }
+                openFeedback()
             } label: {
                 Label {
                     Text(verbatim: localized("demo.open_feedback"))
@@ -145,7 +300,7 @@ extension ContentView {
                 }
             }
             Button {
-                present { try UAPPKit.showRoadmap() }
+                openRoadmap()
             } label: {
                 Label {
                     Text(verbatim: localized("demo.open_roadmap"))
@@ -155,9 +310,11 @@ extension ContentView {
             }
             Button {
                 present {
-                    try UAPPKit.showChangelog(configuration: .init(automaticallyScrolls: true,
-                                                                   interval: 15,
-                                                                   pageSize: 10))
+                    try UAPPKit.showChangelog(configuration: .init(
+                        automaticallyScrolls: true,
+                        interval: 15,
+                        pageSize: 10
+                    ))
                 }
             } label: {
                 Label {
@@ -188,9 +345,11 @@ extension ContentView {
                         license: "MIT",
                         showsChangelog: true,
                         showsAppStoreReview: true,
-                        changelogConfiguration: .init(automaticallyScrolls: true,
-                                                      interval: 15,
-                                                      pageSize: 10)
+                        changelogConfiguration: .init(
+                            automaticallyScrolls: true,
+                            interval: 15,
+                            pageSize: 10
+                        )
                     ))
                 }
             } label: {

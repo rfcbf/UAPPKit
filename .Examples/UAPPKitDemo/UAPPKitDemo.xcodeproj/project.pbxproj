@@ -9,27 +9,46 @@
 /* Begin PBXBuildFile section */
 		06E03757AD4702C3D42E1DF2 /* UAPPKitDemoSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = B318E9966D6FE595FBF42611 /* UAPPKitDemoSupport.swift */; };
 		234CBBA2051C2C92B5CF757B /* UAPPKit.icon in Resources */ = {isa = PBXBuildFile; fileRef = F587648344C3DCA06CB9E0CF /* UAPPKit.icon */; };
+		40FC75531D2F03858B068443 /* DemoAccountModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 720450AB273A812437FB1FA0 /* DemoAccountModelTests.swift */; };
 		441E492CA09BC252987A0E04 /* UAPPKitCanvasPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F8F1C0FAF3A95EB1FC3D76B /* UAPPKitCanvasPreviews.swift */; };
 		482926BFF29BE4FD7297DE13 /* UAPPKitDemoContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86C499082AFEE4EA5EC73E4A /* UAPPKitDemoContentView.swift */; };
 		589E7EF2B7AE122DB5901817 /* UAPPKitDemoActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 625099D4008B13D9170FE443 /* UAPPKitDemoActions.swift */; };
+		6A75B8053CAABF542D14FC62 /* DemoAccountModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EBEA872444F45077DEC537C /* DemoAccountModel.swift */; };
 		83116D9DD499AD6968E645E3 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C23FE361BD825ED69E7E8B5E /* LaunchScreen.storyboard */; };
 		A40B7ED429B2593C20FB1C9B /* UAPPKit in Frameworks */ = {isa = PBXBuildFile; productRef = 266132D9394C3619182E1A6C /* UAPPKit */; };
 		C05305B0DE5E9ACD94BEB179 /* UAPPKitDemoSections.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD62410A26135FF3D46570AC /* UAPPKitDemoSections.swift */; };
 		D996EA0357BDC7F26F2A1265 /* UAPPKitDemoComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09139957F41E53EC63F34EE2 /* UAPPKitDemoComponents.swift */; };
 		D9BC79F95592C918042E1A49 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9CFBCE0E40D58C6FE21099CD /* Assets.xcassets */; };
+		E03B81102791B600D7F12F17 /* DemoAccountScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69B6B21E02756B4BC5EE7C7F /* DemoAccountScreen.swift */; };
 		EA56C6390AEA6F6DAC2B19B8 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 3562DA31DA44924F659A91D9 /* Localizable.xcstrings */; };
+		ECC2506A4F6E9AE0C8AF7F38 /* UAPPKit in Frameworks */ = {isa = PBXBuildFile; productRef = 898A0A3A3AB154E94D8FA112 /* UAPPKit */; };
 		EE4A593DB82270784BD538FE /* UAPPKitDemoTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C782F8841FCCA38799F669 /* UAPPKitDemoTheme.swift */; };
 		FC075CAE0BC97C8BEF655C3D /* UAPPKitDemoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5550BD2CE3113488F939F26 /* UAPPKitDemoApp.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		FC13166A3A9952E75F0EBE59 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 02FEFBFCA847EA56556B7E56 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 1F942C654C10A24A08E6777F;
+			remoteInfo = UAPPKitDemo;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		09139957F41E53EC63F34EE2 /* UAPPKitDemoComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UAPPKitDemoComponents.swift; sourceTree = "<group>"; };
 		3562DA31DA44924F659A91D9 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		425F2350996380291C175525 /* UAPPKitDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = UAPPKitDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		625099D4008B13D9170FE443 /* UAPPKitDemoActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UAPPKitDemoActions.swift; sourceTree = "<group>"; };
+		69B6B21E02756B4BC5EE7C7F /* DemoAccountScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoAccountScreen.swift; sourceTree = "<group>"; };
+		720450AB273A812437FB1FA0 /* DemoAccountModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoAccountModelTests.swift; sourceTree = "<group>"; };
 		73C782F8841FCCA38799F669 /* UAPPKitDemoTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UAPPKitDemoTheme.swift; sourceTree = "<group>"; };
 		86C499082AFEE4EA5EC73E4A /* UAPPKitDemoContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UAPPKitDemoContentView.swift; sourceTree = "<group>"; };
+		8EBEA872444F45077DEC537C /* DemoAccountModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoAccountModel.swift; sourceTree = "<group>"; };
+		8EEC8E19D7259607CEBE52A9 /* UAPPKitDemoTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = UAPPKitDemoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9CFBCE0E40D58C6FE21099CD /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		9EE8F959E114E6E2B6881A73 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		9F8F1C0FAF3A95EB1FC3D76B /* UAPPKitCanvasPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UAPPKitCanvasPreviews.swift; sourceTree = "<group>"; };
 		AD62410A26135FF3D46570AC /* UAPPKitDemoSections.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UAPPKitDemoSections.swift; sourceTree = "<group>"; };
 		B318E9966D6FE595FBF42611 /* UAPPKitDemoSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UAPPKitDemoSupport.swift; sourceTree = "<group>"; };
@@ -48,6 +67,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F1B03752D293DC54FD7B6788 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				ECC2506A4F6E9AE0C8AF7F38 /* UAPPKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -55,6 +82,7 @@
 			isa = PBXGroup;
 			children = (
 				9CFBCE0E40D58C6FE21099CD /* Assets.xcassets */,
+				9EE8F959E114E6E2B6881A73 /* Info.plist */,
 				C23FE361BD825ED69E7E8B5E /* LaunchScreen.storyboard */,
 				3562DA31DA44924F659A91D9 /* Localizable.xcstrings */,
 				F587648344C3DCA06CB9E0CF /* UAPPKit.icon */,
@@ -81,12 +109,21 @@
 			path = Home;
 			sourceTree = "<group>";
 		};
+		6796945F804BCC5EC8EDA205 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				720450AB273A812437FB1FA0 /* DemoAccountModelTests.swift */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
 		6B92E150DB66AF38D8497A82 = {
 			isa = PBXGroup;
 			children = (
 				02A56214B34396CD462C04DD /* Resources */,
 				F64671BF37781F53A734B85B /* Sources */,
 				E64D4C5AB6A34249D002F97B /* Swift Package Dependencies */,
+				6796945F804BCC5EC8EDA205 /* Tests */,
 				E7FB65E1C6D63D74B0466E2C /* Products */,
 			);
 			sourceTree = "<group>";
@@ -108,6 +145,15 @@
 			path = Shared;
 			sourceTree = "<group>";
 		};
+		C70FC764FA5D6806C2402E7A /* Account */ = {
+			isa = PBXGroup;
+			children = (
+				8EBEA872444F45077DEC537C /* DemoAccountModel.swift */,
+				69B6B21E02756B4BC5EE7C7F /* DemoAccountScreen.swift */,
+			);
+			path = Account;
+			sourceTree = "<group>";
+		};
 		E64D4C5AB6A34249D002F97B /* Swift Package Dependencies */ = {
 			isa = PBXGroup;
 			children = (
@@ -120,6 +166,7 @@
 			isa = PBXGroup;
 			children = (
 				425F2350996380291C175525 /* UAPPKitDemo.app */,
+				8EEC8E19D7259607CEBE52A9 /* UAPPKitDemoTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -127,6 +174,7 @@
 		F64671BF37781F53A734B85B /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				C70FC764FA5D6806C2402E7A /* Account */,
 				74FD92BA85FB4FE723446024 /* Applications */,
 				0A382B5591397CD80EE1D2A8 /* Components */,
 				285982CB164D86105F146855 /* Home */,
@@ -158,6 +206,26 @@
 			productReference = 425F2350996380291C175525 /* UAPPKitDemo.app */;
 			productType = "com.apple.product-type.application";
 		};
+		9B8D6189601E95660555FE54 /* UAPPKitDemoTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9D87E22AE6BD0F78196CE27C /* Build configuration list for PBXNativeTarget "UAPPKitDemoTests" */;
+			buildPhases = (
+				E8B039A587075E411A99096A /* Sources */,
+				F1B03752D293DC54FD7B6788 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				121AB48BD87874B628D38557 /* PBXTargetDependency */,
+			);
+			name = UAPPKitDemoTests;
+			packageProductDependencies = (
+				898A0A3A3AB154E94D8FA112 /* UAPPKit */,
+			);
+			productName = UAPPKitDemoTests;
+			productReference = 8EEC8E19D7259607CEBE52A9 /* UAPPKitDemoTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -165,7 +233,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 2710;
+				LastUpgradeCheck = 1430;
 			};
 			buildConfigurationList = EF401F9EED063012EE9844A3 /* Build configuration list for PBXProject "UAPPKitDemo" */;
 			developmentRegion = en;
@@ -197,6 +265,7 @@
 			projectRoot = "";
 			targets = (
 				1F942C654C10A24A08E6777F /* UAPPKitDemo */,
+				9B8D6189601E95660555FE54 /* UAPPKitDemoTests */,
 			);
 		};
 /* End PBXProject section */
@@ -220,6 +289,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6A75B8053CAABF542D14FC62 /* DemoAccountModel.swift in Sources */,
+				E03B81102791B600D7F12F17 /* DemoAccountScreen.swift in Sources */,
 				441E492CA09BC252987A0E04 /* UAPPKitCanvasPreviews.swift in Sources */,
 				589E7EF2B7AE122DB5901817 /* UAPPKitDemoActions.swift in Sources */,
 				FC075CAE0BC97C8BEF655C3D /* UAPPKitDemoApp.swift in Sources */,
@@ -231,21 +302,55 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E8B039A587075E411A99096A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				40FC75531D2F03858B068443 /* DemoAccountModelTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		121AB48BD87874B628D38557 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 1F942C654C10A24A08E6777F /* UAPPKitDemo */;
+			targetProxy = FC13166A3A9952E75F0EBE59 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		3F92CBA19752F7340867BB5D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/UAPPKitDemo.app/UAPPKitDemo";
+			};
+			name = Release;
+		};
 		43D57A9FB63613C9F00E8F11 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = UAPPKit;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 5TQQ84X3M3;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "UAPPKit Demo";
+				INFOPLIST_FILE = Resources/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "A câmera permite tirar uma foto para o seu perfil.";
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -302,7 +407,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -319,12 +424,13 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = UAPPKit;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 5TQQ84X3M3;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "UAPPKit Demo";
+				INFOPLIST_FILE = Resources/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "A câmera permite tirar uma foto para o seu perfil.";
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -387,7 +493,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -399,9 +505,35 @@
 			};
 			name = Debug;
 		};
+		C38B8EF1D7CFB67843B6C270 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/UAPPKitDemo.app/UAPPKitDemo";
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		9D87E22AE6BD0F78196CE27C /* Build configuration list for PBXNativeTarget "UAPPKitDemoTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C38B8EF1D7CFB67843B6C270 /* Debug */,
+				3F92CBA19752F7340867BB5D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		B19A2E44ED36AE93E0FAB34B /* Build configuration list for PBXNativeTarget "UAPPKitDemo" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -431,6 +563,10 @@
 
 /* Begin XCSwiftPackageProductDependency section */
 		266132D9394C3619182E1A6C /* UAPPKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = UAPPKit;
+		};
+		898A0A3A3AB154E94D8FA112 /* UAPPKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = UAPPKit;
 		};

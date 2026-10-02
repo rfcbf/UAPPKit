@@ -10,7 +10,7 @@ import UAPPKit
 
 #Preview("Roadmap · CalcJuros DEV") {
     DemoCanvasNavigation {
-        UAPPFeedbackScreen(client: DemoCanvasPreview.client, mode: .roadmap)
+        UAPPRoadmapScreen(client: DemoCanvasPreview.client)
     }
 }
 

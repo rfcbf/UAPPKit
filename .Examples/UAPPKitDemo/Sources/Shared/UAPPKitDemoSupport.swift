@@ -16,7 +16,7 @@ struct UAPPOnChangeModifier<Value: Equatable>: ViewModifier {
         } else {
             content.onReceive(Just(value)) { newValue in
                 guard let previousValue else {
-                    self.previousValue = newValue
+                    previousValue = newValue
                     return
                 }
                 guard previousValue != newValue else {

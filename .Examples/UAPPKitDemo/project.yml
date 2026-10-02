@@ -2,7 +2,7 @@ name: UAPPKitDemo
 
 options:
   deploymentTarget:
-    iOS: "16.0"
+    iOS: "18.0"
   localPackagesGroup: Swift Package Dependencies
 
 packages:
@@ -23,6 +23,13 @@ targets:
     dependencies:
       - package: UAPPKit
         product: UAPPKit
+    info:
+      path: Resources/Info.plist
+      properties:
+        NSCameraUsageDescription: A câmera permite tirar uma foto para o seu perfil.
+        CFBundleURLTypes:
+          - CFBundleURLSchemes:
+              - uappkit
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: net.renatoferraz.UAPPKitDemo
@@ -35,6 +42,20 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
 
+  UAPPKitDemoTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: Tests
+    dependencies:
+      - target: UAPPKitDemo
+      - package: UAPPKit
+        product: UAPPKit
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
 schemes:
   UAPPKitDemo:
     build:
@@ -42,6 +63,9 @@ schemes:
         UAPPKitDemo: all
     run:
       config: Debug
+    test:
+      targets:
+        - UAPPKitDemoTests
     profile:
       config: Release
     analyze:

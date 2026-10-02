@@ -3,6 +3,8 @@ import UAPPKit
 import UIKit
 
 struct ContentView: View {
+    @StateObject var account = DemoAccountModel()
+    @State var accountDestination: DemoAccountDestination?
     @AppStorage(UAPPKit.localePreferenceKey)
     var languageIdentifier = DemoSettings.defaultLanguage
     @AppStorage(DemoSettings.projectSlug)
@@ -40,6 +42,7 @@ struct ContentView: View {
 
     @State var statusMessage: String?
     @State var statusIsSuccess = false
+    @State var isShowingStatus = false
     @State var isTestingConnection = false
     @State var isOpeningAppStoreReview = false
     @State var appStoreReviewError: String?
@@ -59,12 +62,45 @@ struct ContentView: View {
             .modifier(PersistentNavigationBar())
         }
         .environment(\.locale, Locale(identifier: languageIdentifier))
+        .sheet(item: $accountDestination, onDismiss: {
+            Task { await account.refreshSession() }
+        }) { destination in
+            Group {
+                switch destination {
+                case .connect:
+                    UAPPAccountScreen(
+                        authentication: account.authentication,
+                        client: try? UAPPKit.makeClient(),
+                        theme: configuredTheme,
+                        onSessionChange: account.updateSession
+                    )
+                case .profile:
+                    DemoAccountScreen(model: account, languageIdentifier: languageIdentifier, theme: configuredTheme)
+                case .user:
+                    if let session = account.session {
+                        UAPPUserScreen(
+                            session: session, authentication: account.authentication, client: try? UAPPKit.makeClient(),
+                            theme: configuredTheme, onSessionChange: account.updateSession
+                        )
+                    }
+                }
+            }
+            .environment(\.locale, Locale(identifier: languageIdentifier))
+        }
+        .sheet(isPresented: $isShowingStatus) {
+            configurationStatusSheet
+                .environment(\.locale, Locale(identifier: languageIdentifier))
+        }
         .preferredColorScheme(
             DemoAppearance(rawValue: appearance)?.colorScheme ?? .light
         )
         .onAppear {
             applyAppearance()
             applyConfiguredTheme()
+        }
+        .task {
+            guard saveConfiguration(showSuccessMessage: false) else { return }
+            await account.refreshSession()
         }
         .uappOnChange(of: appearance) { _ in applyAppearance() }
         .uappOnChange(of: languageIdentifier) { newValue in
@@ -89,7 +125,7 @@ struct ContentView: View {
 
     private var singleColumnContent: some View {
         Form {
-            configurationSections
+            homeSections
             screensSection()
         }
         .modifier(DemoFormLayout(isSecondary: false))
@@ -121,14 +157,14 @@ struct ContentView: View {
     private var twoPanelContent: some View {
         if #available(iOS 27.1, *) {
             ArrangementView {
-                configurationForm
+                homeForm
             } secondary: {
                 screensForm
             }
             .arrangementViewStyle(.split.axes(.horizontal))
         } else {
             HStack(spacing: 0) {
-                configurationForm
+                homeForm
                     .frame(maxWidth: .infinity)
                 Divider()
                 screensForm

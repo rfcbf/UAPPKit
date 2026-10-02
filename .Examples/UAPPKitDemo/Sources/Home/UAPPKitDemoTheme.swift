@@ -1,6 +1,6 @@
 import SwiftUI
-import UIKit
 import UAPPKit
+import UIKit
 
 extension ContentView {
     @MainActor

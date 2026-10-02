@@ -7,6 +7,38 @@ A tela inicial permite informar o `public_slug` do app e o servidor Supabase,
 salvar essas configurações no dispositivo e testar a conexão antes de abrir as
 telas do UAPPKit.
 
+A tela principal oferece duas opções, cada uma em uma sheet própria:
+
+- “Conectar”: conta por e-mail/senha, Google, Apple ou GitHub. O mesmo provedor
+  é passado a Feedback e Roadmap, que reaproveitam a sessão em memória.
+- “Preencher perfil”: nome, e-mail e foto opcional persistidos
+  neste aparelho. Nome e e-mail são enviados ao kit como identidade declarada;
+  a foto escolhida fica somente no Demo, sem upload público.
+
+Perfil local não autentica uma conta. Se o visitante decidir participar, o kit
+pode pedir login para validar autoria. Sair da conta preserva o perfil local;
+o botão “Apagar perfil local” remove os dados salvos. Uma conta conectada
+precisa de novo login depois de reiniciar o app. Trocar projeto/servidor
+descarta a sessão anterior.
+
+O provedor do kit descobre a configuração pública somente ao iniciar um login. O callback
+OAuth é `uappkit://authentication`, registrado no target; o servidor precisa
+permitir esse endereço e ter cada provedor configurado. Não há chave privada
+nem token no setup. `Tests/DemoAccountModelTests.swift` cobre persistência,
+sessão compartilhada e saída com um provedor falso.
+
+Validação anterior à migração do fluxo para o kit: 148 testes do pacote e dois testes do Demo aprovados; compilação
+do Demo no iPhone 18 Pro Simulator e abertura da página GitHub conferidas.
+Entrega do código, retorno OAuth e login completo com contas reais continuam
+pendentes. O aplicativo e o target de testes usam iOS 18+.
+
+“Conectar” apresenta `UAPPAccountScreen`, pertencente ao pacote: login,
+cadastro, confirmação de e-mail e recuperação de senha com ícone do aplicativo.
+O Demo não implementa esses fluxos. O login próprio de participação do kit
+continua disponível por código. Consulte [Autenticação](../../Documentation/Authentication.md)
+para configurar o callback e os modelos de e-mail. Esta migração não foi
+compilada nem testada, conforme orientação do proprietário.
+
 A abertura usa `Resources/LaunchScreen.storyboard`, configurado no target por
 `UILaunchStoryboardName`. O iOS apresenta o fundo roxo e o mascote enquanto
 inicializa o processo, e o app entra diretamente em `ContentView`, sem splash
