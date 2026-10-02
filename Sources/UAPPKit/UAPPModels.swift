@@ -9,6 +9,7 @@ public enum UAPPFeedbackCategory: String, Sendable, Equatable, Codable, CaseIter
 
 public enum UAPPReactionKind: String, Sendable, Equatable, Codable {
     case vote
+    @available(*, deprecated, message: "Use vote. A participação é apresentada como votação.")
     case like
 }
 
@@ -42,6 +43,13 @@ public struct UAPPFeedbackItem: Identifiable, Sendable, Equatable, Codable {
     public let viewerVoted: Bool
     public let viewerLiked: Bool
     public let createdAt: Date?
+    public let authorName: String?
+    public let authorAvatarURL: URL?
+    public let statusId: String?
+    public let voters: [UAPPFeedbackVoter]?
+    public let imageURL: URL?
+    public let imageURLs: [URL]?
+    public var attachmentURLs: [URL] { imageURLs ?? imageURL.map { [$0] } ?? [] }
 
     public init(
         id: String,
@@ -54,7 +62,13 @@ public struct UAPPFeedbackItem: Identifiable, Sendable, Equatable, Codable {
         priority: Int = 0,
         viewerVoted: Bool = false,
         viewerLiked: Bool = false,
-        createdAt: Date? = nil
+        createdAt: Date? = nil,
+        authorName: String? = nil,
+        authorAvatarURL: URL? = nil,
+        statusId: String? = nil,
+        voters: [UAPPFeedbackVoter]? = nil,
+        imageURL: URL? = nil,
+        imageURLs: [URL]? = nil
     ) {
         self.id = id
         self.title = title
@@ -67,6 +81,12 @@ public struct UAPPFeedbackItem: Identifiable, Sendable, Equatable, Codable {
         self.viewerVoted = viewerVoted
         self.viewerLiked = viewerLiked
         self.createdAt = createdAt
+        self.authorName = authorName
+        self.authorAvatarURL = authorAvatarURL
+        self.statusId = statusId
+        self.voters = voters
+        self.imageURL = imageURL
+        self.imageURLs = imageURLs
     }
 
     enum CodingKeys: String, CodingKey {
@@ -78,6 +98,54 @@ public struct UAPPFeedbackItem: Identifiable, Sendable, Equatable, Codable {
         case viewerVoted = "viewer_voted"
         case viewerLiked = "viewer_liked"
         case createdAt = "created_at"
+        case authorName = "author_name"
+        case authorAvatarURL = "author_avatar_url"
+        case statusId = "status_id"
+        case voters
+        case imageURL = "image_url"
+        case imageURLs = "image_urls"
+    }
+}
+
+extension UAPPFeedbackItem {
+    func settingVote(enabled: Bool) -> UAPPFeedbackItem {
+        let change = enabled == viewerVoted ? 0 : (enabled ? 1 : -1)
+        return UAPPFeedbackItem(
+            id: id, title: title, body: body, voteCount: max(0, voteCount + change),
+            likeCount: likeCount, commentCount: commentCount,
+            category: category, priority: priority, viewerVoted: enabled,
+            viewerLiked: viewerLiked, createdAt: createdAt, authorName: authorName,
+            authorAvatarURL: authorAvatarURL, statusId: statusId,
+            voters: voters, imageURL: imageURL, imageURLs: imageURLs
+        )
+    }
+
+    func settingLike(enabled: Bool) -> UAPPFeedbackItem {
+        let change = enabled == viewerLiked ? 0 : (enabled ? 1 : -1)
+        return UAPPFeedbackItem(
+            id: id, title: title, body: body, voteCount: voteCount,
+            likeCount: max(0, likeCount + change), commentCount: commentCount,
+            category: category, priority: priority, viewerVoted: viewerVoted,
+            viewerLiked: enabled, createdAt: createdAt, authorName: authorName,
+            authorAvatarURL: authorAvatarURL, statusId: statusId,
+            voters: voters, imageURL: imageURL, imageURLs: imageURLs
+        )
+    }
+}
+
+/// Perfis públicos das últimas pessoas que reagiram ao feedback.
+public struct UAPPFeedbackVoter: Sendable, Equatable, Codable {
+    public let displayName: String
+    public let avatarURL: URL?
+
+    public init(displayName: String, avatarURL: URL? = nil) {
+        self.displayName = displayName
+        self.avatarURL = avatarURL
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case displayName
+        case avatarURL = "avatarUrl"
     }
 }
 
@@ -94,11 +162,67 @@ public struct UAPPComment: Identifiable, Sendable, Equatable, Codable {
     public let createdAt: Date
     public let authorKind: AuthorKind
     public let viewerLiked: Bool
+    /// Votos no comentário; os campos antigos permanecem no contrato de transporte.
+    public var voteCount: Int { likeCount }
+    public var viewerVoted: Bool { viewerLiked }
+    public let authorName: String?
+    public let authorAvatarURL: URL?
+    public let imageURL: URL?
+    public let imageURLs: [URL]?
+    public let viewerOwned: Bool?
+    public var attachmentURLs: [URL] { imageURLs ?? imageURL.map { [$0] } ?? [] }
+
+    public init(
+        id: String, body: String, parentCommentId: String? = nil,
+        likeCount: Int, createdAt: Date, authorKind: AuthorKind,
+        viewerLiked: Bool, authorName: String? = nil,
+        authorAvatarURL: URL? = nil, imageURL: URL? = nil,
+        moderationState: String? = nil,
+        imageURLs: [URL]? = nil,
+        viewerOwned: Bool? = nil
+    ) {
+        self.id = id
+        self.body = body
+        self.parentCommentId = parentCommentId
+        self.likeCount = likeCount
+        self.createdAt = createdAt
+        self.authorKind = authorKind
+        self.viewerLiked = viewerLiked
+        self.authorName = authorName
+        self.authorAvatarURL = authorAvatarURL
+        self.imageURL = imageURL
+        self.imageURLs = imageURLs
+        self.moderationState = moderationState
+        self.viewerOwned = viewerOwned
+    }
+
+    public let moderationState: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, body, parentCommentId, likeCount, createdAt, authorKind, viewerLiked, authorName, moderationState, viewerOwned
+        case authorAvatarURL = "authorAvatarUrl"
+        case imageURL = "imageUrl"
+        case imageURLs = "imageUrls"
+    }
+}
+
+extension UAPPComment {
+    func avatarURL(viewer: UAPPIdentity?) -> URL? {
+        if viewerOwned == true, let viewer { return viewer.avatarURL }
+        return authorAvatarURL
+    }
 }
 
 public struct UAPPFeedbackPage: Sendable, Equatable {
     public let items: [UAPPFeedbackItem]
     public let nextCursor: String?
+    public let statuses: [UAPPRoadmapColumn.Status]
+
+    public init(items: [UAPPFeedbackItem], nextCursor: String?, statuses: [UAPPRoadmapColumn.Status] = []) {
+        self.items = items
+        self.nextCursor = nextCursor
+        self.statuses = statuses
+    }
 }
 
 public struct UAPPCommentsPage: Sendable, Equatable {
@@ -252,6 +376,19 @@ public struct UAPPRoadmapColumn: Sendable, Equatable, Codable {
         public let key: String
         public let name: String
         public let position: Int
+        public let color: String?
+
+        public init(id: String, key: String, name: String, position: Int, color: String? = nil) {
+            self.id = id
+            self.key = key
+            self.name = name
+            self.position = position
+            self.color = color
+        }
+
+        enum CodingKeys: String, CodingKey {
+            case id, key, name, position, color
+        }
     }
 
     public let status: Status
@@ -424,6 +561,7 @@ struct UAPPFeedbackResponse: Decodable {
     let project: UAPPProject?
     let items: [UAPPFeedbackItem]
     let nextCursor: String?
+    let statuses: [UAPPRoadmapResponse.RawStatus]?
 }
 
 struct UAPPRoadmapResponse: Decodable {
@@ -433,6 +571,11 @@ struct UAPPRoadmapResponse: Decodable {
         let name: String
         let position: Int
         let isRoadmapVisible: Bool?
+        let color: String?
+
+        enum CodingKeys: String, CodingKey {
+            case id, key, name, position, isRoadmapVisible, color
+        }
     }
 
     let project: UAPPProject?
@@ -451,6 +594,12 @@ struct UAPPRoadmapResponse: Decodable {
         let priority: Int
         let viewerVoted: Bool
         let viewerLiked: Bool
+        let createdAt: Date?
+        let authorName: String?
+        let authorAvatarURL: URL?
+        let voters: [UAPPFeedbackVoter]?
+        let imageURL: URL?
+        let imageURLs: [URL]?
 
         enum CodingKeys: String, CodingKey {
             case id, title, body
@@ -461,6 +610,12 @@ struct UAPPRoadmapResponse: Decodable {
             case category, priority
             case viewerVoted = "viewer_voted"
             case viewerLiked = "viewer_liked"
+            case createdAt = "created_at"
+            case authorName = "author_name"
+            case authorAvatarURL = "author_avatar_url"
+            case voters
+            case imageURL = "image_url"
+            case imageURLs = "image_urls"
         }
     }
 }

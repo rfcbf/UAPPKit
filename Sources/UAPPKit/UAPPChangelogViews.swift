@@ -88,7 +88,7 @@ struct UAPPChangelogImage: View {
 
     var body: some View {
         GeometryReader { proxy in
-            AsyncImage(url: fixture == nil ? item.section.imageURL : nil) { phase in
+            UAPPCachedImage(url: fixture == nil ? item.section.imageURL : nil) { phase in
                 switch fixture?.phase ?? phase {
                 case let .success(image):
                     image.resizable().scaledToFit()
@@ -101,14 +101,19 @@ struct UAPPChangelogImage: View {
                             .font(.caption).multilineTextAlignment(.center)
                     }
                 default:
-                    ProgressView().accessibilityLabel(Text(verbatim: uappLocalized("changelog.image_loading")))
+                    UAPPImageLoadingPlaceholder()
+                        .accessibilityLabel(Text(verbatim: uappLocalized("changelog.image_loading")))
                 }
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
         }
         .aspectRatio(40.0 / 21.0, contentMode: .fit)
         .background(.secondary.opacity(0.08))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(.secondary.opacity(0.18), lineWidth: 1)
+        }
         .accessibilityLabel(Text(uappChangelogMarkdown(item.section.bodyMarkdown)))
     }
 }
@@ -120,11 +125,45 @@ struct UAPPChangelogItemText: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(verbatim: uappLocalized("category.\(item.section.category.rawValue)", languageIdentifier: locale.identifier))
-                .font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+            UAPPChangelogCategoryLabel(category: item.section.category)
             UAPPChangelogTranslatedText(text: item.section.bodyMarkdown, lineLimit: lineLimit)
                 .font(.subheadline)
                 .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+}
+
+/// Rótulo da categoria com ícone sobre fundo tingido pela cor de destaque.
+struct UAPPChangelogCategoryLabel: View {
+    let category: UAPPChangelogCategory
+    @Environment(\.locale) private var locale
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        // HStack em vez de Label: o espaçamento padrão do Label afasta demais o ícone do nome.
+        HStack(alignment: .firstTextBaseline, spacing: 4) {
+            Image(systemName: category.symbol)
+                .imageScale(.small)
+                .accessibilityHidden(true)
+            Text(verbatim: uappLocalized("category.\(category.rawValue)", languageIdentifier: locale.identifier))
+        }
+        .font(.caption.weight(.semibold))
+        .foregroundStyle(.tint)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(.tint.opacity(colorScheme == .dark ? 0.2 : 0.1), in: Capsule())
+        .accessibilityAddTraits(.isHeader)
+    }
+}
+
+extension UAPPChangelogCategory {
+    /// Símbolo SF exibido junto ao nome da categoria no changelog.
+    var symbol: String {
+        switch self {
+        case .new: "sparkles"
+        case .improved: "arrow.up.circle"
+        case .fixed: "wrench.and.screwdriver"
+        case .security: "lock.shield"
         }
     }
 }
@@ -260,14 +299,18 @@ struct UAPPChangelogTextItems: View {
             ForEach(UAPPChangelogCategory.allCases, id: \.self) { category in
                 let group = items.filter { $0.section.category == category }
                 if !group.isEmpty {
-                    Text(verbatim: uappLocalized("category.\(category.rawValue)", languageIdentifier: locale.identifier))
-                        .font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                    UAPPChangelogCategoryLabel(category: category)
                     ForEach(group) { item in
-                        HStack(alignment: .top, spacing: 8) {
-                            Text(verbatim: "•").accessibilityHidden(true)
+                        HStack(alignment: .firstTextBaseline, spacing: 10) {
+                            Circle()
+                                .fill(.tint)
+                                .frame(width: 5, height: 5)
+                                .alignmentGuide(.firstTextBaseline) { $0[.bottom] + 2 }
+                                .accessibilityHidden(true)
                             UAPPChangelogTranslatedText(text: item.section.bodyMarkdown, lineLimit: lineLimit)
                                 .font(.subheadline)
                         }
+                        .padding(.leading, 4)
                     }
                 }
             }

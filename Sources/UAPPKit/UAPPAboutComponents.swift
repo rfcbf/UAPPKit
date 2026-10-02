@@ -48,11 +48,29 @@ struct UAPPAboutAppIdentity: View {
                 uappLocalizedFormat("about.version", $0)
             } ?? uappLocalized("about.version_unavailable")
 
-            Text(verbatim: versionLabel)
-                .font(.footnote)
-                .foregroundStyle(palette.secondaryText)
+            Label {
+                Text(verbatim: versionLabel)
+            } icon: {
+                Image(systemName: "tag.fill")
+                    .accessibilityHidden(true)
+            }
+            .font(.footnote.weight(.semibold))
+            .monospacedDigit()
+            .foregroundStyle(palette.accent ?? .accentColor)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(VersionPillBackground(accent: palette.accent ?? .accentColor))
         }
         .frame(maxWidth: .infinity)
+    }
+}
+
+private struct VersionPillBackground: View {
+    let accent: Color
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Capsule().fill(accent.opacity(UAPPSurface.selectionFillOpacity(colorScheme)))
     }
 }
 
@@ -118,6 +136,7 @@ struct UAPPAboutResources: View {
             if !links.isEmpty || configuration.license != nil {
                 Text(verbatim: uappLocalized("about.resources"))
                     .font(.title3.weight(.semibold))
+                    .accessibilityAddTraits(.isHeader)
             }
             if configuration.showsChangelog, let onOpenChangelog {
                 Button(action: onOpenChangelog) {
@@ -166,11 +185,10 @@ struct UAPPAboutResources: View {
         showsProgress: Bool = false
     ) -> some View {
         HStack(spacing: 12) {
-            Image(systemName: systemImage)
-                .font(.body.weight(.semibold))
-                .foregroundStyle(palette.accent ?? .accentColor)
-                .frame(width: 24)
-                .accessibilityHidden(true)
+            UAPPAccentIconBadge(
+                systemImage: systemImage, accent: palette.accent ?? .accentColor,
+                size: 34, cornerRadius: 10, font: .subheadline.weight(.semibold)
+            )
             Text(verbatim: title)
                 .font(.body)
             Spacer(minLength: 0)
@@ -184,19 +202,19 @@ struct UAPPAboutResources: View {
                     .accessibilityHidden(true)
             }
         }
-        .padding(.horizontal, 14)
-        .frame(maxWidth: .infinity, minHeight: 54, alignment: .leading)
-        .background(palette.cardBackground, in: RoundedRectangle(cornerRadius: 16))
-        .contentShape(Rectangle())
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
+        .uappCardSurface(palette)
+        .contentShape(RoundedRectangle(cornerRadius: UAPPSurface.largeCornerRadius, style: .continuous))
     }
 
     private func infoRow(title: String, value: String, systemImage: String) -> some View {
         HStack(spacing: 12) {
-            Image(systemName: systemImage)
-                .font(.body.weight(.semibold))
-                .foregroundStyle(palette.accent ?? .accentColor)
-                .frame(width: 24)
-                .accessibilityHidden(true)
+            UAPPAccentIconBadge(
+                systemImage: systemImage, accent: palette.accent ?? .accentColor,
+                size: 34, cornerRadius: 10, font: .subheadline.weight(.semibold)
+            )
             VStack(alignment: .leading, spacing: 2) {
                 Text(verbatim: title)
                     .font(.subheadline)
@@ -206,9 +224,11 @@ struct UAPPAboutResources: View {
             }
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 14)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
         .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
-        .background(palette.cardBackground, in: RoundedRectangle(cornerRadius: 16))
+        .uappCardSurface(palette)
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -221,13 +241,22 @@ struct UAPPAboutDeveloperContent: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 28) {
             if let imageURL = about.imageURL {
-                AsyncImage(url: imageURL) { image in
-                    image.resizable().scaledToFill()
-                } placeholder: {
-                    ProgressView()
+                UAPPCachedImage(url: imageURL) { phase in
+                    if let image = phase.image {
+                        image.resizable().scaledToFill()
+                    } else if phase.error != nil {
+                        Image(systemName: "person.crop.circle.fill")
+                            .resizable().scaledToFit().foregroundStyle(.secondary)
+                    } else {
+                        UAPPImageLoadingPlaceholder()
+                    }
                 }
                 .frame(width: 112, height: 112)
                 .clipShape(Circle())
+                .padding(4)
+                .overlay {
+                    Circle().strokeBorder((palette.accent ?? .accentColor).opacity(0.35), lineWidth: 2)
+                }
                 .frame(maxWidth: .infinity)
             }
             if let developerName = about.developerName, !developerName.isEmpty {
@@ -282,7 +311,7 @@ struct UAPPAboutDeveloperContent: View {
                                     }
                                     .padding(.horizontal, 14)
                                     .frame(maxWidth: .infinity, minHeight: 58, alignment: .leading)
-                                    .background(palette.cardBackground, in: RoundedRectangle(cornerRadius: 16))
+                                    .uappCardSurface(palette)
                                     .contentShape(Rectangle())
                                 }
                                 .foregroundStyle(palette.primaryText)
@@ -298,6 +327,7 @@ struct UAPPAboutDeveloperContent: View {
         VStack(alignment: .leading, spacing: 18) {
             Text(verbatim: uappLocalized(titleKey))
                 .font(.title3.weight(.semibold))
+                .accessibilityAddTraits(.isHeader)
             content()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -315,11 +345,10 @@ struct UAPPAboutDeveloperContent: View {
     private func appDiscoveryCard(destination: URL) -> some View {
         Link(destination: destination) {
             HStack(spacing: 16) {
-                Image(systemName: "square.grid.2x2.fill")
-                    .font(.system(size: 26))
-                    .foregroundStyle(palette.accent ?? .accentColor)
-                    .frame(width: 60, height: 60)
-                    .accessibilityHidden(true)
+                UAPPAccentIconBadge(
+                    systemImage: "square.grid.2x2.fill", accent: palette.accent ?? .accentColor,
+                    size: 52, cornerRadius: 16
+                )
 
                 VStack(alignment: .leading, spacing: 5) {
                     Text(verbatim: uappLocalized("about.discovery.title"))
@@ -339,7 +368,7 @@ struct UAPPAboutDeveloperContent: View {
                     .accessibilityHidden(true)
             }
             .padding(14)
-            .background(palette.cardBackground, in: RoundedRectangle(cornerRadius: 16))
+            .uappCardSurface(palette)
         }
         .buttonStyle(.plain)
         .accessibilityHint(Text(verbatim: uappLocalized("about.open_public_page")))
@@ -348,23 +377,28 @@ struct UAPPAboutDeveloperContent: View {
     private func appCard(_ app: UAPPAboutApp) -> some View {
         HStack(spacing: 12) {
             if let iconURL = app.iconURL {
-                AsyncImage(url: iconURL) { image in
-                    image.resizable().scaledToFill()
-                } placeholder: {
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(palette.background)
-                        .overlay { ProgressView() }
+                UAPPCachedImage(url: iconURL) { phase in
+                    if let image = phase.image {
+                        image.resizable().scaledToFill()
+                    } else if phase.error != nil {
+                        Image(systemName: "app.fill")
+                            .foregroundStyle(palette.secondaryText)
+                    } else {
+                        UAPPImageLoadingPlaceholder()
+                    }
                 }
                 .frame(width: 36, height: 36)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .strokeBorder(palette.separator.opacity(0.5), lineWidth: 1)
+                }
                 .accessibilityHidden(true)
             } else {
-                Image(systemName: "app.fill")
-                    .font(.system(size: 20))
-                    .foregroundStyle(palette.accent ?? .accentColor)
-                    .frame(width: 36, height: 36)
-                    .background(palette.background, in: RoundedRectangle(cornerRadius: 10))
-                    .accessibilityHidden(true)
+                UAPPAccentIconBadge(
+                    systemImage: "app.fill", accent: palette.accent ?? .accentColor,
+                    size: 36, cornerRadius: 10, font: .body.weight(.semibold)
+                )
             }
 
             VStack(alignment: .leading, spacing: 3) {
@@ -384,8 +418,10 @@ struct UAPPAboutDeveloperContent: View {
                 .foregroundStyle(palette.secondaryText)
         }
         .padding(.horizontal, 14)
+        .padding(.vertical, 10)
         .frame(maxWidth: .infinity, minHeight: 58, alignment: .leading)
-        .background(palette.cardBackground, in: RoundedRectangle(cornerRadius: 16))
+        .uappCardSurface(palette)
+        .contentShape(RoundedRectangle(cornerRadius: UAPPSurface.largeCornerRadius, style: .continuous))
     }
 
     @MainActor

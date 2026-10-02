@@ -53,11 +53,10 @@ func feedbackScreenBuildsLoadedStates() async {
         testingIsLoading: false,
         feedback: [item]
     ))
-    await render(UAPPFeedbackScreen(
+    await render(UAPPRoadmapScreen(
         client: client,
-        mode: .roadmap,
         testingIsLoading: false,
-        roadmap: [roadmap]
+        columns: [roadmap]
     ))
     await render(UAPPFeedbackScreen(
         client: client,
@@ -102,6 +101,43 @@ func submitFeedbackScreenRendersForm() async {
     await render(UAPPSubmitFeedbackScreen(client: client, onComplete: {}))
 }
 
+@Test("compositor de feedback tem símbolo e título distintos para cada tipo")
+func submitFeedbackCategoriesHaveDistinctPresentation() {
+    let categories = UAPPFeedbackCategory.allCases
+    #expect(Set(categories.map(\.composerSymbol)).count == categories.count)
+    #expect(categories.map(\.composerTitleKey) == [
+        "category.bug", "category.feature", "category.improvement", "category.question"
+    ])
+}
+
+@Test("textos do compositor de feedback estão traduzidos", arguments: UAPPLanguage.supported)
+func submitFeedbackComposerStringsAreTranslated(language: UAPPLanguage) {
+    let keys = [
+        "feedback.compose.intro", "feedback.compose.title_placeholder", "feedback.compose.title_hint",
+        "feedback.compose.description_placeholder", "feedback.compose.attachments",
+        "feedback.compose.attachments_hint", "feedback.compose.optional"
+    ]
+    for key in keys {
+        #expect(uappLocalized(key, languageIdentifier: language.identifier) != key)
+    }
+}
+
+@Test("Feedback e Roadmap renderizam busca sem resultados")
+@MainActor
+func feedbackAndRoadmapRenderSearchResults() async {
+    let client = makeClient { _ in response(#"{"items":[]}"#) }
+    let item = UAPPFeedbackItem(id: "1", title: "Notificações", body: nil, voteCount: 0, likeCount: 0, commentCount: 0)
+    let column = UAPPRoadmapColumn(status: .init(id: "1", key: "planned", name: "Planejado", position: 0), items: [item])
+    for query in ["notificacoes", "ausente"] {
+        await render(UAPPFeedbackScreen(
+            client: client, mode: .feedback, testingIsLoading: false, feedback: [item], testingQuery: query
+        ))
+        await render(UAPPRoadmapScreen(
+            client: client, testingIsLoading: false, columns: [column], testingQuery: query
+        ))
+    }
+}
+
 #if canImport(UIKit) || canImport(AppKit)
 @Test("UAPPFeedbackScreen renderiza feedback, roadmap e changelog")
 @MainActor
@@ -136,11 +172,10 @@ func feedbackScreenRendersLoadedContentInHost() async {
         testingIsLoading: false,
         feedback: [item]
     ))
-    await render(UAPPFeedbackScreen(
+    await render(UAPPRoadmapScreen(
         client: client,
-        mode: .roadmap,
         testingIsLoading: false,
-        roadmap: [column]
+        columns: [column]
     ))
     await render(UAPPFeedbackScreen(
         client: client,

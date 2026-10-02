@@ -130,8 +130,9 @@ public struct UAPPAboutScreen: View {
 
     private var loadingView: some View {
         VStack {
+            // Sem o círculo claro do placeholder de imagem: só o indicador, na cor de destaque.
             ProgressView()
-                .controlSize(.large)
+                .tint(palette.accent ?? .accentColor)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(palette.background.ignoresSafeArea())
@@ -172,13 +173,7 @@ public struct UAPPAboutScreen: View {
 
     private func preloadRemoteIcon(_ url: URL) async {
         do {
-            let (data, response) = try await URLSession.shared.data(from: url)
-            guard !data.isEmpty,
-                  let httpResponse = response as? HTTPURLResponse,
-                  (200 ..< 300).contains(httpResponse.statusCode)
-            else {
-                throw URLError(.badServerResponse)
-            }
+            _ = try await UAPPRemoteImageCache.shared.load(url)
             isRemoteIconReady = true
         } catch {
             remoteIconURL = nil

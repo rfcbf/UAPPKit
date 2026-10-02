@@ -28,10 +28,16 @@ public enum UAPPMascotState: Sendable {
 /// Ilustração do mascote para estados vazios, falhas e confirmações.
 public struct UAPPMascotIllustration: View {
     private let state: UAPPMascotState
-    private let width: CGFloat = 144
+    private let width: CGFloat
 
     public init(state: UAPPMascotState) {
+        self.init(state: state, width: 144)
+    }
+
+    /// Largura reduzida para estados em linha, como colunas vazias do Roadmap.
+    init(state: UAPPMascotState, width: CGFloat) {
         self.state = state
+        self.width = width
     }
 
     public var body: some View {
@@ -89,11 +95,15 @@ struct UAPPUnavailableContent: View {
                 Button {
                     retry()
                 } label: {
-                    Text(verbatim: uappLocalized("common.retry"))
+                    UAPPPrimaryButtonLabel(
+                        title: uappLocalized("common.retry"),
+                        systemImage: "arrow.clockwise",
+                        accent: palette.accent ?? accentColor,
+                        palette: palette
+                    )
+                    .frame(maxWidth: 280)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(palette.accent ?? accentColor)
-                .foregroundStyle(palette.buttonText)
+                .buttonStyle(.plain)
             }
         }
     }
@@ -116,7 +126,7 @@ struct UAPPStateCard<Content: View>: View {
         content
             .frame(maxWidth: 520)
             .padding(24)
-            .background(palette.cardBackground, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .uappCardSurface(palette, cornerRadius: 28)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             .padding(.horizontal, 16)
     }

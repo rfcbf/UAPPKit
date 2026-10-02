@@ -23,6 +23,8 @@ import SwiftUI
 public enum UAPPKit {
     private static var client: UAPPClient?
     private static var configuration: UAPPConfiguration?
+    private static var participationClient: UAPPClient?
+    private static var participationIdentity: UAPPIdentity?
     private static var theme: UAPPTheme = .system
     private static var hostLocaleIdentifier = UAPPLocalizationPreferences.defaultIdentifier
 
@@ -45,9 +47,16 @@ public enum UAPPKit {
             signatureProvider: signatureProvider,
             locale: Locale(identifier: localeIdentifier)
         )
+        if self.configuration?.projectId != projectId || self.configuration?.host != host {
+            participationClient = nil
+            participationIdentity = nil
+        }
         self.configuration = configuration
         self.theme = theme
         client = UAPPClient(configuration: configuration)
+        Task { [participationClient] in
+            await participationClient?.setLocale(Locale(identifier: localeIdentifier))
+        }
     }
 
     /// Atualiza o idioma principal informado pelo aplicativo hospedeiro.
@@ -55,7 +64,10 @@ public enum UAPPKit {
     public static func setLocale(_ locale: Locale) {
         let identifier = UAPPLocalizationPreferences.select(identifier: locale.identifier)
         hostLocaleIdentifier = identifier
-        Task { await client?.setLocale(Locale(identifier: identifier)) }
+        Task { [client, participationClient] in
+            await client?.setLocale(Locale(identifier: identifier))
+            await participationClient?.setLocale(Locale(identifier: identifier))
+        }
     }
 
     /// Chave de `UserDefaults` que o aplicativo hospedeiro pode usar para
@@ -68,19 +80,29 @@ public enum UAPPKit {
         userId: String,
         email: String? = nil,
         displayName: String? = nil,
-        traits: [String: String] = [:]
+        traits: [String: String] = [:],
+        avatarURL: URL? = nil
     ) {
         let identity = UAPPIdentity(
             userId: userId,
             email: email,
             displayName: displayName,
-            traits: traits
+            traits: traits,
+            avatarURL: avatarURL
         )
-        Task { await client?.setIdentity(identity) }
+        participationIdentity = identity
+        Task { [client, participationClient] in
+            await client?.setIdentity(identity)
+            await participationClient?.setIdentity(identity)
+        }
     }
 
     public static func reset() {
-        Task { await client?.setIdentity(nil) }
+        participationIdentity = nil
+        Task { [client, participationClient] in
+            await client?.setIdentity(nil)
+            await participationClient?.setIdentity(nil)
+        }
     }
 
     /// Cliente de baixo nível para quem quiser montar a própria interface.
@@ -89,12 +111,61 @@ public enum UAPPKit {
         return client
     }
 
+    /// Cliente com login automático por e-mail, para Feedback/Roadmap em navegação própria.
+    /// Não solicita login nem acessa autenticação durante o setup.
+    public static func makeParticipationClient() throws -> UAPPClient {
+        if let participationClient {
+            return participationClient
+        }
+        guard let configuration else { throw UAPPKitError.notConfigured }
+        let client = UAPPClient(
+            configuration: configuration,
+            authentication: UAPPAutomaticAuthentication(
+                configuration: configuration,
+                sessionStorage: UAPPKeychainSessionStorage(account: UAPPKeychainSessionStorage.account(
+                    host: configuration.host, projectId: configuration.projectId
+                ))
+            )
+        )
+        participationClient = client
+        let identity = participationIdentity
+        Task { await client.setIdentity(identity) }
+        return client
+    }
+
+    /// Cliente isolado de Feedback/Roadmap, criado depois do setup e do login.
+    /// O perfil é opcional e não representa comprovação de autenticação.
+    public static func makeClient(
+        identity: UAPPIdentity? = nil,
+        accessTokenProvider: UAPPAccessTokenProvider?
+    ) async throws -> UAPPClient {
+        try await requireClient().withAuthentication(
+            identity: identity, accessTokenProvider: accessTokenProvider
+        )
+    }
+
+    public static func makeClient(
+        identity: UAPPIdentity? = nil,
+        authentication: any UAPPAuthenticationProvider
+    ) async throws -> UAPPClient {
+        try await requireClient().withAuthentication(identity: identity, provider: authentication)
+    }
+
     static func requireClient() throws -> UAPPClient {
         guard let client else { throw UAPPKitError.notConfigured }
         return client
     }
 
     // MARK: - Apresentação das telas nativas
+
+    /// Cria o provedor reutilizável da conta do app sem iniciar login no setup.
+    public static func makeAuthentication(
+        callbackURL: URL,
+        methods: [UAPPLoginMethod] = UAPPLoginMethod.allCases
+    ) throws -> any UAPPAuthenticationProvider {
+        guard let configuration else { throw UAPPKitError.notConfigured }
+        return UAPPAuthentication.automatic(configuration: configuration, callbackURL: callbackURL, methods: methods)
+    }
 
     #if canImport(UIKit) && canImport(SwiftUI)
     #if DEBUG
@@ -105,11 +176,66 @@ public enum UAPPKit {
     #endif
 
     public static func showFeedback() throws {
-        try present(UAPPFeedbackScreen(client: requireClient(), mode: .feedback))
+        try present(UAPPFeedbackScreen(client: makeParticipationClient(), mode: .feedback))
+    }
+
+    /// Abre as informações da conta já conectada no aplicativo.
+    public static func showUser(
+        session: UAPPAuthenticationSession,
+        authentication: any UAPPAuthenticationProvider,
+        onSessionChange: @escaping @MainActor (UAPPAuthenticationSession?) -> Void = { _ in }
+    ) throws {
+        try present(UAPPUserScreen(
+            session: session, authentication: authentication, client: requireClient(), theme: theme,
+            onSessionChange: onSessionChange
+        ))
+    }
+
+    /// Abre login/cadastro/recuperação com a identidade visual do aplicativo.
+    public static func showAuthentication(
+        authentication: any UAPPAuthenticationProvider,
+        onSessionChange: @escaping @MainActor (UAPPAuthenticationSession?) -> Void = { _ in }
+    ) throws {
+        try present(UAPPAccountScreen(
+            authentication: authentication, client: requireClient(), theme: theme,
+            onSessionChange: onSessionChange
+        ))
+    }
+
+    public static func showFeedback(
+        identity: UAPPIdentity? = nil,
+        authentication: any UAPPAuthenticationProvider
+    ) async throws {
+        let client = try await makeClient(identity: identity, authentication: authentication)
+        present(UAPPFeedbackScreen(client: client, mode: .feedback))
+    }
+
+    public static func showFeedback(
+        identity: UAPPIdentity? = nil,
+        accessTokenProvider: UAPPAccessTokenProvider?
+    ) async throws {
+        let client = try await makeClient(identity: identity, accessTokenProvider: accessTokenProvider)
+        present(UAPPFeedbackScreen(client: client, mode: .feedback))
     }
 
     public static func showRoadmap() throws {
-        try present(UAPPFeedbackScreen(client: requireClient(), mode: .roadmap))
+        try present(UAPPRoadmapScreen(client: makeParticipationClient()))
+    }
+
+    public static func showRoadmap(
+        identity: UAPPIdentity? = nil,
+        authentication: any UAPPAuthenticationProvider
+    ) async throws {
+        let client = try await makeClient(identity: identity, authentication: authentication)
+        present(UAPPRoadmapScreen(client: client))
+    }
+
+    public static func showRoadmap(
+        identity: UAPPIdentity? = nil,
+        accessTokenProvider: UAPPAccessTokenProvider?
+    ) async throws {
+        let client = try await makeClient(identity: identity, accessTokenProvider: accessTokenProvider)
+        present(UAPPRoadmapScreen(client: client))
     }
 
     public static func showChangelog() throws {

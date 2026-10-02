@@ -14,7 +14,7 @@ struct UAPPApplicationIcon: View {
 
     var body: some View {
         if let remoteURL {
-            AsyncImage(url: remoteURL) { phase in
+            UAPPCachedImage(url: remoteURL) { phase in
                 if let image = phase.image {
                     image
                         .resizable()
@@ -22,10 +22,7 @@ struct UAPPApplicationIcon: View {
                 } else if phase.error != nil {
                     localIcon
                 } else {
-                    ZStack {
-                        localIcon.opacity(0.35)
-                        ProgressView()
-                    }
+                    UAPPImageLoadingPlaceholder()
                 }
             }
         } else {

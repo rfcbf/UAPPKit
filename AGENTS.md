@@ -9,9 +9,19 @@
 
 ## Desenvolvimento e validação
 
-Use Swift tools 6.0 e linguagem Swift 6. Antes de enviar uma alteração,
-execute `swift package dump-package`, `swift build`, `swift test`,
-`swiftformat . --lint` e `swiftlint lint --strict` em macOS com Xcode.
+Use Swift tools 6.0 e linguagem Swift 6.
+
+Por preferência explícita do proprietário, faça somente as alterações pedidas
+e informe quando terminar. Não execute builds, testes automatizados, verificações
+de cobertura nem testes ou inspeções de telas em simulador/dispositivo. Não abra,
+instale ou rode o Demo para validar alterações. O proprietário faz a validação
+e envia fotos e orientações quando precisar de ajustes.
+
+Essa regra vale também para conversas futuras e prevalece sobre instruções de
+validação automática neste arquivo. Só execute essas validações quando o
+proprietário pedir explicitamente; não solicite autorização a cada alteração.
+Se um problema estiver complicado, o proprietário poderá pedir explicitamente
+para fazer o build e testar a tela. Nesse caso, valide apenas o escopo solicitado.
 
 Instale SwiftFormat, SwiftLint e XcodeGen com
 `brew install swiftformat swiftlint xcodegen`. Para aplicar o estilo antes de
@@ -34,7 +44,8 @@ validar, execute `swiftformat .`.
 - Toda alteração de comportamento público deve incluir ou atualizar testes da
   unidade correspondente, cobrindo sucesso, erro e campos opcionais quando
   aplicável.
-- A cobertura mínima exigida é 80% de linhas no código de produção. Rode
+- A cobertura mínima exigida na CI é 80% de linhas no código de produção.
+  Quando o proprietário solicitar validação de cobertura, use
   `swift test --enable-code-coverage` e depois `bash Scripts/check-coverage.sh`.
   O verificador exclui somente arquivos gerados, o ponto de entrada dos testes
   e os próprios arquivos em `Tests/`; as telas SwiftUI e a internacionalização
@@ -57,7 +68,7 @@ sejam determinísticos e não dependam de rede.
 
 ## Apple platforms
 
-As plataformas declaradas são iOS 16+ (inclui iPadOS) e macOS 13+. Não declare
+As plataformas declaradas são iOS 18+ (inclui iPadOS) e macOS 13+. Não declare
 suporte a outro sistema sem compilar e testar o pacote nessa plataforma.
 Interface nova deve ser SwiftUI nativa, acessível e compatível com Dynamic
 Type. Não introduza WebView para substituir as telas nativas.
@@ -68,6 +79,9 @@ target que os renderiza. Não use PNG direto nem `systemImage` para esses ícone
 inclua as nove combinações de peso/tamanho e guides de Small, Medium e Large.
 
 ## Documentação e releases
+
+Não cite projetos pessoais do proprietário na interface, na documentação ou
+nos exemplos do UAPPKit. Use nomes e cenários genéricos.
 
 Mantenha README, arquitetura, decisões, roadmap e changelog independentes do
 checkout privado do UAPP. Exemplos de instalação devem apontar ao repositório

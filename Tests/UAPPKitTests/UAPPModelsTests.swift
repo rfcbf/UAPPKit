@@ -31,6 +31,56 @@ func feedbackItemDecodesContractKeys() throws {
     #expect(item.viewerVoted)
     #expect(!item.viewerLiked)
     #expect(item.createdAt != nil)
+    #expect(item.authorName == nil)
+    #expect(item.authorAvatarURL == nil)
+    #expect(item.statusId == nil)
+}
+
+@Test("feedback decodifica autor, foto e status sem expor dados privados")
+func feedbackItemDecodesAuthorAndStatus() throws {
+    let item = try JSONDecoder().decode(UAPPFeedbackItem.self, from: json("""
+    {"id":"1","title":"Ideia","body":null,"vote_count":2,"like_count":0,
+     "public_comment_count":1,"priority":0,"viewer_voted":false,"viewer_liked":false,
+     "author_name":"Ana","author_avatar_url":"https://example.test/photo.jpg","status_id":"planned"}
+    """))
+    #expect(item.authorName == "Ana")
+    #expect(item.authorAvatarURL?.absoluteString == "https://example.test/photo.jpg")
+    #expect(item.statusId == "planned")
+    let encoded = try JSONEncoder().encode(item)
+    #expect(try JSONDecoder().decode(UAPPFeedbackItem.self, from: encoded) == item)
+}
+
+@Test("feedback rejeita tipos inválidos nos novos campos")
+func feedbackItemRejectsInvalidAuthor() {
+    #expect(throws: DecodingError.self) {
+        try JSONDecoder().decode(UAPPFeedbackItem.self, from: json("""
+        {"id":"1","title":"Ideia","vote_count":0,"like_count":0,"public_comment_count":0,
+         "priority":0,"viewer_voted":false,"viewer_liked":false,"author_name":123}
+        """))
+    }
+}
+
+@Test("curtir atualiza somente a reação e preserva os metadados do card")
+func feedbackLikeUpdatesPreserveMetadata() {
+    let original = UAPPFeedbackItem(
+        id: "1", title: "Ideia", body: "Texto", voteCount: 8, likeCount: 2, commentCount: 3,
+        category: .feature, priority: 5, viewerVoted: true,
+        createdAt: Date(timeIntervalSince1970: 100), authorName: "Ana",
+        authorAvatarURL: URL(string: "https://example.test/photo.jpg"), statusId: "planned"
+    )
+    let liked = original.settingLike(enabled: true)
+    #expect(liked.likeCount == 3)
+    #expect(liked.viewerLiked)
+    #expect(liked.voteCount == original.voteCount)
+    #expect(liked.authorName == original.authorName)
+    #expect(liked.authorAvatarURL == original.authorAvatarURL)
+    #expect(liked.statusId == original.statusId)
+    #expect(liked.createdAt == original.createdAt)
+    #expect(liked.settingLike(enabled: true) == liked)
+    #expect(liked.settingLike(enabled: false) == original)
+    let empty = UAPPFeedbackItem(id: "empty", title: "Empty", body: nil,
+                                 voteCount: 0, likeCount: 0, commentCount: 0, viewerLiked: true)
+    #expect(empty.settingLike(enabled: false).likeCount == 0)
 }
 
 @Test("modelos públicos mantêm defaults e identificadores")

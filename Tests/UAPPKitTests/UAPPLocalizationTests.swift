@@ -27,6 +27,37 @@ func packageStringsFollowSelectedLanguage() {
     #expect(uappLocalized("language.menu", languageIdentifier: "ja") == "言語")
 }
 
+@Test("locales regionais usam as traduções de conta do idioma correspondente")
+@MainActor
+func regionalAccountStrings() {
+    #expect(uappLocalized("account.name", languageIdentifier: "en_US") == "Name")
+    #expect(uappLocalized("account.password", languageIdentifier: "es_MX") == "Contraseña")
+    #expect(uappLocalized("user.account", languageIdentifier: "zh_Hant_TW") == "你的帳戶")
+}
+
+@Test("idiomas de conta incluem textos de autenticação, perfil e foto", arguments: UAPPLanguage.supported)
+func accountTranslations(_ language: UAPPLanguage) {
+    let keys = [
+        "account.start_title", "account.start_message", "account.welcome", "account.welcome_message",
+        "account.create", "account.create_message", "account.confirm_title", "account.confirm_message",
+        "account.recover_title", "account.recover_message", "account.recovery_code_title",
+        "account.recovery_code_message", "account.new_password_title", "account.new_password_message",
+        "account.name", "account.password", "account.password_confirmation", "account.forgot",
+        "account.connect", "account.send_recovery", "account.save_password", "account.or",
+        "account.back", "account.back_login", "account.resend", "account.login_error",
+        "account.operation_error", "account.unsupported", "user.account", "photo.hint", "photo.error"
+    ]
+    for key in keys {
+        #expect(uappLocalized(key, languageIdentifier: language.identifier) != key)
+    }
+    if language.identifier != "pt-BR" {
+        #expect(uappLocalized("account.start_title", languageIdentifier: language.identifier) != "Bem-vindo")
+    }
+    let hint = uappLocalized("account.password_hint", languageIdentifier: language.identifier)
+    #expect(hint.contains("%d"))
+    #expect(String(format: hint, 8).contains("8"))
+}
+
 @Test("idioma do hospedeiro e idioma da tela apresentada são independentes")
 @MainActor
 func hostAndPresentationLanguagesAreIndependent() {

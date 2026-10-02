@@ -86,6 +86,13 @@ enum UAPPLocalizationPreferences {
             return exact.identifier
         }
 
+        let normalized = identifier.replacingOccurrences(of: "_", with: "-").lowercased()
+        if let regional = UAPPLanguage.supported.first(where: {
+            normalized.hasPrefix($0.identifier.lowercased() + "-")
+        }) {
+            return regional.identifier
+        }
+
         let languageCode = Locale(identifier: identifier).language.languageCode?.identifier
         return UAPPLanguage.supported.first {
             Locale(identifier: $0.identifier).language.languageCode?.identifier == languageCode
@@ -155,7 +162,9 @@ func uappLocalized(_ key: String) -> String {
 
 func uappLocalized(_ key: String, languageIdentifier: String) -> String {
     let bundle = Bundle.module
-    let path = bundle.path(forResource: languageIdentifier, ofType: "lproj")
+    let identifier = UAPPLocalizationPreferences.matchingIdentifier(for: languageIdentifier)
+        ?? UAPPLocalizationPreferences.fallbackIdentifier
+    let path = bundle.path(forResource: identifier, ofType: "lproj")
         ?? bundle.path(forResource: UAPPLocalizationPreferences.fallbackIdentifier, ofType: "lproj")
     return (path.flatMap(Bundle.init(path:)) ?? bundle)
         .localizedString(forKey: key, value: key, table: nil)
@@ -190,13 +199,20 @@ private struct UAPPOnChangeModifier<Value: Equatable>: ViewModifier {
     }
 }
 
-private extension View {
+extension View {
+    /// Observes `value` without the deprecated `onChange(of:perform:)`, keeping macOS 13 support.
+    @ViewBuilder
     func uappOnChange<Value: Equatable>(of value: Value, perform action: @escaping (Value) -> Void) -> some View {
-        modifier(UAPPOnChangeModifier(value: value, action: action))
+        if #available(iOS 17, macOS 14, *) {
+            onChange(of: value) { _, newValue in action(newValue) }
+        } else {
+            modifier(UAPPOnChangeModifier(value: value, action: action))
+        }
     }
 }
 
 struct UAPPLanguageMenu: View {
+    var accentOverride: Color?
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.uappTheme) private var theme
     @AppStorage(UAPPLocalizationPreferences.presentationStorageKey)
@@ -258,7 +274,7 @@ struct UAPPLanguageMenu: View {
     }
 
     private var accentColor: Color {
-        theme.resolved(for: colorScheme).accent ?? .accentColor
+        theme.resolved(for: colorScheme).accent ?? accentOverride ?? .accentColor
     }
 }
 #endif

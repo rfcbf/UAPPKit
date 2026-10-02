@@ -1,13 +1,46 @@
 # Arquitetura e contrato com o serviço UAPP
 
+Os detalhes de feedback consomem o item específico e todas as páginas de
+comentários, com respostas, perfis públicos e anexos. A tela atualiza a conversa
+no primeiro plano e após escritas. Imagens JPEG/PNG opcionais são enviadas como
+`image: { mimeType, base64 }` nos endpoints existentes de envio/interação;
+respostas de feedback usam `image_url` e comentários usam `imageUrl` com URLs
+temporárias. O arquivo permanece privado até uma leitura autorizada.
+
+A ponte opcional de sessão recebe `accessTokenProvider` ao abrir Feedback/Roadmap
+ou criar um cliente de participação, e envia Authorization apenas nessas áreas.
+O setup e as leituras de Sobre, Changelog e Reviews ficam independentes da
+sessão. A ponte usa a persistência do hospedeiro e não assume que um perfil informado está
+autenticado. `signatureProvider` mantém seu header anterior. O desenho
+do vínculo aos usuários do aplicativo e os limites desta etapa estão em
+[Feedback e autenticação](Feedback.md).
+
+`UAPPAuthenticationProvider` integra a sessão do hospedeiro com a interface
+nativa de login. O adaptador opcional `UAPPAuthentication` implementa
+nativamente o fluxo personalizado. Nas chamadas simples de Feedback/Roadmap,
+um provider interno descobre a configuração pública ao solicitar código e
+compartilha a conta, persistida no Keychain por servidor e projeto. O cliente público permanece sem autenticação.
+O adaptador personalizado implementa
+OAuth/PKCE, código por e-mail, persistência no Keychain e renovação de sessão. O backend
+vincula usuários por aplicativo e sujeito validado, separando contas e convidados.
+
 ## Objetivo e escopo atual
+
+`UAPPAccountScreen` é a interface reutilizável da conta do aplicativo. Seu
+modelo controla login, cadastro, confirmação e recuperação com o provedor
+injetado. `UAPPAuthentication.automatic` e `UAPPKit.makeAuthentication`
+compartilham a implementação de descoberta pública; o Demo não implementa
+endpoints nem conserva senhas. A identidade visual reutiliza o componente do
+Sobre e o tema do kit. As apresentações comunicam alterações de sessão ao
+hospedeiro, que mantém o provedor para Feedback/Roadmap. A integração está em
+[Autenticação](Authentication.md).
 
 UAPPKit é um Swift Package para integrar aplicativos Apple às experiências
 públicas de Feedback, Roadmap, Changelog, avaliações da App Store e Sobre do UAPP. A interface é
 SwiftUI nativa, sem `WKWebView` nem `SFSafariViewController`.
 
 O pacote oferece leitura de conteúdo publicado, paginação de feedback e
-comentários, envio de feedback, votos, curtidas e comentários sujeitos à
+comentários, envio de feedback, votos e comentários sujeitos à
 moderação. Não implementa cache offline, notificações push, upload de imagens
 ou sincronização automática do changelog.
 
@@ -22,7 +55,9 @@ ou sincronização automática do changelog.
 | `UAPPTranslation.swift` | Exibe a biografia no idioma de origem e oferece tradução sob demanda pelo framework Apple Translation. |
 | `UAPPTransport.swift` | Protocolo substituível `UAPPTransport` e implementação `URLSessionTransport`. |
 | `UAPPModels.swift` | Modelos públicos e estruturas internas para decodificar as respostas. |
-| `UAPPFeedbackScreen.swift` | Views SwiftUI para Feedback, Roadmap, Changelog, envio de feedback e comentários. |
+| `UAPPFeedbackScreen.swift` | Views SwiftUI para Feedback, Changelog e envio de feedback; `mode: .roadmap` delega a `UAPPRoadmapScreen`. |
+| `UAPPRoadmapScreen.swift` | Roadmap público: itens agrupados pelos status visíveis, com busca, filtros, ordenação, voto, detalhes e atualização ao vivo. |
+| `UAPPFeedbackListSupport.swift` | Infraestrutura compartilhada por Feedback e Roadmap: filtros/ordenação, estado sem resultados, navegação para detalhes/autor, voto otimista e classificação de falhas de carga. |
 | `UAPPReviewsScreen.swift` / `UAPPAboutScreen.swift` | Telas nativas para avaliações públicas da App Store e Sobre do aplicativo. |
 | `UAPPDeveloperAboutScreen.swift` | Tela separada para o perfil público do desenvolvedor, seus apps e redes sociais. |
 | `UAPPAboutConfiguration.swift` / `UAPPAboutComponents.swift` | Metadados automáticos do bundle, conteúdo institucional parametrizável e componentes visuais das telas Sobre. |
@@ -32,7 +67,9 @@ ou sincronização automática do changelog.
 
 `projectId` é o `public_slug` do projeto no UAPP. O host padrão aponta para a
 URL pública do projeto Supabase de produção; `setup` permite substituí-lo,
-como ao usar DEV. Não há chave de API ou credencial administrativa no SDK.
+como ao usar DEV. A leitura pública não exige chave de API. O adaptador de
+login opcional recebe apenas a chave pública do Supabase; credenciais
+administrativas nunca entram no SDK.
 
 O tema é configurado globalmente em `UAPPKit.setup` por `UAPPTheme`, com
 paletas opcionais para light e dark. O tema padrão usa cores semânticas do
@@ -90,7 +127,7 @@ Os endpoints ficam sob `<host>/functions/v1`.
 Os headers incluem `x-uapp-project` e `x-uapp-installation-id`; o header de
 assinatura é incluído quando há provider configurado.
 
-- **feedback:** itens públicos e publicados, contagens de votos, curtidas e
+- **feedback:** itens públicos e publicados, contagens de votos e
   comentários, categoria, prioridade e estado das reações da instalação.
 - **roadmap:** status visíveis no roadmap e itens publicados agrupados por
   status. O SDK ordena colunas pela posição e não apresenta status ocultos.
@@ -111,7 +148,7 @@ assinatura é incluído quando há provider configurado.
   `UAPPChangelogConfiguration` controla a reprodução automática, desativada por
   padrão e pausada fora da tela, em segundo plano, com VoiceOver ou Reduzir Movimento.
 - **comments:** conteúdo público de comunidade para um item, incluindo cursor
-  de paginação e estado de curtida da instalação.
+  de paginação e estado de voto da instalação.
 - **reviews:** avaliações da App Store/TestFlight sincronizadas no UAPP para o
   aplicativo e expostas quando o módulo está público. O UAPP continua sendo a
   origem e o local de gestão dessas avaliações; o SDK só as consulta. A tela
@@ -153,8 +190,8 @@ a apresentação nativa mesmo nesse estado.
 - `POST /public-feedback-submit` envia título, corpo opcional, categoria,
   identidade opcional e installation ID. O SDK envia `Idempotency-Key`.
   Submissões são moderadas pelo serviço.
-- `POST /public-feedback-interact` envia voto, retirada de voto, curtida,
-  retirada de curtida ou comentário. Também inclui installation ID,
+- `POST /public-feedback-interact` envia voto, retirada de voto ou comentário.
+  Também inclui installation ID,
   identificador do item e chave de idempotência. Comentários podem incluir
   comentário pai e nome de exibição e entram em moderação.
 
@@ -183,7 +220,7 @@ modelos, modos de tela, protocolo de transporte e erros.
 
 ## Plataformas
 
-- iOS 16 ou posterior, incluindo iPadOS: cliente, views e apresentação nativa
+- iOS 18 ou posterior, incluindo iPadOS: cliente, views e apresentação nativa
   pelo view controller ativo.
 - macOS 13 ou posterior: cliente e views SwiftUI; a apresentação automática
   de view controller é condicionada a UIKit e não existe no macOS.
@@ -198,7 +235,7 @@ orientação fixa ou métricas globais para decidir o layout. A tela interna pod
 oferecer mais espaço, mas mantém a mesma hierarquia e funcionalidade da tela
 externa.
 
-O pacote continua com deployment target iOS 16. APIs específicas do Duo, como
+O pacote usa deployment target iOS 18. APIs específicas do Duo, como
 regiões reservadas, arrangements, observação da dobradiça, múltiplas cenas ou
 câmeras frontal interna/externa, só devem ser adicionadas em um app hospedeiro
 quando o caso de uso exigir e com a disponibilidade de plataforma apropriada.

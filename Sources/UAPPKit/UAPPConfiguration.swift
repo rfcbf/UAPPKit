@@ -4,6 +4,10 @@ import Foundation
 /// usuário final. Fica pronta para o futuro; a V1 não a exige.
 public typealias UAPPSignatureProvider = @Sendable () async throws -> String
 
+/// Obtém um access token aceito pelo backend UAPP. O app controla login,
+/// renovação e logout; `nil` representa uma sessão ausente.
+public typealias UAPPAccessTokenProvider = @Sendable () async throws -> String?
+
 /// Configuração imutável do SDK. Não carrega segredos: apenas o identificador
 /// público do projeto e o host do UAPP.
 public struct UAPPConfiguration: Sendable {
@@ -47,17 +51,29 @@ public struct UAPPIdentity: Sendable, Equatable, Codable {
     public var userId: String
     public var email: String?
     public var displayName: String?
+    /// Foto do perfil informada pelo app, sem comprovar autenticação.
+    public var avatarURL: URL?
+    /// Foto local do perfil para envio ao cadastro do autor, sem depender de um arquivo.
+    public var avatarData: Data?
     public var traits: [String: String]
 
     public init(
         userId: String,
         email: String? = nil,
         displayName: String? = nil,
-        traits: [String: String] = [:]
+        traits: [String: String] = [:],
+        avatarURL: URL? = nil,
+        avatarData: Data? = nil
     ) {
         self.userId = userId
         self.email = email
         self.displayName = displayName
         self.traits = traits
+        self.avatarURL = avatarURL
+        self.avatarData = avatarData
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case userId, email, displayName, traits, avatarURL, avatarData
     }
 }

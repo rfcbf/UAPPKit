@@ -1,5 +1,32 @@
 # UAPPKit
 
+Os detalhes de feedback incluem autor/data, descrição completa, status, votantes
+e conversa com respostas e reações. Feedback e comentários permitem anexar uma
+imagem; a conversa é atualizada automaticamente enquanto a tela está ativa.
+
+Para Feedback/Roadmap, basta configurar o projeto e abrir a tela. O kit
+oferece login por e-mail com código somente ao participar, sem configurar
+autenticação no cliente.
+
+Para autenticação em qualquer parte do aplicativo, use a tela pública
+`UAPPAccountScreen`: login por e-mail/senha, Google, Apple e GitHub, criação de
+conta e recuperação de senha, com o ícone e o tema do aplicativo. O Demo usa
+essa tela do kit. Veja [integração e configuração](Documentation/Authentication.md).
+
+Feedback e Roadmap podem receber `authentication:` ao serem abertos,
+reutilizando a sessão do aplicativo ou o login nativo opcional do kit
+(Apple, Google, GitHub e código por e-mail). O setup continua sem autenticação.
+Veja exemplos e limitações em [Feedback e autenticação](Documentation/Feedback.md).
+
+O [checklist de implementação](Documentation/Roadmap.md) registra o estado das
+telas Sobre, Changelog, Reviews, Feedback e Roadmap. A integração opcional com
+perfil e sessão do aplicativo está descrita em
+[Feedback e autenticação](Documentation/Feedback.md), incluindo o caso de apps
+com perfil local/iCloud e as validações ainda pendentes no app consumidor.
+O setup não recebe sessão: a autenticação opcional é informada somente ao
+abrir Feedback/Roadmap ou criar um cliente para essas áreas. Sobre, Changelog
+e Reviews continuam independentes do access token.
+
 A tela de changelog oferece imagens por item, carrossel com reprodução automática
 opcional, pesquisa nas versões carregadas e detalhes completos.
 Veja [configuração e compatibilidade](Documentation/Changelog.md).
@@ -9,12 +36,13 @@ do UAPP a aplicativos Apple. A interface usa SwiftUI e não incorpora conteúdo
 em uma WebView.
 
 O pacote oferece um cliente HTTP assíncrono para leitura de conteúdo público,
-envio de feedback, reações e comentários. Não tem dependências externas.
+envio de feedback, reações e comentários. No iOS, usa Mantis para o recorte de
+fotos de perfil; o Swift Package Manager resolve essa dependência automaticamente.
 
 ## Requisitos
 
 - Swift 6.0 ou posterior.
-- iOS 16 ou posterior, incluindo iPadOS.
+- iOS 18 ou posterior, incluindo iPadOS.
 - macOS 13 ou posterior para usar o cliente e as views SwiftUI.
 
 O pacote não declara suporte a watchOS, tvOS ou visionOS.
@@ -199,12 +227,12 @@ Também é possível incorporar a view na navegação do próprio aplicativo:
 
 ```swift
 NavigationStack {
-    UAPPFeedbackScreen(
-        client: try UAPPKit.makeClient(),
-        mode: .roadmap
-    )
+    UAPPRoadmapScreen(client: try UAPPKit.makeClient())
 }
 ```
+
+`UAPPFeedbackScreen(client:mode: .roadmap)` continua disponível e apresenta a
+mesma `UAPPRoadmapScreen`.
 
 ## Cliente para interface própria
 
@@ -247,7 +275,7 @@ try await client.submitComment(
 
 As páginas de feedback e comentários incluem `nextCursor` para paginação. Use
 `changelogPage(limit:cursor:filters:)` para paginar o Changelog. As reações
-disponíveis são voto e curtida. Comentários enviados entram em moderação.
+disponíveis são voto e retirada de voto, em feedbacks e comentários. Comentários enviados entram em moderação.
 
 ## Identidade opcional
 
@@ -278,6 +306,156 @@ UAPPKit.setup(projectId: "meu-app") {
 O token é enviado no header `x-uapp-signature` como Bearer. O backend atual
 ainda não valida esse token; portanto, ele não deve ser tratado como controle
 de autorização ativo.
+
+## Perfil e participação da conta
+
+A tela `UAPPUserScreen` mostra foto, nome abreviado e e-mail, com a ação de
+desconectar na barra. Os cards e o histórico abrangem todos os aplicativos
+vinculados ao mesmo usuário no serviço, com identificação do aplicativo e
+status atual de cada feedback. Ao apresentar a view diretamente, passe também
+`client: try UAPPKit.makeClient()`; `UAPPKit.showUser` já usa o cliente configurado.
+Veja [conta e participação global](Documentation/UserActivity.md).
+
+## Carregamento e cache de imagens
+
+As telas do kit e o Demo compartilham o cache de imagens remotas. Durante o
+carregamento, o espaço da imagem mostra um círculo cinza claro com progresso;
+quando a imagem chega, ela substitui o indicador. Falhas mostram o fallback
+da tela, sem manter o progresso indefinidamente. Imagens locais já disponíveis
+aparecem diretamente.
+
+Para reutilizar esse comportamento em uma tela do aplicativo:
+
+```swift
+UAPPCachedImage(url: avatarURL) { phase in
+    if let image = phase.image {
+        image.resizable().scaledToFill()
+    } else if avatarURL == nil || phase.error != nil {
+        Image(systemName: "person.crop.circle.fill")
+            .resizable().scaledToFit()
+    } else {
+        UAPPImageLoadingPlaceholder()
+    }
+}
+.frame(width: 64, height: 64)
+.clipShape(Circle())
+```
+
+O cache mantém imagens decodificadas em memória, com limite de 32 MB e 100
+entradas. A validade em memória é de até cinco minutos e respeita os headers
+`Cache-Control` e `Age`; `no-store` e `no-cache` impedem essa retenção.
+O cache HTTP em disco tem limite de 64 MB e segue as regras de validade e
+revalidação do servidor. Requisições simultâneas da mesma URL compartilham o
+download. As imagens são decodificadas em até 2048 pixels e respostas acima de
+10 MB são rejeitadas.
+
+Para limpar os caches de memória e disco, chame `UAPPImageCache.removeAll()`
+na main actor. A limpeza também cancela downloads pendentes. Uma foto nova
+deve usar uma URL nova ou versionada; o cadastro do kit já gera uma URL única
+para cada envio.
+
+## Seleção e recorte da foto de perfil
+
+No iOS, use `UAPPProfilePhotoPicker(photo: $photo)` para escolher uma imagem
+da biblioteca ou câmera, ajustar o recorte circular e receber um JPEG
+comprimido de até 512 pixels. O componente pertence ao kit e é usado no Demo
+ao preencher o perfil e criar uma conta por e-mail. No cadastro, a foto é
+vinculada à conta depois da autenticação e da confirmação de e-mail, quando
+exigida. A câmera exige `NSCameraUsageDescription` no Info.plist do aplicativo;
+o kit solicita a permissão ao usar a câmera. O seletor nativo da biblioteca
+não exige acesso à biblioteca inteira. Veja
+[uso e configuração](Documentation/ProfilePhotos.md).
+
+### Configurar o acesso à câmera no aplicativo
+
+**A descrição de uso da câmera precisa ficar no aplicativo que utiliza o
+UAPPKit.** O pacote SPM não adiciona essa informação ao Info.plist do app.
+O kit cuida da solicitação de permissão ao escolher **Tirar uma foto**;
+o integrador configura o texto apresentado pelo iOS.
+
+No Xcode:
+
+1. Abra o projeto do aplicativo e selecione o projeto no navegador lateral.
+2. Em **TARGETS**, selecione o target do aplicativo que apresenta o seletor de
+   foto, não o pacote UAPPKit.
+3. Abra a aba **Info** e adicione uma entrada em **Custom iOS Target Properties**.
+4. Selecione **Privacy - Camera Usage Description** (chave
+   `NSCameraUsageDescription`), com tipo **String**.
+5. No valor, escreva uma explicação do uso, por exemplo:
+   **“A câmera permite tirar uma foto para o seu perfil.”**
+
+Se o projeto usa um arquivo Info.plist próprio, adicione a chave dentro do
+`<dict>` principal, ou atualize seu valor caso ela já exista:
+
+```xml
+<key>NSCameraUsageDescription</key>
+<string>A câmera permite tirar uma foto para o seu perfil.</string>
+```
+
+Projetos cujo Info.plist é gerado pelo Xcode podem configurar a entrada pela
+aba **Info**, sem criar um arquivo separado. Se o projeto é gerado por outra
+ferramenta, mantenha essa chave também na configuração que gera o target.
+
+Sem essa descrição, o seletor do kit informa que a câmera está indisponível.
+Se a permissão for negada, ele oferece a opção de abrir os Ajustes.
+A seleção da biblioteca usa `PhotosPicker` e não exige
+`NSPhotoLibraryUsageDescription` nem acesso à biblioteca inteira neste fluxo.
+O Demo já inclui a descrição da câmera.
+
+Consulte a [documentação da Apple sobre NSCameraUsageDescription](https://developer.apple.com/documentation/bundleresources/information-property-list/nscamerausagedescription).
+
+## Retorno do login com Google, Apple e GitHub
+
+Para fechar a janela do serviço e a sheet do kit após conectar, o login precisa
+retornar ao endereço do aplicativo configurado em `callbackURL`.
+No Demo esse endereço é `uappkit://authentication`.
+
+1. No Xcode, selecione o target do aplicativo e abra **Info → URL Types**.
+2. Registre o esquema do endereço em **URL Schemes**, sem `://`:
+   `uappkit` para o Demo. O Demo já inclui esse registro.
+3. Use o endereço completo correspondente em `callbackURL` ao criar o
+   provedor de autenticação do kit.
+
+A habilitação do endereço de retorno no serviço de autenticação é gerenciada
+pela equipe responsável pelo UAPP; o integrador não precisa acessar o painel
+do serviço. Ao adotar um endereço próprio, informe-o à equipe para habilitação.
+
+## Manter a conta conectada
+
+O provedor de autenticação do UAPPKit salva automaticamente a sessão no
+**Keychain do aplicativo**, incluindo perfil, tokens e expiração. O aplicativo
+não precisa implementar essa gravação nem salvar tokens em UserDefaults.
+A conta pode ser restaurada ao reabrir o app, inclusive depois de um novo build.
+O provedor automático separa as sessões por servidor e projeto.
+
+Depois do setup, crie o provedor e mantenha a mesma instância na camada de conta:
+
+```swift
+let authentication = try UAPPKit.makeAuthentication(
+    callbackURL: URL(string: "meuapp://authentication")!
+)
+
+// Ao abrir o aplicativo, restaure a sessão e atualize o estado da sua interface.
+let restoredSession = try await authentication.currentSession()
+```
+
+Essa consulta é assíncrona: aguarde a restauração antes de decidir se a
+interface deve mostrar a conta conectada ou a opção de login. Trate os erros
+na camada de conta; uma falha temporária de rede não apaga a sessão salva.
+O kit renova tokens expirados quando necessário; uma renovação rejeitada
+pode exigir novo login.
+
+Passe o mesmo provedor para `UAPPAccountScreen`, `UAPPUserScreen` e
+Feedback/Roadmap. Use `onSessionChange` para atualizar o estado do aplicativo
+quando a pessoa conectar ou sair. As telas do kit oferecem a opção de saída;
+para sair pela própria interface do aplicativo, chame
+`try await authentication.signOut()` e atualize o estado da conta. Sair remove
+também a sessão salva no Keychain. Senhas não são armazenadas.
+
+Se usar um `UAPPAuthenticationProvider` próprio, a persistência e a restauração
+são responsabilidade desse provedor. Ao criar `UAPPAuthenticationConfiguration`
+diretamente, `persistsSession: false` desativa a persistência do kit.
+Veja o fluxo completo em [Autenticação reutilizável](Documentation/Authentication.md).
 
 ## Segurança e privacidade
 

@@ -47,6 +47,80 @@ enum TestError: Error {
     case expected
 }
 
+actor StubAuthentication: UAPPAuthenticationProvider {
+    nonisolated let methods: [UAPPLoginMethod] = [.apple, .google, .github, .email]
+    var session: UAPPAuthenticationSession?
+    var error: UAPPAuthenticationError?
+    var sessionFails = false
+    var requestedEmail: String?
+
+    func setSession(_ session: UAPPAuthenticationSession?) {
+        self.session = session
+    }
+
+    func setError(_ error: UAPPAuthenticationError?) {
+        self.error = error
+    }
+
+    func setSessionFails(_ value: Bool) {
+        sessionFails = value
+    }
+
+    func currentSession() throws -> UAPPAuthenticationSession? {
+        if sessionFails {
+            throw TestError.expected
+        }
+        return session
+    }
+
+    func signIn(method _: UAPPLoginMethod) throws -> UAPPAuthenticationSession {
+        if let error {
+            throw error
+        }
+        let session = UAPPAuthenticationSession(
+            identity: UAPPIdentity(userId: "verified", email: "person@example.test", displayName: "Pessoa"),
+            accessToken: "verified-token"
+        )
+        self.session = session
+        return session
+    }
+
+    func requestEmailCode(email: String) throws {
+        if let error {
+            throw error
+        }
+        requestedEmail = email
+    }
+
+    func verifyEmailCode(email _: String, code _: String) throws -> UAPPAuthenticationSession {
+        try signIn(method: .email)
+    }
+
+    func signOut() throws {
+        if let error {
+            throw error
+        }
+        session = nil
+    }
+}
+
+final class AuthenticationClock: @unchecked Sendable {
+    private let lock = NSLock()
+    private var date = Date(timeIntervalSince1970: 1000)
+
+    func now() -> Date {
+        lock.lock()
+        defer { lock.unlock() }
+        return date
+    }
+
+    func advance() {
+        lock.lock()
+        date = date.addingTimeInterval(4000)
+        lock.unlock()
+    }
+}
+
 actor RequestGate {
     private var started = false
     private var startWaiters: [CheckedContinuation<Void, Never>] = []

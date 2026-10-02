@@ -28,17 +28,27 @@ public struct UAPPFeedbackScreen: View {
     private var selectedLanguage = UAPPLocalizationPreferences.defaultIdentifier
 
     @State private var isLoading = true
+    @State private var isRefreshing = false
     @State private var errorMessage: String?
     @State private var errorMascotState: UAPPMascotState = .unavailable
     @State private var projectColor: Color?
     @State private var feedback: [UAPPFeedbackItem] = []
-    @State private var roadmap: [UAPPRoadmapColumn] = []
+    @State private var feedbackStatuses: [UAPPRoadmapColumn.Status] = []
+    @State private var feedbackCategory: UAPPFeedbackCategory?
+    @State private var feedbackStatusId: String?
+    @State private var feedbackSort: UAPPFeedbackSort = .newest
     @StateObject private var changelogModel: UAPPChangelogModel
+    @StateObject private var participation: UAPPParticipationModel
     @State private var isSubmittingFeedback = false
     @State private var showsChangelogSearch = false
     @State private var changelogQuery = ""
     @State private var changelogTranslationCache = UAPPReviewTranslationCache()
+    @State private var feedbackTranslationCache = UAPPReviewTranslationCache()
     @State private var selectedChangelogEntry: UAPPChangelogEntry?
+    @State private var selectedFeedback: UAPPFeedbackItem?
+    @State private var selectedAuthor: UAPPFeedbackItem?
+    @State private var reactingIds: Set<String> = []
+    @State private var reactionError: String?
 
     public init(
         client: UAPPClient,
@@ -48,43 +58,45 @@ public struct UAPPFeedbackScreen: View {
         self.client = client
         self.mode = mode
         self.changelogConfiguration = changelogConfiguration
+        _participation = StateObject(wrappedValue: UAPPParticipationModel(client: client))
         _changelogModel = StateObject(wrappedValue: UAPPChangelogModel(client: client, pageSize: changelogConfiguration.pageSize))
     }
 
-    init(
-        client: UAPPClient,
-        mode: UAPPScreenMode,
-        testingIsLoading isLoading: Bool,
-        errorMessage: String? = nil,
-        errorMascotState: UAPPMascotState = .unavailable,
-        projectColor: Color? = nil,
-        feedback: [UAPPFeedbackItem] = [],
-        roadmap: [UAPPRoadmapColumn] = [],
-        changelog: [UAPPChangelogEntry] = [],
-        changelogNextCursor: String? = nil,
-        isLoadingMoreChangelog: Bool = false,
-        changelogLoadMoreError: String? = nil,
-        testingChangelogModel: UAPPChangelogModel? = nil,
-        testingChangelogTranslationCache: UAPPReviewTranslationCache? = nil
-    ) {
-        self.client = client
-        self.mode = mode
-        changelogConfiguration = .init()
-        _isLoading = State(initialValue: isLoading)
-        _errorMessage = State(initialValue: errorMessage)
-        _errorMascotState = State(initialValue: errorMascotState)
-        _projectColor = State(initialValue: projectColor)
-        _feedback = State(initialValue: feedback)
-        _roadmap = State(initialValue: roadmap)
-        _changelogTranslationCache = State(initialValue: testingChangelogTranslationCache ?? UAPPReviewTranslationCache())
-        _changelogModel = StateObject(wrappedValue: testingChangelogModel ?? UAPPChangelogModel(
-            client: client, entries: changelog, nextCursor: changelogNextCursor,
-            isLoadingMore: isLoadingMoreChangelog, loadMoreError: changelogLoadMoreError
-        ))
+    public var body: some View {
+        if mode == .roadmap {
+            // Compatibilidade: `mode: .roadmap` apresenta a view própria do Roadmap.
+            UAPPRoadmapScreen(client: client)
+        } else {
+            feedbackOrChangelog
+        }
     }
 
-    public var body: some View {
+    private var feedbackOrChangelog: some View {
         screenContent
+            .modifier(UAPPFeedbackItemNavigation(
+                client: client, accentColor: accentColor, statuses: feedbackStatuses,
+                selectedFeedback: $selectedFeedback, selectedAuthor: $selectedAuthor,
+                reactionError: $reactionError, onUpdate: replaceFeedback
+            ))
+            .safeAreaInset(edge: .top, spacing: 0) {
+                if mode == .feedback, !isLoading, errorMessage == nil {
+                    UAPPFeedbackControls(
+                        statuses: feedbackStatuses, category: $feedbackCategory, statusId: $feedbackStatusId,
+                        sort: $feedbackSort, accentColor: accentColor
+                    )
+                }
+            }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                if case .feedback = mode {
+                    HStack {
+                        Spacer()
+                        submitFeedbackButton
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
+                    .padding(.bottom, 16)
+                }
+            }
             .navigationDestination(isPresented: showsChangelogDetail) {
                 if let selectedChangelogEntry {
                     changelogDetailScreen(for: selectedChangelogEntry)
@@ -95,53 +107,47 @@ public struct UAPPFeedbackScreen: View {
             #if canImport(UIKit)
             .toolbar(.visible, for: .navigationBar)
             #endif
-            .uappNavigationBar(titleKey: mode.titleKey, accentColor: accentColor)
+            .uappNavigationBar(titleKey: mode.titleKey, accentColor: accentColor, showsLanguageMenu: false)
+            .modifier(UAPPParticipationModifier(
+                model: participation,
+                accentColor: accentColor,
+                enabled: mode != .changelog,
+                searchAction: {
+                    showsChangelogSearch.toggle()
+                    if !showsChangelogSearch {
+                        changelogQuery = ""
+                    }
+                },
+                searchPromptKey: mode == .changelog ? "changelog.search" : "common.search"
+            ))
             .modifier(UAPPChangelogSearchModifier(
-                enabled: mode == .changelog,
+                enabled: true,
                 query: $changelogQuery,
                 isPresented: $showsChangelogSearch,
-                accentColor: accentColor
+                accentColor: accentColor,
+                promptKey: mode == .changelog ? "changelog.search" : "common.search"
             ))
             .environment(\.uappChangelogTranslationCache, changelogTranslationCache)
+            .environment(\.uappFeedbackTranslationCache, feedbackTranslationCache)
             .environment(\.locale, Locale(identifier: selectedLanguage))
-            .onChange(of: showsChangelogSearch) { isPresented in
+            .uappOnChange(of: showsChangelogSearch) { isPresented in
                 if !isPresented {
                     changelogQuery = ""
                 }
             }
             .task { await load() }
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    if case .feedback = mode {
-                        Button {
-                            isSubmittingFeedback = true
-                        } label: {
-                            Text(verbatim: uappLocalized("feedback.send"))
-                        }
-                    }
-                }
-                ToolbarItem(placement: .primaryAction) {
-                    if case .changelog = mode {
-                        Button {
-                            showsChangelogSearch.toggle()
-                            if !showsChangelogSearch {
-                                changelogQuery = ""
-                            }
-                        } label: {
-                            Image(systemName: "magnifyingglass")
-                                .foregroundStyle(accentColor)
-                        }
-                        .accessibilityLabel(Text(verbatim: uappLocalized("changelog.search")))
-                    }
-                }
-            }
+            .modifier(UAPPFeedbackLiveModifier(client: mode == .changelog ? nil : client) {
+                await load(silently: true)
+            })
             .sheet(isPresented: $isSubmittingFeedback) {
                 NavigationStack {
-                    UAPPSubmitFeedbackScreen(client: client) {
+                    UAPPSubmitFeedbackScreen(client: client, accentColor: accentColor) {
                         isSubmittingFeedback = false
                         Task { await load() }
                     }
                 }
+                .environment(\.uappTheme, theme)
+                .environment(\.locale, Locale(identifier: selectedLanguage))
                 .uappPresentationBackground(palette.background)
                 .uappPresentationPlacement(.trailing)
             }
@@ -153,6 +159,21 @@ public struct UAPPFeedbackScreen: View {
 
     private var accentColor: Color {
         palette.accent ?? projectColor ?? .accentColor
+    }
+
+    private var submitFeedbackButton: some View {
+        Button {
+            Task { await participation.perform { isSubmittingFeedback = true } }
+        } label: {
+            Image(systemName: "square.and.pencil")
+                .font(.system(size: 24, weight: .semibold))
+                .foregroundStyle(palette.buttonText)
+                .frame(width: 56, height: 56)
+                .background(accentColor, in: Circle())
+                .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text(verbatim: uappLocalized("feedback.send")))
     }
 
     private var showsChangelogDetail: Binding<Bool> {
@@ -177,7 +198,7 @@ public struct UAPPFeedbackScreen: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if let errorMessage {
             UAPPUnavailableContent(
-                message: errorMessage,
+                message: uappLocalized(errorMessage),
                 accentColor: accentColor,
                 mascotState: errorMascotState
             ) {
@@ -191,6 +212,11 @@ public struct UAPPFeedbackScreen: View {
                     titleKey: "feedback.empty.title",
                     messageKey: "feedback.empty.message"
                 )
+            case .feedback where UAPPFeedbackSearch.presentedItems(
+                feedback, matching: changelogQuery, category: feedbackCategory,
+                statusId: feedbackStatusId, sort: feedbackSort
+            ).isEmpty:
+                UAPPStateCard { UAPPFeedbackNoResults() }
             case .changelog where changelogModel.entries.isEmpty && changelogModel.nextCursor == nil:
                 UAPPEmptyContent(
                     mascotState: .emptyChangelog,
@@ -199,6 +225,7 @@ public struct UAPPFeedbackScreen: View {
                 )
             default:
                 List { content }
+                    .modifier(UAPPFeedbackListSpacing(enabled: mode != .changelog))
                     .scrollContentBackground(.hidden)
                     .background(palette.background)
                     .listRowSeparatorTint(palette.separator)
@@ -210,42 +237,22 @@ public struct UAPPFeedbackScreen: View {
     private var content: some View {
         switch mode {
         case .feedback:
-            ForEach(feedback) { item in
-                NavigationLink {
-                    UAPPFeedbackDetailScreen(client: client, item: item)
-                } label: {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(item.title).font(.headline)
-                        if let body = item.body, !body.isEmpty {
-                            Text(body).font(.subheadline).foregroundStyle(palette.secondaryText)
-                        }
-                        Text(verbatim: uappLocalizedFormat(
-                            "feedback.metrics",
-                            item.voteCount,
-                            item.likeCount,
-                            item.commentCount
-                        ))
-                        .font(.caption)
-                        .foregroundStyle(palette.secondaryText.opacity(0.75))
-                    }
-                }
+            let filtered = UAPPFeedbackSearch.presentedItems(
+                feedback, matching: changelogQuery, category: feedbackCategory,
+                statusId: feedbackStatusId, sort: feedbackSort
+            )
+            if filtered.isEmpty {
+                UAPPFeedbackNoResultsRow()
+            }
+            ForEach(filtered) { item in
+                feedbackCard(item, status: feedbackStatuses.first { $0.id == item.statusId })
                 .listRowBackground(palette.cardBackground)
+                .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
+                .alignmentGuide(.listRowSeparatorTrailing) { $0.width }
             }
         case .roadmap:
-            ForEach(roadmap, id: \.status.key) { column in
-                Section(column.status.name) {
-                    if column.items.isEmpty {
-                        Text(verbatim: uappLocalized("roadmap.empty"))
-                            .foregroundStyle(palette.secondaryText)
-                    }
-                    ForEach(column.items) { item in
-                        NavigationLink(item.title) {
-                            UAPPFeedbackDetailScreen(client: client, item: item)
-                        }
-                    }
-                }
-                .listRowBackground(palette.cardBackground)
-            }
+            // Apresentado por UAPPRoadmapScreen.
+            EmptyView()
         case .changelog:
             let filtered = UAPPChangelogPresentation.newestFirst(changelogModel.entries)
                 .filter { UAPPChangelogPresentation(entry: $0).matches(changelogQuery) }
@@ -296,30 +303,98 @@ public struct UAPPFeedbackScreen: View {
         }
     }
 
-    private func load() async {
-        isLoading = true
-        errorMessage = nil
+    private func feedbackCard(_ item: UAPPFeedbackItem, status: UAPPRoadmapColumn.Status?) -> some View {
+        UAPPFeedbackCard(
+            item: item, status: status, accentColor: accentColor,
+            isReacting: reactingIds.contains(item.id) || participation.isBusy,
+            onReact: { Task { await participation.perform { await react(to: item.id) } } },
+            onProfile: { selectedAuthor = item },
+            onDetail: { selectedFeedback = item }
+        )
+    }
+
+    private func replaceFeedback(_ item: UAPPFeedbackItem) {
+        feedback = feedback.map { $0.id == item.id ? item : $0 }
+    }
+
+    private func react(to id: String) async {
+        guard !reactingIds.contains(id),
+              let original = feedback.first(where: { $0.id == id }) else { return }
+        reactingIds.insert(id)
+        defer { reactingIds.remove(id) }
+        if !(await UAPPFeedbackVoting.toggle(original, client: client, replace: replaceFeedback)) {
+            reactionError = uappLocalized("detail.reaction_error")
+        }
+    }
+
+    private func load(silently: Bool = false) async {
+        while isRefreshing || (silently && !reactingIds.isEmpty) {
+            do { try await Task.sleep(for: .milliseconds(50)) } catch { return }
+        }
+        guard !Task.isCancelled else { return }
+        isRefreshing = true
+        if !silently { isLoading = true; errorMessage = nil }
+        defer { isRefreshing = false; if !silently { isLoading = false } }
         do {
             switch mode {
             case .feedback:
-                feedback = try await client.feedback()
+                let page = try await client.feedbackPage()
+                try Task.checkCancellation()
+                feedback = page.items
+                feedbackStatuses = page.statuses
             case .roadmap:
-                roadmap = try await client.roadmap()
+                return
             case .changelog:
                 try await changelogModel.load()
             }
+            let project = await client.currentProject()
+            projectColor = project?.primaryColor.flatMap(Color.init(hex:))
+            errorMessage = nil
+        } catch is CancellationError { return
         } catch {
             let project = await client.currentProject()
             projectColor = project?.primaryColor.flatMap(Color.init(hex:))
-            if case UAPPKitError.http(status: 403, _) = error {
-                errorMascotState = .unavailable
-                errorMessage = uappLocalized("unavailable.content")
-            } else {
-                errorMascotState = .connectionError
-                errorMessage = uappLocalized("unavailable.load_error")
+            if let failure = UAPPFeedbackLoadFailure.make(for: error, silently: silently, hasContent: !feedback.isEmpty) {
+                if failure.clearsContent { feedback = [] }
+                errorMascotState = failure.mascotState
+                errorMessage = failure.messageKey
             }
         }
-        isLoading = false
+    }
+}
+
+extension UAPPFeedbackScreen {
+    init(
+        client: UAPPClient,
+        mode: UAPPScreenMode,
+        testingIsLoading isLoading: Bool,
+        errorMessage: String? = nil,
+        errorMascotState: UAPPMascotState = .unavailable,
+        projectColor: Color? = nil,
+        feedback: [UAPPFeedbackItem] = [],
+        changelog: [UAPPChangelogEntry] = [],
+        changelogNextCursor: String? = nil,
+        isLoadingMoreChangelog: Bool = false,
+        changelogLoadMoreError: String? = nil,
+        testingChangelogModel: UAPPChangelogModel? = nil,
+        testingChangelogTranslationCache: UAPPReviewTranslationCache? = nil,
+        testingQuery: String = ""
+    ) {
+        self.client = client
+        self.mode = mode
+        changelogConfiguration = .init()
+        _participation = StateObject(wrappedValue: UAPPParticipationModel(client: client))
+        _isLoading = State(initialValue: isLoading)
+        _errorMessage = State(initialValue: errorMessage)
+        _errorMascotState = State(initialValue: errorMascotState)
+        _projectColor = State(initialValue: projectColor)
+        _feedback = State(initialValue: feedback)
+        _changelogQuery = State(initialValue: testingQuery)
+        _changelogTranslationCache = State(initialValue: testingChangelogTranslationCache ?? UAPPReviewTranslationCache())
+        _changelogModel = StateObject(wrappedValue: testingChangelogModel ?? UAPPChangelogModel(
+            client: client, entries: changelog, nextCursor: changelogNextCursor,
+            isLoadingMore: isLoadingMoreChangelog, loadMoreError: changelogLoadMoreError
+        ))
     }
 }
 
@@ -365,66 +440,363 @@ struct UAPPEmptyContent: View {
 }
 
 struct UAPPSubmitFeedbackScreen: View {
+    private enum Field: Hashable {
+        case title
+        case description
+    }
+
+    static let minimumTitleLength = 3
+
     let client: UAPPClient
+    var accentColor: Color?
     let onComplete: () -> Void
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.uappTheme) private var theme
+    @AppStorage(UAPPLocalizationPreferences.presentationStorageKey)
+    private var selectedLanguage = UAPPLocalizationPreferences.defaultIdentifier
     @State private var title = ""
     @State private var details = ""
+    @State private var imageData: [Data] = []
+    @State private var isProcessingImage = false
     @State private var category: UAPPFeedbackCategory = .feature
     @State private var isSending = false
     @State private var errorMessage: String?
+    @FocusState private var focusedField: Field?
+    @ScaledMetric(relativeTo: .body) private var descriptionMinHeight: CGFloat = 140
+    @ScaledMetric(relativeTo: .title2) private var headerIconSize: CGFloat = 52
 
     private var palette: UAPPResolvedPalette {
         theme.resolved(for: colorScheme)
     }
 
+    private var resolvedAccent: Color {
+        palette.accent ?? accentColor ?? .accentColor
+    }
+
+    private var trimmedTitleLength: Int {
+        title.trimmingCharacters(in: .whitespacesAndNewlines).count
+    }
+
     var body: some View {
-        Form {
-            TextField(
-                uappLocalized("feedback.field.title"),
-                text: $title
-            )
-            Picker(selection: $category) {
-                Text(verbatim: uappLocalized("category.bug")).tag(UAPPFeedbackCategory.bug)
-                Text(verbatim: uappLocalized("category.feature")).tag(UAPPFeedbackCategory.feature)
-                Text(verbatim: uappLocalized("category.improvement")).tag(UAPPFeedbackCategory.improvement)
-                Text(verbatim: uappLocalized("category.question")).tag(UAPPFeedbackCategory.question)
-            } label: {
-                Text(verbatim: uappLocalized("feedback.field.type"))
+        ScrollView {
+            VStack(alignment: .leading, spacing: 26) {
+                introHeader
+                categorySection
+                titleSection
+                descriptionSection
+                attachmentsSection
+                if let errorMessage {
+                    errorBanner(errorMessage)
+                }
             }
-            TextField(
-                uappLocalized("feedback.field.description"),
-                text: $details,
-                axis: .vertical
-            )
-            .lineLimit(4 ... 10)
-            if let errorMessage {
-                Text(errorMessage).foregroundStyle(.red)
-            }
+            .padding(.horizontal, 20)
+            .padding(.top, 12)
+            .padding(.bottom, 24)
+            .frame(maxWidth: 640, alignment: .leading)
+            .frame(maxWidth: .infinity)
         }
-        .scrollContentBackground(.hidden)
-        .background(palette.background)
+        .scrollDismissesKeyboard(.interactively)
+        .background(palette.background.ignoresSafeArea())
         .foregroundStyle(palette.primaryText)
-        .tint(palette.accent ?? .accentColor)
+        .tint(resolvedAccent)
+        .environment(\.locale, Locale(identifier: selectedLanguage))
         #if canImport(UIKit)
         .toolbar(.visible, for: .navigationBar)
         #endif
         .uappNavigationBar(
             titleKey: "feedback.new_title",
-            accentColor: palette.accent ?? .accentColor
+            accentColor: resolvedAccent
         )
         .toolbar {
-            ToolbarItem(placement: .confirmationAction) {
+            #if canImport(UIKit)
+            ToolbarItemGroup(placement: .keyboard) {
                 Button {
-                    Task { await submit() }
+                    focusedField = .title
                 } label: {
-                    Text(verbatim: uappLocalized("common.send"))
+                    Label(uappLocalized("feedback.field.title"), systemImage: "chevron.up")
+                        .labelStyle(.iconOnly)
+                        .foregroundStyle(resolvedAccent)
+                        .frame(minWidth: 44, minHeight: 44)
                 }
-                .disabled(isSending || title.trimmingCharacters(in: .whitespacesAndNewlines).count < 3)
+                .disabled(focusedField != .description)
+                Button {
+                    focusedField = .description
+                } label: {
+                    Label(uappLocalized("feedback.field.description"), systemImage: "chevron.down")
+                        .labelStyle(.iconOnly)
+                        .foregroundStyle(resolvedAccent)
+                        .frame(minWidth: 44, minHeight: 44)
+                }
+                .disabled(focusedField != .title)
+                Spacer()
+                Button(uappLocalized("navigation.close")) {
+                    focusedField = nil
+                }
+                .foregroundStyle(resolvedAccent)
+                .frame(minHeight: 44)
+            }
+            #endif
+        }
+        .safeAreaInset(edge: .bottom) {
+            sendBar
+        }
+    }
+
+    // MARK: - Seções
+
+    private var introHeader: some View {
+        HStack(alignment: .center, spacing: 14) {
+            Image(systemName: category.composerSymbol)
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(resolvedAccent)
+                .frame(width: headerIconSize, height: headerIconSize)
+                .background(
+                    resolvedAccent.opacity(colorScheme == .dark ? 0.22 : 0.12),
+                    in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+                )
+                .id(category)
+                .transition(.scale(scale: 0.85).combined(with: .opacity))
+                .accessibilityHidden(true)
+
+            Text(verbatim: uappLocalized("feedback.compose.intro"))
+                .font(.subheadline)
+                .foregroundStyle(palette.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var categorySection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionHeader("feedback.field.type")
+            LazyVGrid(
+                columns: [GridItem(.adaptive(minimum: 150), spacing: 10)],
+                alignment: .leading,
+                spacing: 10
+            ) {
+                ForEach(UAPPFeedbackCategory.allCases, id: \.self) { option in
+                    categoryChip(option)
+                }
             }
         }
+    }
+
+    private func categoryChip(_ option: UAPPFeedbackCategory) -> some View {
+        let isSelected = option == category
+        return Button {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                category = option
+            }
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: option.composerSymbol)
+                    .font(.body.weight(.semibold))
+                    .frame(minWidth: 22)
+                    .accessibilityHidden(true)
+                Text(verbatim: uappLocalized(option.composerTitleKey))
+                    .font(.subheadline.weight(.semibold))
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.body)
+                        .transition(.scale.combined(with: .opacity))
+                        .accessibilityHidden(true)
+                }
+            }
+            .foregroundStyle(isSelected ? resolvedAccent : palette.primaryText)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
+            .background {
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(isSelected ? resolvedAccent.opacity(colorScheme == .dark ? 0.2 : 0.1) : palette.cardBackground)
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(
+                        isSelected ? resolvedAccent : palette.separator.opacity(0.5),
+                        lineWidth: isSelected ? 1.5 : 1
+                    )
+            }
+            .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .disabled(isSending)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    private var titleSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            sectionHeader("feedback.field.title")
+            TextField(
+                uappLocalized("feedback.field.title"),
+                text: $title,
+                prompt: Text(verbatim: uappLocalized("feedback.compose.title_placeholder"))
+            )
+            .textFieldStyle(.plain)
+            .font(.body)
+            .focused($focusedField, equals: .title)
+            .submitLabel(.next)
+            .onSubmit { focusedField = .description }
+            .disabled(isSending)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 14)
+            .background(fieldBackground(isFocused: focusedField == .title))
+            .contentShape(Rectangle())
+            .onTapGesture { focusedField = .title }
+
+            if !title.isEmpty, trimmedTitleLength < Self.minimumTitleLength {
+                Label {
+                    Text(verbatim: uappLocalized("feedback.compose.title_hint"))
+                } icon: {
+                    Image(systemName: "info.circle")
+                }
+                .font(.footnote)
+                .foregroundStyle(palette.secondaryText)
+                .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: trimmedTitleLength < Self.minimumTitleLength)
+    }
+
+    private var descriptionSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            sectionHeader("feedback.field.description", detailKey: "feedback.compose.optional")
+            ZStack(alignment: .topLeading) {
+                if details.isEmpty {
+                    Text(verbatim: uappLocalized("feedback.compose.description_placeholder"))
+                        .foregroundStyle(palette.secondaryText)
+                        .padding(.top, 8)
+                        .padding(.leading, 5)
+                        .allowsHitTesting(false)
+                        .accessibilityHidden(true)
+                }
+                TextEditor(text: $details)
+                    .focused($focusedField, equals: .description)
+                    .scrollContentBackground(.hidden)
+                    .frame(minHeight: descriptionMinHeight)
+                    .disabled(isSending)
+                    .accessibilityLabel(Text(verbatim: uappLocalized("feedback.field.description")))
+            }
+            .font(.body)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 6)
+            .background(fieldBackground(isFocused: focusedField == .description))
+        }
+    }
+
+    private var attachmentsSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionHeader(
+                "feedback.compose.attachments",
+                detail: "\(imageData.count)/\(UAPPFeedbackComposerAttachments.limit)"
+            )
+            UAPPFeedbackComposerAttachments(
+                data: $imageData,
+                isProcessing: $isProcessingImage,
+                accent: resolvedAccent,
+                palette: palette
+            )
+            .disabled(isSending)
+            Text(verbatim: uappLocalized("feedback.compose.attachments_hint"))
+                .font(.footnote)
+                .foregroundStyle(palette.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func errorBanner(_ key: String) -> some View {
+        Label {
+            Text(verbatim: uappLocalized(key))
+                .fixedSize(horizontal: false, vertical: true)
+        } icon: {
+            Image(systemName: "exclamationmark.triangle.fill")
+        }
+        .font(.subheadline)
+        .foregroundStyle(.red)
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            Color.red.opacity(colorScheme == .dark ? 0.18 : 0.08),
+            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+        )
+    }
+
+    private var sendBar: some View {
+        Button {
+            focusedField = nil
+            Task { await submit() }
+        } label: {
+            HStack(spacing: 10) {
+                if isSending {
+                    ProgressView().tint(palette.buttonText)
+                } else {
+                    Image(systemName: "paperplane.fill")
+                        .accessibilityHidden(true)
+                }
+                Text(verbatim: uappLocalized("common.send"))
+                    .font(.headline)
+            }
+            .frame(maxWidth: .infinity, minHeight: 52)
+            .foregroundStyle(palette.buttonText)
+            .background(resolvedAccent, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .disabled(!canSend)
+        .opacity(canSend || isSending ? 1 : 0.45)
+        .animation(.easeInOut(duration: 0.2), value: canSend)
+        .frame(maxWidth: 640)
+        .padding(.horizontal, 20)
+        .padding(.top, 12)
+        .padding(.bottom, 8)
+        .frame(maxWidth: .infinity)
+        .background {
+            palette.background
+                .ignoresSafeArea(edges: .bottom)
+                .overlay(alignment: .top) { Divider() }
+        }
+    }
+
+    // MARK: - Componentes
+
+    private func sectionHeader(_ key: String, detailKey: String) -> some View {
+        sectionHeader(key, detail: uappLocalized(detailKey))
+    }
+
+    private func sectionHeader(_ key: String, detail: String? = nil) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text(verbatim: uappLocalized(key))
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(palette.primaryText)
+                .accessibilityAddTraits(.isHeader)
+            Spacer(minLength: 8)
+            if let detail {
+                Text(verbatim: detail)
+                    .monospacedDigit()
+                    .font(.footnote)
+                    .foregroundStyle(palette.secondaryText)
+            }
+        }
+    }
+
+    private func fieldBackground(isFocused: Bool) -> some View {
+        RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .fill(palette.cardBackground)
+            .overlay {
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(
+                        isFocused ? resolvedAccent : palette.separator.opacity(0.5),
+                        lineWidth: isFocused ? 1.5 : 1
+                    )
+            }
+            .animation(.easeInOut(duration: 0.15), value: isFocused)
+    }
+
+    private var canSend: Bool {
+        !isSending && !isProcessingImage && trimmedTitleLength >= Self.minimumTitleLength
     }
 
     private func submit() async {
@@ -434,51 +806,34 @@ struct UAPPSubmitFeedbackScreen: View {
             _ = try await client.submitFeedback(
                 title: title.trimmingCharacters(in: .whitespacesAndNewlines),
                 body: details.trimmingCharacters(in: .whitespacesAndNewlines),
-                category: category
+                category: category,
+                imagesData: imageData
             )
             onComplete()
         } catch {
-            errorMessage = uappLocalized("feedback.submit_error")
+            withAnimation(.easeInOut(duration: 0.2)) {
+                errorMessage = "feedback.submit_error"
+            }
         }
         isSending = false
     }
 }
 
-private extension View {
-    @ViewBuilder
-    func uappPresentationPlacement(_ placement: UAPPPresentationPlacement) -> some View {
-        #if os(iOS)
-        if #available(iOS 27, *) {
-            presentationPlacement(placement.swiftUIValue)
-        } else {
-            self
-        }
-        #else
-        self
-        #endif
+extension UAPPFeedbackCategory {
+    /// Chave localizada exibida no seletor de tipo do compositor.
+    var composerTitleKey: String {
+        "category.\(rawValue)"
     }
 
-    @ViewBuilder
-    func uappPresentationBackground(_ color: Color) -> some View {
-        if #available(iOS 16.4, macOS 13.3, *) {
-            presentationBackground(color)
-        } else {
-            background(color.ignoresSafeArea())
-        }
-    }
-}
-
-private enum UAPPPresentationPlacement {
-    case trailing
-
-    #if os(iOS)
-    @available(iOS 27, *)
-    var swiftUIValue: PresentationPlacement {
+    /// Símbolo SF associado ao tipo de feedback no compositor.
+    var composerSymbol: String {
         switch self {
-        case .trailing: .trailing
+        case .bug: "ladybug"
+        case .feature: "sparkles"
+        case .improvement: "wand.and.stars"
+        case .question: "questionmark.bubble"
         }
     }
-    #endif
 }
 
 #endif

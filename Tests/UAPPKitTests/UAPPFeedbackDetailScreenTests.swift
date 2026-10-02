@@ -17,7 +17,7 @@ func feedbackDetailScreenBuildsInitialView() async {
     await render(UAPPFeedbackDetailScreen(client: client, item: item))
 }
 
-@Test("UAPPFeedbackDetailScreen constrói comentários e estados de envio")
+@Test("UAPPFeedbackDetailScreen constrói comentários publicados, skeleton pendente e estados de envio")
 @MainActor
 func feedbackDetailScreenBuildsLoadedState() async {
     let client = makeClient { _ in response(#"{"ok":true,"comments":[]}"#) }
@@ -49,6 +49,17 @@ func feedbackDetailScreenBuildsLoadedState() async {
             createdAt: Date(),
             authorKind: .community,
             viewerLiked: false
+        ),
+        UAPPComment(
+            id: "pending-reply",
+            body: "Resposta ainda aguardando aprovação",
+            parentCommentId: "team-comment",
+            likeCount: 0,
+            createdAt: Date(timeIntervalSince1970: 0),
+            authorKind: .community,
+            viewerLiked: false,
+            imageURL: URL(string: "https://example.test/pending-image.jpg"),
+            moderationState: "pending"
         )
     ]
 

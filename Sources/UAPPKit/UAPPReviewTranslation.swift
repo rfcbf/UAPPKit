@@ -29,12 +29,13 @@ struct UAPPReviewTranslatedText: View {
     var cache: UAPPReviewTranslationCache?
     var rendersMarkdown = false
     var lineLimit: Int?
+    var displayTransform: (String) -> String = { $0 }
 
     var body: some View {
         UAPPReviewTranslationContent(
             text: text, targetIdentifier: targetIdentifier,
             model: cache?.model(for: text, targetIdentifier: targetIdentifier),
-            rendersMarkdown: rendersMarkdown, lineLimit: lineLimit
+            rendersMarkdown: rendersMarkdown, lineLimit: lineLimit, displayTransform: displayTransform
         )
         .id("\(targetIdentifier)|\(text)")
     }
@@ -46,13 +47,16 @@ struct UAPPReviewTranslationContent: View {
     @StateObject private var model: UAPPReviewTextModel
     let rendersMarkdown: Bool
     let lineLimit: Int?
+    let displayTransform: (String) -> String
 
-    init(text: String, targetIdentifier: String, model: UAPPReviewTextModel? = nil, rendersMarkdown: Bool = false, lineLimit: Int? = nil) {
+    init(text: String, targetIdentifier: String, model: UAPPReviewTextModel? = nil, rendersMarkdown: Bool = false,
+         lineLimit: Int? = nil, displayTransform: @escaping (String) -> String = { $0 }) {
         self.text = text
         self.targetIdentifier = targetIdentifier
         _model = StateObject(wrappedValue: model ?? UAPPReviewTextModel(original: text))
         self.rendersMarkdown = rendersMarkdown
         self.lineLimit = lineLimit
+        self.displayTransform = displayTransform
     }
 
     var body: some View {
@@ -112,7 +116,8 @@ struct UAPPReviewTranslationContent: View {
     }
 
     private func formattedText(_ value: String) -> Text {
-        rendersMarkdown ? Text(uappChangelogMarkdown(value)) : Text(verbatim: value)
+        let displayed = displayTransform(value)
+        return rendersMarkdown ? Text(uappChangelogMarkdown(displayed)) : Text(verbatim: displayed)
     }
 }
 #endif

@@ -64,6 +64,12 @@ struct UAPPKitTests {
             await Task.yield()
         }
         #expect(await client.currentIdentity()?.userId == "user")
+        let scopedProfile = UAPPIdentity(userId: "feedback-user")
+        let participation = try await UAPPKit.makeClient(
+            identity: scopedProfile, accessTokenProvider: { "later-session" }
+        )
+        #expect(await participation.currentIdentity() == scopedProfile)
+        #expect(await client.currentIdentity()?.userId == "user")
         UAPPKit.reset()
         for _ in 0 ..< 100 {
             if await client.currentIdentity() == nil {
@@ -72,6 +78,21 @@ struct UAPPKitTests {
             await Task.yield()
         }
         #expect(await client.currentIdentity() == nil)
+    }
+
+    @Test("Feedback/Roadmap usam login automático e compartilham conta sem afetar conteúdo público")
+    @MainActor
+    func automaticParticipationClient() throws {
+        UAPPKit.setup(projectId: "automatic-demo")
+        let publicClient = try UAPPKit.makeClient()
+        let participation = try UAPPKit.makeParticipationClient()
+        #expect(publicClient.authentication == nil)
+        #expect(participation.authentication?.methods == [.email])
+        #expect(try UAPPKit.makeParticipationClient() === participation)
+        UAPPKit.setup(projectId: "automatic-demo", theme: .system)
+        #expect(try UAPPKit.makeParticipationClient() === participation)
+        UAPPKit.setup(projectId: "another-project")
+        #expect(try UAPPKit.makeParticipationClient() !== participation)
     }
 
     @Test("UAPPKit expõe a preferência de idioma e atualiza o locale")

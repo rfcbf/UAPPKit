@@ -6,6 +6,154 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+- Nova view pública `UAPPRoadmapScreen(client:)`. `UAPPKit.showRoadmap` passa a
+  apresentá-la, e `UAPPFeedbackScreen(client:mode: .roadmap)` continua
+  disponível, delegando à mesma view. No Roadmap, o card mostra o tipo e o voto
+  na primeira linha, título, descrição de até três linhas e o autor abaixo,
+  sem badge de status nem comentários. Mudança aditiva.
+
+- Perfil local aberto pela toolbar consulta votos, comentários e histórico
+  públicos da instalação, sem login. Novo inicializador
+  `UAPPUserScreen(profile:client:theme:)` e consulta `participationProfile()`.
+
+- Perfis locais podem entregar a foto diretamente em `UAPPIdentity.avatarData`,
+  com default `nil` e fallback compatível para `avatarURL` local. O Demo passa
+  os bytes salvos ao enviar feedback; o cadastro de usuários inclui perfis com
+  nome/e-mail mesmo sem autenticação e exibe o avatar.
+
+- Feedback e roadmap do Demo usam o perfil local salvo sem solicitar login,
+  mostram sua foto na toolbar e enviam nome, e-mail e foto no novo feedback.
+  Avatares locais são carregados sem rede; o backend persiste a foto no cadastro
+  do autor. A autenticação dentro do feedback usa a tela geral de conta.
+
+- Perfil público do autor usa a mesma foto atual da conta exibida no feedback.
+  Fotos removidas não são recuperadas de perfis ou identidades antigas.
+
+- Participação apresentada somente como votos no perfil, histórico, comentários,
+  notificações e traduções. Estatísticas de conta recebem `totals.votes`; o
+  histórico público recebe `vote_count`. Campos legados de transporte são
+  preservados, e `UAPPReactionKind.like` foi descontinuado em favor de `.vote`.
+
+- Foto de comentários próprios acompanha a sessão da barra superior, com autoria
+  confirmada pelo campo opcional `viewerOwned`, sem comparar nomes de usuários.
+- Corrigida a reação dos cards de Feedback e Roadmap: a seta passa a salvar
+  votos, usando a mesma contagem e seleção dos detalhes e da web. Ordenação
+  por votos acompanha essa correção; campos legados continuam compatíveis.
+
+- Anexos nos detalhes aparecem menores e lado a lado, preservando a imagem
+  carregada quando a assinatura da URL é renovada. Visualizador com fundo preto
+  e botão `xmark` no canto superior esquerdo.
+- Versão mínima de iOS/iPadOS elevada para 18 no pacote e no Demo, incluindo
+  seu target de testes. Aplicativos consumidores precisam usar iOS 18+;
+  a versão mínima de macOS permanece 13.
+
+- Atualização ao vivo nas sheets de feedback acompanha a atividade do aplicativo
+  no iOS, inclusive quando o hospedeiro não propaga o estado da cena.
+- Descrição dos cards limitada a três linhas; título, descrição e comentários
+  públicos usam a tradução dinâmica existente. Status, formulário e mensagens
+  acompanham a troca de idioma.
+
+- Feedback, Roadmap, detalhes e participação no perfil acompanham alterações
+  públicas ao vivo por aplicativo, incluindo votação, comentários, novos itens,
+  exclusões e mudanças de status. Reconciliação preserva filtros e páginas do perfil.
+- Detalhes de feedback recebem invalidações ao vivo para comentários publicados,
+  aprovados, editados ou removidos, com reconexão e consulta periódica de reserva.
+- Compositor com clipe/envio mais próximos da borda inferior, avatares de
+  comentários menores e ação Responder mais próxima do texto. Comentários
+  pendentes ocultam corpo/anexo com skeleton até a publicação ser aprovada.
+
+- Badges de status compartilham as mesmas cores em Feedback, Roadmap, detalhes
+  e perfil. Filtros mostram anéis coloridos pela posição da etapa no roadmap.
+  Perfil público usa lista contínua, filtro de status no servidor e navegação
+  para os detalhes do feedback após expandir a sheet.
+- Correção do carregamento de comentários com datas ISO 8601 contendo frações
+  de segundo e da consulta inicial ao abrir os detalhes; falhas mostram opção
+  de tentar novamente na conversa.
+- Badges de votos e botão de envio com altura visual de 32 pontos, mantendo
+  área de toque de 44 pontos; envio usa avião de papel e anexo mostra só o clipe.
+
+- Detalhes do feedback com autor/data, descrição completa, status, últimos cinco
+  votantes e total de votos; comentários com perfis, respostas e reação por seta.
+- Até duas imagens por feedback/comentário, compactadas em JPEG de até 512 KiB
+  e 1600 pixels cada. Botão de remover sobre o canto superior direito da prévia;
+  novas APIs com `imagesData:` e `imageURLs`, preservando as variantes de uma imagem.
+- Atualização da conversa após envio/reação, ao voltar ao primeiro plano e a
+  cada 15 segundos na tela ativa, incluindo todas as páginas e a moderação.
+
+- Perfil público inclui feedbacks do autor com título, status, data e paginação.
+  `authorProfile(for:cursor:)` mantém chamadas existentes pelo cursor opcional;
+  `items` e `nextCursor` são aditivos e aceitam respostas anteriores sem a lista.
+  Badge de votos com largura reduzida.
+- Perfil público do autor mostra nome completo e estatísticas de participação
+  pública no aplicativo por `UAPPClient.authorProfile(for:)`, sem e-mail, sessão
+  ou conteúdo pendente/interno. Badge de votos mais baixo e alongado.
+- Badge de votos com resposta imediata, navegação independente para perfil
+  público e comentários, cards sem chevron e mascote para filtros sem resultados.
+  `UAPPUserScreen(publicIdentity:theme:)` mostra nome/foto sem e-mail ou sessão.
+- Cards de Feedback e Roadmap com autor, foto, votos com seta para cima,
+  badge de status e comentários; filtros por categoria/status e ordenação local
+  por data, votos ou comentários. Corações removidos, com API preservada.
+- Metadados públicos opcionais de autor/status e status na página de feedback,
+  compatíveis com payloads anteriores. Cores de status compartilhadas nas telas.
+- Perfil conectado com nome abreviado e e-mail ao lado da foto, sem badge e
+  seção duplicada. `UAPPDisplayName.abbreviated` compartilhado com o Demo.
+- Cards de participação e histórico paginado da conta em todos os aplicativos
+  vinculados no mesmo serviço, com sistema, data e status de cada feedback.
+  API autenticada `UAPPClient.userActivity(session:limit:cursor:)`.
+- Imagens remotas no kit e no Demo usam cache compartilhado, downloads
+  deduplicados e indicador em círculo cinza claro durante o carregamento.
+  Inclui perfis, ícones, Sobre, Changelog e pré-carregamento da autenticação.
+- Seletor de foto aceita idioma explícito e acompanha a escolha do Demo no
+  perfil manual e a escolha da apresentação no cadastro, incluindo textos e menus.
+- Sheets de conta, perfil e resultado da configuração do Demo recebem
+  explicitamente o idioma selecionado, evitando abrir o login no idioma do sistema.
+- Foto opcional no cadastro por e-mail, com recorte circular, envio após
+  confirmação e atualização do avatar na sessão persistida. Falhas de envio
+  permitem tentar novamente sem repetir o cadastro. Câmera com permissão sob
+  demanda e atalho para os Ajustes quando o acesso estiver negado.
+- Autenticação e perfil acompanham a seleção de idioma da apresentação.
+  Textos de conta e foto traduzidos nos 13 idiomas; locales regionais normalizados.
+- `UAPPProfilePhotoPicker` no iOS: biblioteca ou câmera, recorte circular com
+  Mantis e compressão JPEG em até 512 pixels. Demo reutiliza o componente do kit.
+- Sessão de autenticação persistida no Keychain, com restauração no Demo,
+  renovação de tokens e remoção ao sair. Registros separados por servidor/projeto.
+
+- `UAPPUserScreen` e `UAPPKit.showUser` para consultar foto, nome e e-mail da
+  conta conectada e sair. Demo abre a sheet de altura média ao tocar na conta.
+
+- Autenticação aguarda os dados e a imagem do aplicativo, oferece uma escolha
+  inicial entre login e cadastro com navegação de retorno e fecha ao conectar.
+- Demo mostra a conta conectada e permite sair pela tela principal.
+
+- `UAPPAccountScreen` pública com identidade visual do aplicativo, login,
+  cadastro, confirmação de e-mail e recuperação de senha. Provedor automático
+  e ícones dos serviços movidos para o kit; Demo consome a interface pública.
+- APIs aditivas de cadastro/recuperação com implementações padrão no protocolo,
+  preservando adaptadores existentes. Alteração ainda não lançada e não
+  compilada/testada, conforme preferência do proprietário.
+
+- Demo usa e-mail e senha para conectar a conta do aplicativo. O provedor ganha
+  `signIn(email:password:)` com implementação padrão opcional, preservando
+  compatibilidade com provedores existentes; senhas não são persistidas.
+
+- Demo com conta do aplicativo por e-mail, Google, Apple e GitHub, compartilhada
+  com Feedback/Roadmap; perfil local persistido com nome, e-mail e foto opcional.
+
+- Login padrão de Feedback/Roadmap simplificado: configuração automática, e-mail com código somente ao participar e conta compartilhada entre as telas.
+- Demo conectado ao fluxo padrão sem chave/provider/callback; cliente `makeParticipationClient()` para navegação própria.
+- Serviço público de configuração publicado em PRD/DEV e código de confirmação de primeiro acesso incluído nos dois ambientes.
+
+- Nome público do login opcional: `UAPPAuthentication` e `UAPPAuthenticationConfiguration`, sem referência ao fornecedor de infraestrutura. Renomeação da API ainda não lançada, sem mudança de comportamento.
+
+- Autenticação informada ao abrir Feedback/Roadmap, com cliente isolado por apresentação; setup e leituras de Sobre, Changelog e Reviews independentes de access token.
+
+- Checklist das telas Sobre o desenvolvedor, Sobre o aplicativo, Changelog e Reviews atualizado.
+- Feedback e Roadmap com busca local e cor de destaque compartilhada por fechar, idioma, formulário e detalhes.
+- Perfil opcional com URL de foto e ponte injetável de access token para reaproveitar a sessão do app cliente.
+- Provider de autenticação do hospedeiro e login nativo opcional por Apple, Google, GitHub e código por e-mail, fornecidos ao abrir Feedback/Roadmap.
+- Conta confirmada com foto, logout, renovação de sessão e retomada da ação após login; textos nos 13 idiomas do kit.
+- Backend publicado em PRD/DEV com vínculo por aplicativo/sujeito validado e autoria/cache separados na troca de conta; login real no app consumidor ainda pendente.
+
 - Destino dos detalhes do changelog registrado fora da lista para compatibilidade com a navegação SwiftUI.
 - Correção do carregamento de traduções interrompidas no changelog, com reutilização do cache e tradução das linhas em lote.
 - Indicador de páginas com cápsulas que interpolam largura e cor conforme a rolagem do carrossel.

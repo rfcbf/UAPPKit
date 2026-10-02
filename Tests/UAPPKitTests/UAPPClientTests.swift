@@ -2,6 +2,75 @@ import Foundation
 import Testing
 @testable import UAPPKit
 
+@Test("feedback com anexos envia os bytes da foto do perfil sem arquivo local")
+func clientFeedbackIncludesProfilePhotoBytes() async throws {
+    let recorder = RequestRecorder()
+    let client = makeClient(recorder: recorder) { _ in response(#"{"ok":true,"id":"feedback"}"#) }
+    let photo = Data([0xFF, 0xD8, 0xFF, 0xD9])
+    await client.setIdentity(UAPPIdentity(userId: "profile", displayName: "Visitante", avatarData: photo))
+    _ = try await client.submitFeedback(title: "Novo feedback", imagesData: [])
+    let body = try #require(recorder.requests.first?.httpBody)
+    let payload = try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
+    let avatar = try #require(payload["profilePhoto"] as? [String: String])
+    #expect(avatar["base64"] == photo.base64EncodedString())
+    #expect(avatar["mimeType"] == "image/jpeg")
+    #expect(payload["image"] == nil)
+    #expect(payload["images"] == nil)
+}
+
+@Test("foto do perfil inválida falha antes de enviar")
+func clientFeedbackRejectsInvalidProfilePhotoBytes() async throws {
+    let recorder = RequestRecorder()
+    let client = makeClient(recorder: recorder) { _ in response(#"{"ok":true}"#) }
+    await client.setIdentity(UAPPIdentity(userId: "profile", avatarData: Data("not an image".utf8)))
+    await #expect(throws: UAPPKitError.invalidResponse) {
+        try await client.submitFeedback(title: "Novo feedback", imagesData: [])
+    }
+    #expect(recorder.requests.isEmpty)
+}
+
+@Test("feedback envia foto local, nome e e-mail sem exigir conta")
+func clientFeedbackIncludesLocalProfilePhoto() async throws {
+    let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID()).jpg")
+    let photo = Data([0xFF, 0xD8, 0xFF, 0xD9])
+    try photo.write(to: url)
+    defer { try? FileManager.default.removeItem(at: url) }
+    let recorder = RequestRecorder()
+    let client = makeClient(recorder: recorder) { _ in response(#"{"ok":true,"id":"feedback"}"#) }
+    await client.setIdentity(UAPPIdentity(userId: "profile", email: "visitor@example.test",
+                                         displayName: "Visitante", avatarURL: url))
+    _ = try await client.submitFeedback(title: "Novo feedback")
+    let request = try #require(recorder.requests.first)
+    let body = try #require(request.httpBody)
+    let payload = try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
+    let avatar = try #require(payload["profilePhoto"] as? [String: String])
+    #expect(payload["email"] as? String == "visitor@example.test")
+    #expect(payload["displayName"] as? String == "Visitante")
+    #expect(avatar["base64"] == photo.base64EncodedString())
+    #expect(avatar["mimeType"] == "image/jpeg")
+    #expect(request.value(forHTTPHeaderField: "Authorization") == nil)
+
+    await client.setIdentity(UAPPIdentity(userId: "profile", displayName: "Visitante"))
+    _ = try await client.submitFeedback(title: "Sem foto")
+    let second = try #require(recorder.requests.last?.httpBody)
+    let withoutPhoto = try #require(JSONSerialization.jsonObject(with: second) as? [String: Any])
+    #expect(withoutPhoto["profilePhoto"] is NSNull)
+}
+
+@Test("foto local acima do limite impede envio do feedback")
+func clientFeedbackRejectsOversizedProfilePhoto() async throws {
+    let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID()).jpg")
+    try Data(repeating: 0, count: 512 * 1024 + 1).write(to: url)
+    defer { try? FileManager.default.removeItem(at: url) }
+    let recorder = RequestRecorder()
+    let client = makeClient(recorder: recorder) { _ in response(#"{"ok":true}"#) }
+    await client.setIdentity(UAPPIdentity(userId: "profile", avatarURL: url))
+    await #expect(throws: UAPPKitError.invalidResponse) {
+        try await client.submitFeedback(title: "Novo feedback")
+    }
+    #expect(recorder.requests.isEmpty)
+}
+
 @Test("cliente guarda e limpa a identidade corrente")
 func clientStoresAndClearsIdentity() async {
     let client = makeClient { _ in response(#"{"ok":true}"#) }
@@ -28,6 +97,7 @@ func clientFeedbackSendsPaginationAndSignature() async throws {
     let page = try await client.feedbackPage(limit: 12, cursor: "cursor-1")
     let request = try #require(recorder.requests.first)
     #expect(page.items.isEmpty)
+    #expect(page.statuses.isEmpty)
     #expect(page.nextCursor == "cursor-2")
     #expect(queryValue("slug", in: request) == "meu-app")
     #expect(queryValue("resource", in: request) == "feedback")
@@ -35,6 +105,46 @@ func clientFeedbackSendsPaginationAndSignature() async throws {
     #expect(queryValue("cursor", in: request) == "cursor-1")
     #expect(request.value(forHTTPHeaderField: "x-uapp-signature") == "Bearer signed-token")
     #expect(await client.currentProject()?.displayName == "Meu App")
+}
+
+@Test("feedback expõe status ordenados e preserva autor e cor opcionais")
+func clientFeedbackPreservesCardMetadata() async throws {
+    let client = makeClient { _ in
+        response("""
+        {"statuses":[
+          {"id":"done","key":"shipped","name":"Concluído","position":2,"color":"#28734D"},
+          {"id":"planned","key":"planned","name":"Planejado","position":1}],
+         "items":[{"id":"1","title":"Ideia","body":null,"status_id":"planned",
+          "vote_count":3,"like_count":0,"public_comment_count":2,"priority":0,
+          "viewer_voted":false,"viewer_liked":false,"author_name":"Ana",
+          "author_avatar_url":"https://example.test/photo.jpg"}]}
+        """)
+    }
+    let page = try await client.feedbackPage()
+    #expect(page.statuses.map(\.id) == ["planned", "done"])
+    #expect(page.statuses.first?.color == nil)
+    #expect(page.statuses.last?.color == "#28734D")
+    #expect(page.items.first?.authorName == "Ana")
+    #expect(page.items.first?.authorAvatarURL?.host == "example.test")
+    #expect(page.items.first?.statusId == "planned")
+}
+
+@Test("roadmap preserva autor, foto e data dos cards")
+func clientRoadmapPreservesCardMetadata() async throws {
+    let client = makeClient { _ in
+        response("""
+        {"statuses":[{"id":"planned","key":"planned","name":"Planejado","position":1}],
+         "items":[{"id":"1","title":"Ideia","body":null,"status_id":"planned",
+          "vote_count":3,"like_count":0,"public_comment_count":2,"priority":0,
+          "viewer_voted":false,"viewer_liked":false,"author_name":"Ana",
+          "author_avatar_url":"https://example.test/photo.jpg","created_at":"2026-10-01T12:00:00Z"}]}
+        """)
+    }
+    let item = try #require(try await client.roadmap().first?.items.first)
+    #expect(item.authorName == "Ana")
+    #expect(item.authorAvatarURL?.host == "example.test")
+    #expect(item.statusId == "planned")
+    #expect(item.createdAt != nil)
 }
 
 @Test("cliente envia o idioma atual no Accept-Language")
@@ -260,14 +370,14 @@ func clientReactionSendsLikeAndComment() async throws {
         response(#"{"ok":true,"enabled":false}"#)
     }
 
-    try await client.setReaction(itemId: "item", commentId: "comment", kind: .like, enabled: false)
+    try await client.setReaction(itemId: "item", commentId: "comment", kind: .vote, enabled: false)
     let request = try #require(recorder.requests.first)
     let bodyData = try #require(request.httpBody)
     let payload = try #require(JSONSerialization.jsonObject(with: bodyData) as? [String: Any])
     #expect(request.url?.path.hasSuffix("/public-feedback-interact") == true)
     #expect(payload["itemId"] as? String == "item")
     #expect(payload["commentId"] as? String == "comment")
-    #expect(payload["action"] as? String == "like")
+    #expect(payload["action"] as? String == "vote")
     #expect(payload["enabled"] as? Bool == false)
 }
 

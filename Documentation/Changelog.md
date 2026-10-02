@@ -82,17 +82,17 @@ e empates preservam essa ordem. Categorias repetidas são itens independentes.
 Imagens são carregadas de forma assíncrona, com estados de carregamento e falha.
 A área acompanha a largura disponível em 40:21. `scaledToFit` preserva imagens
 antigas com outras proporções, sem cortar o conteúdo. A lista usa carrossel
-nativo com parallax no iOS 17+, páginas convencionais no iOS 16 e seleção por
+nativo com parallax no iOS 18+ e seleção por
 indicadores no macOS 13. Durante a rolagem, a imagem se desloca em sentido
 contrário dentro do cartão; ao parar, a proporção original fica inteira. A descrição do
 item selecionado muda com transição de opacidade. Os itens sem imagem aparecem
 com marcadores por categoria, separados da descrição geral.
 
 O indicador usa cápsulas de oito pontos de altura: a página ativa tem largura
-de 26 pontos e as demais, oito. Ao rolar no iOS 17+, os 18 pontos extras e a cor
+de 26 pontos e as demais, oito. Ao rolar no iOS 18+, os 18 pontos extras e a cor
 ativa passam gradualmente da cápsula atual para a próxima, conforme o progresso
-real do carrossel. Tocar em uma cápsula seleciona sua imagem. No iOS 16 e no
-macOS, a transição acompanha a seleção. Com Reduzir Movimento, o destaque
+real do carrossel. Tocar em uma cápsula seleciona sua imagem. No macOS,
+a transição acompanha a seleção. Com Reduzir Movimento, o destaque
 acompanha a página selecionada sem animação; zero ou uma imagem não mostram
 indicador. Cada controle mantém o rótulo de página localizado para VoiceOver.
 

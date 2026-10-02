@@ -112,13 +112,15 @@ private struct UAPPReviewEmptyState: View {
             UAPPMascotIllustration(state: .emptyFeedback)
             Text(verbatim: uappLocalized("reviews.empty.title"))
                 .font(.title3.weight(.semibold))
+                .multilineTextAlignment(.center)
+                .accessibilityAddTraits(.isHeader)
             Text(verbatim: uappLocalized("reviews.empty.message"))
                 .foregroundStyle(palette.secondaryText)
                 .multilineTextAlignment(.center)
         }
         .padding(24)
         .frame(maxWidth: 520)
-        .background(palette.cardBackground, in: RoundedRectangle(cornerRadius: 24))
+        .uappCardSurface(palette, cornerRadius: 28)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(16)
     }

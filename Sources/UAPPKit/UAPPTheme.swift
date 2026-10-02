@@ -109,6 +109,8 @@ struct UAPPNavigationBarModifier: ViewModifier {
     let title: Text
     let accentColor: Color
     var showsCloseButton = true
+    var showsLanguageMenu = true
+    var onClose: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
 
@@ -123,15 +125,17 @@ struct UAPPNavigationBarModifier: ViewModifier {
             .toolbar {
                 if showsCloseButton {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button(action: { dismiss() }) {
+                        Button(action: { if let onClose { onClose() } else { dismiss() } }) {
                             Image(systemName: "xmark")
                                 .foregroundStyle(accentColor)
                         }
                         .accessibilityLabel(Text(verbatim: uappLocalized("navigation.close")))
                     }
                 }
-                ToolbarItem(placement: .automatic) {
-                    UAPPLanguageMenu()
+                if showsLanguageMenu {
+                    ToolbarItem(placement: .primaryAction) {
+                        UAPPLanguageMenu(accentOverride: accentColor)
+                    }
                 }
             }
             .tint(accentColor)
@@ -145,13 +149,17 @@ extension View {
     func uappNavigationBar(
         titleKey: String,
         accentColor: Color,
-        showsCloseButton: Bool = true
+        showsCloseButton: Bool = true,
+        showsLanguageMenu: Bool = true,
+        onClose: (() -> Void)? = nil
     ) -> some View {
         modifier(
             UAPPNavigationBarModifier(
                 title: Text(verbatim: uappLocalized(titleKey)),
                 accentColor: accentColor,
-                showsCloseButton: showsCloseButton
+                showsCloseButton: showsCloseButton,
+                showsLanguageMenu: showsLanguageMenu,
+                onClose: onClose
             )
         )
     }
@@ -159,13 +167,17 @@ extension View {
     func uappNavigationBar(
         verbatimTitle: String,
         accentColor: Color,
-        showsCloseButton: Bool = true
+        showsCloseButton: Bool = true,
+        showsLanguageMenu: Bool = true,
+        onClose: (() -> Void)? = nil
     ) -> some View {
         modifier(
             UAPPNavigationBarModifier(
                 title: Text(verbatim: verbatimTitle),
                 accentColor: accentColor,
-                showsCloseButton: showsCloseButton
+                showsCloseButton: showsCloseButton,
+                showsLanguageMenu: showsLanguageMenu,
+                onClose: onClose
             )
         )
     }
