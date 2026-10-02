@@ -1,0 +1,47 @@
+#if os(iOS)
+import AVFoundation
+import SwiftUI
+import Testing
+import UIKit
+@testable import UAPPKit
+
+@MainActor
+struct UAPPProfilePhotoPickerTests {
+    @Test("Seletor mostra foto, ausência de foto, processamento e erro")
+    func pickerStatesRender() async {
+        var photo: Data? = sampleJPEG()
+        let binding = Binding(get: { photo }, set: { photo = $0 })
+        await render(UAPPProfilePhotoPicker(photo: binding, theme: .init(light: .init(accent: .purple))))
+        await render(UAPPProfilePhotoPicker(photo: .constant(nil), languageIdentifier: "en").controlSize(.small))
+        await render(UAPPProfilePhotoPicker(photo: .constant(nil), isProcessing: true, errorKey: nil))
+        await render(UAPPProfilePhotoPicker(photo: .constant(nil), languageIdentifier: "xx",
+                                            isProcessing: false, errorKey: "photo.camera_denied"))
+        #expect(photo != nil)
+    }
+
+    @Test("Câmera exige descrição de uso e respeita a permissão do sistema")
+    func cameraAccessRules() async {
+        typealias Picker = UAPPProfilePhotoPicker
+        #expect(await Picker.cameraAccess(usageDescription: nil, status: .authorized) { true } == .unavailable)
+        #expect(await Picker.cameraAccess(usageDescription: "Foto", status: .authorized) { false } == .allowed)
+        #expect(await Picker.cameraAccess(usageDescription: "Foto", status: .notDetermined) { true } == .allowed)
+        #expect(await Picker.cameraAccess(usageDescription: "Foto", status: .notDetermined) { false } == .denied)
+        #expect(await Picker.cameraAccess(usageDescription: "Foto", status: .denied) { true } == .denied)
+        #expect(await Picker.cameraAccess(usageDescription: "Foto", status: .restricted) { true } == .denied)
+    }
+
+    @Test("Coordenador da câmera entrega a foto tirada ou nada ao cancelar")
+    func cameraCoordinatorDeliversImage() {
+        var received: [UIImage?] = []
+        let picker = UAPPProfileCameraPicker { received.append($0) }
+        let coordinator = picker.makeCoordinator()
+        let controller = UIImagePickerController()
+        let image = UIImage(data: sampleJPEG())
+        coordinator.imagePickerController(controller, didFinishPickingMediaWithInfo: [.originalImage: image as Any])
+        coordinator.imagePickerControllerDidCancel(controller)
+        #expect(received.count == 2)
+        #expect(received.first??.size == image?.size)
+        #expect(received.last! == nil)
+    }
+}
+#endif

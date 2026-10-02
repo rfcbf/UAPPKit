@@ -1,5 +1,14 @@
 import SwiftUI
 import Testing
+#if canImport(UIKit)
+import UIKit
+private let becameActive = UIApplication.didBecomeActiveNotification
+private let resignedActive = UIApplication.willResignActiveNotification
+#elseif canImport(AppKit)
+import AppKit
+private let becameActive = NSApplication.didBecomeActiveNotification
+private let resignedActive = NSApplication.didResignActiveNotification
+#endif
 @testable import UAPPKit
 
 @Test("autoplay depende do aplicativo ativo, visibilidade, configuração e acessibilidade")
@@ -24,4 +33,24 @@ func changelogAutoplayConditions() {
 @MainActor
 func changelogApplicationActivityRenders() async {
     await render(Text("Carrossel").modifier(UAPPChangelogApplicationActivity(isActive: .constant(false))))
+}
+
+@MainActor
+private final class ActivityBox {
+    var isActive = false
+    var binding: Binding<Bool> { Binding(get: { self.isActive }, set: { self.isActive = $0 }) }
+}
+
+@Test("observador acompanha ativação e saída do aplicativo")
+@MainActor
+func changelogApplicationActivityFollowsLifecycle() async {
+    let box = ActivityBox()
+    await render(Text("Carrossel").modifier(UAPPChangelogApplicationActivity(isActive: box.binding))) {
+        NotificationCenter.default.post(name: becameActive, object: nil)
+        await Task.yield()
+        #expect(box.isActive)
+        NotificationCenter.default.post(name: resignedActive, object: nil)
+        await Task.yield()
+        #expect(!box.isActive)
+    }
 }

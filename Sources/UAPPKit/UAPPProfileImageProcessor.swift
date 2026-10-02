@@ -5,10 +5,20 @@ import UniformTypeIdentifiers
 import UIKit
 #endif
 
+/// Só devolve a fonte quando há uma imagem completa. Dados inválidos são recusados antes
+/// de pedir a miniatura, evitando o log de erro do ImageIO e o trabalho desnecessário.
+func uappImageSource(from data: Data) -> CGImageSource? {
+    guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+          CGImageSourceGetCount(source) > 0,
+          CGImageSourceGetStatusAtIndex(source, 0) == .statusComplete
+    else { return nil }
+    return source
+}
+
 /// Normaliza a foto de perfil para recorte circular em JPEG de até 512 pixels.
 public enum UAPPProfileImageProcessor {
     public static func compressedJPEG(from data: Data) -> Data? {
-        guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+        guard let source = uappImageSource(from: data) else { return nil }
         let options: [CFString: Any] = [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
             kCGImageSourceCreateThumbnailWithTransform: true,

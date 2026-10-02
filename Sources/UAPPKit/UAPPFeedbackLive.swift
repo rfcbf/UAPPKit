@@ -7,14 +7,36 @@ struct UAPPFeedbackLiveConfiguration: Decodable, Sendable {
     enum CodingKeys: String, CodingKey { case websocketURL, apiKey, topic }
 }
 
+/// Conexão WebSocket usada pelas invalidações; substituível nos testes.
+protocol UAPPLiveSocket: Sendable {
+    func resume()
+    func send(_ message: URLSessionWebSocketTask.Message) async throws
+    func receive() async throws -> URLSessionWebSocketTask.Message
+    func close()
+}
+
+struct URLSessionLiveSocket: UAPPLiveSocket {
+    let task: URLSessionWebSocketTask
+
+    func resume() { task.resume() }
+    func send(_ message: URLSessionWebSocketTask.Message) async throws { try await task.send(message) }
+    func receive() async throws -> URLSessionWebSocketTask.Message { try await task.receive() }
+    func close() { task.cancel(with: .goingAway, reason: nil) }
+}
+
 /// Recebe apenas invalidações. Os dados continuam vindo da API pública filtrada.
 enum UAPPFeedbackLive {
-    static func updates(_ configuration: UAPPFeedbackLiveConfiguration) throws -> AsyncThrowingStream<Void, any Error> {
+    static func updates(
+        _ configuration: UAPPFeedbackLiveConfiguration,
+        heartbeatDelay: Duration = .seconds(10),
+        heartbeatInterval: Duration = .seconds(25),
+        makeSocket: (URL) -> any UAPPLiveSocket = { URLSessionLiveSocket(task: URLSession.shared.webSocketTask(with: $0)) }
+    ) throws -> AsyncThrowingStream<Void, any Error> {
         var components = URLComponents(url: configuration.websocketURL, resolvingAgainstBaseURL: false)
         components?.queryItems = [URLQueryItem(name: "apikey", value: configuration.apiKey),
                                   URLQueryItem(name: "vsn", value: "1.0.0")]
         guard let url = components?.url else { throw UAPPKitError.invalidResponse }
-        let socket = URLSession.shared.webSocketTask(with: url)
+        let socket = makeSocket(url)
         let topic = "realtime:\(configuration.topic)"
         return AsyncThrowingStream(bufferingPolicy: .bufferingNewest(1)) { continuation in
             let task = Task {
@@ -22,28 +44,28 @@ enum UAPPFeedbackLive {
                 socket.resume()
                 let heartbeat = Task {
                     do {
-                        try await Task.sleep(for: .seconds(10))
+                        try await Task.sleep(for: heartbeatDelay)
                         guard await health.joined else {
-                            socket.cancel(with: .goingAway, reason: nil)
+                            socket.close()
                             return
                         }
                         var reference = 2
                         while !Task.isCancelled {
                             guard await health.beginHeartbeat() else {
-                                socket.cancel(with: .goingAway, reason: nil)
+                                socket.close()
                                 return
                             }
                             try await socket.send(message(topic: "phoenix", event: "heartbeat", ref: String(reference), payload: [:]))
                             reference += 1
-                            try await Task.sleep(for: .seconds(25))
+                            try await Task.sleep(for: heartbeatInterval)
                         }
                     } catch {
-                        socket.cancel(with: .goingAway, reason: nil)
+                        socket.close()
                     }
                 }
                 defer {
                     heartbeat.cancel()
-                    socket.cancel(with: .goingAway, reason: nil)
+                    socket.close()
                 }
                 do {
                     try await socket.send(message(topic: topic, event: "phx_join", ref: "1", payload: [
@@ -78,7 +100,7 @@ enum UAPPFeedbackLive {
             }
             continuation.onTermination = { _ in
                 task.cancel()
-                socket.cancel(with: .goingAway, reason: nil)
+                socket.close()
             }
         }
     }

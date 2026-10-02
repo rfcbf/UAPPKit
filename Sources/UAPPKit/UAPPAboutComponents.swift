@@ -79,6 +79,7 @@ private struct UAPPTranslatedDescription: View {
     let sourceLanguageIdentifier: String?
     let targetLanguageIdentifier: String
     @State private var translatedText: String?
+    @Environment(\.uappSystemTranslationEnabled) private var systemTranslationEnabled
 
     var body: some View {
         content
@@ -87,7 +88,7 @@ private struct UAPPTranslatedDescription: View {
 
     @ViewBuilder
     private var content: some View {
-        if #available(iOS 18.0, macOS 15.0, *), let sourceLanguageIdentifier {
+        if #available(iOS 18.0, macOS 15.0, *), systemTranslationEnabled, let sourceLanguageIdentifier {
             text
                 .translationTask(
                     source: Locale.Language(identifier: sourceLanguageIdentifier),

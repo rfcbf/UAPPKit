@@ -99,7 +99,10 @@ public struct UAPPFeedbackScreen: View {
             }
             .navigationDestination(isPresented: showsChangelogDetail) {
                 if let selectedChangelogEntry {
-                    changelogDetailScreen(for: selectedChangelogEntry)
+                    Self.changelogDetailScreen(
+                        for: selectedChangelogEntry, accentColor: accentColor,
+                        translationCache: changelogTranslationCache
+                    )
                 }
             }
             .background(palette.background.ignoresSafeArea())
@@ -187,8 +190,11 @@ public struct UAPPFeedbackScreen: View {
         )
     }
 
-    func changelogDetailScreen(for entry: UAPPChangelogEntry) -> UAPPChangelogDetailScreen {
-        UAPPChangelogDetailScreen(entry: entry, accentColor: accentColor, translationCache: changelogTranslationCache)
+    /// Recebe cor e cache já resolvidos para não ler ambiente ou estado fora de `body`.
+    static func changelogDetailScreen(
+        for entry: UAPPChangelogEntry, accentColor: Color, translationCache: UAPPReviewTranslationCache
+    ) -> UAPPChangelogDetailScreen {
+        UAPPChangelogDetailScreen(entry: entry, accentColor: accentColor, translationCache: translationCache)
     }
 
     @ViewBuilder

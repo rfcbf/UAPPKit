@@ -7,6 +7,12 @@ import UIKit
 struct UAPPFeedbackLiveModifier: ViewModifier {
     let client: UAPPClient?
     let onChange: @MainActor () async -> Void
+    var updates: (UAPPFeedbackLiveConfiguration) throws -> AsyncThrowingStream<Void, any Error> = {
+        try UAPPFeedbackLive.updates($0)
+    }
+    var debounce: Duration = .milliseconds(250)
+    var reconnectDelay: Duration = .seconds(10)
+    var fallbackInterval: Duration = .seconds(15)
     @Environment(\.scenePhase) private var scenePhase
     #if canImport(UIKit)
     @State private var isForeground = UIApplication.shared.applicationState != .background
@@ -27,20 +33,20 @@ struct UAPPFeedbackLiveModifier: ViewModifier {
                 while !Task.isCancelled {
                     do {
                         let configuration = try await client.feedbackLiveConfiguration()
-                        for try await _ in try UAPPFeedbackLive.updates(configuration) {
-                            try await Task.sleep(for: .milliseconds(250))
+                        for try await _ in try updates(configuration) {
+                            try await Task.sleep(for: debounce)
                             await onChange()
                         }
                     } catch is CancellationError { return }
                     catch { /* Reconnect while the periodic fallback remains available. */ }
-                    do { try await Task.sleep(for: .seconds(10)) } catch { return }
+                    do { try await Task.sleep(for: reconnectDelay) } catch { return }
                 }
             }
             .task(id: canRefresh) {
                 guard client != nil, canRefresh else { return }
                 await onChange()
                 while !Task.isCancelled {
-                    do { try await Task.sleep(for: .seconds(15)) } catch { return }
+                    do { try await Task.sleep(for: fallbackInterval) } catch { return }
                     await onChange()
                 }
             }

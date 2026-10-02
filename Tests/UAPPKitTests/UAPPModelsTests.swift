@@ -7,7 +7,8 @@ func publicEnumsUseContractValues() throws {
     #expect(UAPPFeedbackCategory.allCases.map(\.rawValue) == ["bug", "feature", "improvement", "question"])
     #expect(UAPPChangelogCategory.allCases.map(\.rawValue) == ["new", "improved", "fixed", "security"])
     #expect(UAPPChangelogPlatform.allCases.map(\.rawValue) == ["all", "ios", "ipados", "macos", "watchos", "tvos", "visionos"])
-    #expect(try JSONDecoder().decode(UAPPReactionKind.self, from: json(#""like""#)) == .like)
+    // Valor legado continua decodificável; compara pelo rawValue para não referenciar o caso obsoleto.
+    #expect(try JSONDecoder().decode(UAPPReactionKind.self, from: json(#""like""#)).rawValue == "like")
 }
 
 @Test("item de feedback decodifica chaves snake_case e datas ISO")

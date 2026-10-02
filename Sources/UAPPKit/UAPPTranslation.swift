@@ -77,9 +77,29 @@ struct UAPPAboutBio: View {
     }
 }
 
+/// Resultado da tradução da biografia, separado da sessão do sistema para ser testável.
+enum UAPPBioTranslationOutcome: Equatable {
+    case translated(String)
+    case cancelled
+    case failed
+    /// A tarefa foi cancelada depois de falhar; o estado da tela não deve mudar.
+    case ignored
+
+    static func resolve(_ translate: () async throws -> String) async -> Self {
+        do {
+            let value = try await translate()
+            return Task.isCancelled ? .ignored : .translated(value)
+        } catch is CancellationError {
+            return .cancelled
+        } catch {
+            return Task.isCancelled ? .ignored : .failed
+        }
+    }
+}
+
 #if canImport(Translation)
 @available(iOS 18.0, macOS 15.0, *)
-private struct UAPPAppleTranslatedBio: View {
+struct UAPPAppleTranslatedBio: View {
     let text: String
     let sourceIdentifier: String
     let targetIdentifier: String
@@ -87,7 +107,16 @@ private struct UAPPAppleTranslatedBio: View {
     @Environment(\.uappTheme) private var theme
     @State private var translationConfiguration: TranslationSession.Configuration?
     @State private var translatedText: String?
-    @State private var isTranslating = false
+    @State private var isTranslating: Bool
+
+    init(text: String, sourceIdentifier: String, targetIdentifier: String,
+         translatedText: String? = nil, isTranslating: Bool = false) {
+        self.text = text
+        self.sourceIdentifier = sourceIdentifier
+        self.targetIdentifier = targetIdentifier
+        _translatedText = State(initialValue: translatedText)
+        _isTranslating = State(initialValue: isTranslating)
+    }
 
     private var palette: UAPPResolvedPalette {
         theme.resolved(for: colorScheme)
@@ -136,18 +165,19 @@ private struct UAPPAppleTranslatedBio: View {
             }
         }
         .translationTask(translationConfiguration) { session in
-            do {
-                nonisolated(unsafe) let session = session
-                let response = try await session.translate(text)
-                guard !Task.isCancelled else { return }
-                translatedText = response.targetText
+            nonisolated(unsafe) let session = session
+            let outcome = await UAPPBioTranslationOutcome.resolve { try await session.translate(text).targetText }
+            switch outcome {
+            case let .translated(value):
+                translatedText = value
                 isTranslating = false
-            } catch is CancellationError {
+            case .cancelled:
                 isTranslating = false
-            } catch {
-                guard !Task.isCancelled else { return }
+            case .failed:
                 isTranslating = false
                 translationConfiguration = nil
+            case .ignored:
+                break
             }
         }
     }

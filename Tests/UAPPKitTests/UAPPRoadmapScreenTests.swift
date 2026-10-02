@@ -22,10 +22,10 @@ private let roadmapColumns = [
 @MainActor
 func roadmapScreenBuildsStates() async {
     let client = makeClient { _ in response(#"{"statuses":[],"items":[]}"#) }
-    await render(UAPPRoadmapScreen(client: client))
-    await render(UAPPRoadmapScreen(client: client, testingIsLoading: true))
-    await render(UAPPRoadmapScreen(client: client, testingIsLoading: false, columns: roadmapColumns))
-    await render(UAPPRoadmapScreen(client: client, testingIsLoading: false, columns: []))
+    await renderInNavigationStack(UAPPRoadmapScreen(client: client))
+    await renderInNavigationStack(UAPPRoadmapScreen(client: client, testingIsLoading: true))
+    await renderInNavigationStack(UAPPRoadmapScreen(client: client, testingIsLoading: false, columns: roadmapColumns))
+    await renderInNavigationStack(UAPPRoadmapScreen(client: client, testingIsLoading: false, columns: []))
 }
 
 @Test("UAPPRoadmapScreen renderiza busca por item, por status e sem resultados")
@@ -33,7 +33,7 @@ func roadmapScreenBuildsStates() async {
 func roadmapScreenRendersSearch() async {
     let client = makeClient { _ in response(#"{"statuses":[],"items":[]}"#) }
     for query in ["modo", "concluido", "ausente"] {
-        await render(UAPPRoadmapScreen(
+        await renderInNavigationStack(UAPPRoadmapScreen(
             client: client, testingIsLoading: false, columns: roadmapColumns, testingQuery: query
         ))
     }
@@ -44,9 +44,9 @@ func roadmapScreenRendersSearch() async {
 func roadmapScreenRendersErrors() async {
     let forbidden = makeClient { _ in throw UAPPKitError.http(status: 403, message: "Bloqueado") }
     let offline = makeClient { _ in throw UAPPKitError.transport("offline") }
-    await render(UAPPRoadmapScreen(client: forbidden))
-    await render(UAPPRoadmapScreen(client: offline))
-    await render(UAPPRoadmapScreen(
+    await renderInNavigationStack(UAPPRoadmapScreen(client: forbidden))
+    await renderInNavigationStack(UAPPRoadmapScreen(client: offline))
+    await renderInNavigationStack(UAPPRoadmapScreen(
         client: offline, testingIsLoading: false,
         errorMessage: "unavailable.load_error", errorMascotState: .connectionError
     ))
@@ -56,7 +56,7 @@ func roadmapScreenRendersErrors() async {
 @MainActor
 func feedbackScreenRoadmapModeDelegates() async {
     let client = makeClient { _ in response(#"{"statuses":[],"items":[]}"#) }
-    await render(UAPPFeedbackScreen(client: client, mode: .roadmap))
+    await renderInNavigationStack(UAPPFeedbackScreen(client: client, mode: .roadmap))
 }
 
 @Test("falha de carga diferencia projeto indisponível, erro inicial e atualização silenciosa")

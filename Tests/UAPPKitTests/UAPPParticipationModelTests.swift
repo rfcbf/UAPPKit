@@ -161,7 +161,7 @@ func managedClientRequiresSessionOnlyForParticipation() async throws {
     _ = try await provider.signIn(method: .apple)
     _ = try await client.submitFeedback(title: "Novo")
     _ = try await client.submitComment(itemId: "item", body: "Mensagem")
-    try await client.setReaction(itemId: "item", kind: .like, enabled: true)
+    try await client.setReaction(itemId: "item", kind: .vote, enabled: true)
     #expect(recorder.requests.suffix(3).allSatisfy { $0.value(forHTTPHeaderField: "Authorization") == "Bearer verified-token" })
     let data = try #require(recorder.requests[4].httpBody)
     let payload = try #require(JSONSerialization.jsonObject(with: data) as? [String: String])

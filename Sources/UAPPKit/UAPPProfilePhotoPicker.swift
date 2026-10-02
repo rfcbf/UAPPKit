@@ -29,6 +29,14 @@ public struct UAPPProfilePhotoPicker: View {
         self.languageIdentifier = languageIdentifier
     }
 
+    /// Estado inicial injetável para renderizar processamento e erros nos testes.
+    init(photo: Binding<Data?>, theme: UAPPTheme = .system, languageIdentifier: String? = nil,
+         isProcessing: Bool, errorKey: String?) {
+        self.init(photo: photo, theme: theme, languageIdentifier: languageIdentifier)
+        _isProcessing = State(initialValue: isProcessing)
+        _errorKey = State(initialValue: errorKey)
+    }
+
     private var accent: Color { theme.resolved(for: colorScheme).accent ?? .accentColor }
     private var avatarSize: CGFloat { controlSize == .small || controlSize == .mini ? 56 : 88 }
     private var cameraBadgeSize: CGFloat { controlSize == .small || controlSize == .mini ? 24 : 36 }
@@ -154,22 +162,32 @@ public struct UAPPProfilePhotoPicker: View {
 
     private func openCamera() async {
         errorKey = nil
-        guard Bundle.main.object(forInfoDictionaryKey: "NSCameraUsageDescription") as? String != nil else {
-            errorKey = "photo.camera_unavailable"
-            return
-        }
-        let allowed: Bool
-        switch AVCaptureDevice.authorizationStatus(for: .video) {
-        case .authorized: allowed = true
-        case .notDetermined: allowed = await AVCaptureDevice.requestAccess(for: .video)
-        default: allowed = false
-        }
+        let access = await Self.cameraAccess()
         guard !Task.isCancelled else { return }
-        if allowed {
+        switch access {
+        case .allowed:
             showsCamera = true
-        } else {
+        case .unavailable:
+            errorKey = "photo.camera_unavailable"
+        case .denied:
             errorKey = "photo.camera_denied"
             showsPermissionAlert = true
+        }
+    }
+
+    enum CameraAccess: Equatable { case allowed, denied, unavailable }
+
+    /// Exige a descrição de uso da câmera no app e pede permissão apenas quando ainda não foi decidida.
+    static func cameraAccess(
+        usageDescription: String? = Bundle.main.object(forInfoDictionaryKey: "NSCameraUsageDescription") as? String,
+        status: AVAuthorizationStatus = AVCaptureDevice.authorizationStatus(for: .video),
+        requestAccess: () async -> Bool = { await AVCaptureDevice.requestAccess(for: .video) }
+    ) async -> CameraAccess {
+        guard usageDescription != nil else { return .unavailable }
+        switch status {
+        case .authorized: return .allowed
+        case .notDetermined: return await requestAccess() ? .allowed : .denied
+        default: return .denied
         }
     }
 
@@ -181,7 +199,7 @@ public struct UAPPProfilePhotoPicker: View {
 }
 
 @MainActor
-private struct UAPPProfileCameraPicker: UIViewControllerRepresentable {
+struct UAPPProfileCameraPicker: UIViewControllerRepresentable {
     let onImage: (UIImage?) -> Void
 
     func makeUIViewController(context: Context) -> UIImagePickerController {

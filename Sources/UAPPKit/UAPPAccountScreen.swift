@@ -53,6 +53,26 @@ public struct UAPPAccountScreen: View {
         self.privacyURL = privacyURL
     }
 
+    /// Estado inicial injetável para renderizar cada etapa nos testes.
+    init(
+        model: UAPPAccountModel,
+        appName: String,
+        theme: UAPPTheme = .system,
+        termsURL: URL? = nil,
+        privacyURL: URL? = nil,
+        testingPath: [UAPPAccountModel.Step]
+    ) {
+        _model = StateObject(wrappedValue: model)
+        _path = State(initialValue: testingPath)
+        _isReady = State(initialValue: true)
+        client = nil
+        self.appName = appName
+        appIconURL = nil
+        self.theme = theme
+        self.termsURL = termsURL
+        self.privacyURL = privacyURL
+    }
+
     private var palette: UAPPResolvedPalette { theme.resolved(for: colorScheme) }
     private var accentColor: Color { palette.accent ?? .accentColor }
     private func titleKey(for step: UAPPAccountModel.Step) -> String {

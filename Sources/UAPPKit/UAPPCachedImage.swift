@@ -166,7 +166,7 @@ final class UAPPRemoteImageCache {
         let download = try await task.value
         guard capturedGeneration == generation else { throw CancellationError() }
         if let image = cachedImage(for: url) { return image }
-        guard let source = CGImageSourceCreateWithData(download.data as CFData, nil),
+        guard let source = uappImageSource(from: download.data),
               let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
                 kCGImageSourceCreateThumbnailFromImageAlways: true,
                 kCGImageSourceCreateThumbnailWithTransform: true,

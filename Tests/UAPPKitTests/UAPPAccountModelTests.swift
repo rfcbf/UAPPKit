@@ -129,9 +129,71 @@ struct UAPPAccountModelTests {
         await model.cancelRecovery()
         #expect(try await provider.currentSession() == nil)
     }
+
+    @Test("Login social entrega sessão e sair limpa conta, foto e etapa")
+    func socialSignInAndSignOut() async {
+        var delivered: [UAPPAuthenticationSession?] = []
+        let model = UAPPAccountModel(provider: AccountProviderStub(), minimumPasswordLength: 8) { delivered.append($0) }
+        await model.refresh()
+        #expect(model.session == nil)
+        await model.signIn(.apple)
+        #expect(model.session?.identity.userId == "verified")
+        model.photo = Data([0x01])
+        model.navigate(to: .signup)
+        await model.signOut()
+        #expect(model.session == nil)
+        #expect(model.photo == nil)
+        #expect(model.step == .login)
+        #expect(delivered.count == 2)
+        #expect(delivered.last.flatMap { $0 } == nil)
+    }
+
+    @Test("Reenvio de código vale só para confirmação e recuperação")
+    func resendCode() async {
+        let model = UAPPAccountModel(provider: AccountProviderStub(), minimumPasswordLength: 8) { _ in }
+        await model.resendCode()
+        #expect(model.noticeKey == nil)
+        model.navigate(to: .signup)
+        model.name = "Visitante"
+        model.email = "person@example.test"
+        model.password = "test-password"
+        model.passwordConfirmation = "test-password"
+        await model.submit()
+        await model.resendCode()
+        #expect(model.noticeKey == "account.resent")
+        let recovery = UAPPAccountModel(provider: AccountProviderStub(), minimumPasswordLength: 8) { _ in }
+        recovery.email = "person@example.test"
+        recovery.navigate(to: .recover)
+        await recovery.submit()
+        await recovery.resendCode()
+        #expect(recovery.noticeKey == "account.resent")
+    }
+
+    @Test("Operações sem suporte e falhas de saída informam erro sem fechar a conta")
+    func unsupportedAndFailedOperations() async {
+        let provider = StubAuthentication()
+        let model = UAPPAccountModel(provider: provider, minimumPasswordLength: 6) { _ in }
+        #expect(model.minimumPasswordLength == 6)
+        model.navigate(to: .signup)
+        model.name = "Visitante"
+        model.email = "person@example.test"
+        model.password = "test-password"
+        model.passwordConfirmation = "test-password"
+        await model.submit()
+        #expect(model.errorKey == "account.unsupported")
+        await provider.setError(.cancelled)
+        await model.signIn(.google)
+        #expect(model.errorKey == nil)
+        await provider.setError(.invalidCallback)
+        await model.signOut()
+        #expect(model.errorKey == "auth.signout_error")
+        await provider.setSessionFails(true)
+        await model.refresh()
+        #expect(model.errorKey == "account.operation_error")
+    }
 }
 
-private actor AccountProviderStub: UAPPAuthenticationProvider {
+actor AccountProviderStub: UAPPAuthenticationProvider {
     nonisolated let methods = UAPPLoginMethod.allCases
     nonisolated let supportsProfilePhoto = true
     private var failsPhotoOnce: Bool

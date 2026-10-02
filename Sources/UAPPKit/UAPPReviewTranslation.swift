@@ -13,6 +13,19 @@ enum UAPPReviewTranslation {
         return recognizer.dominantLanguage?.rawValue != Locale(identifier: targetIdentifier).language.languageCode?.identifier
     }
 
+    /// Traduz o texto inteiro ou, em Markdown, somente os fragmentos de texto em lote.
+    static func translate(
+        _ text: String,
+        rendersMarkdown: Bool,
+        single: @Sendable (String) async throws -> String,
+        batch: @Sendable ([String]) async throws -> [String]
+    ) async throws -> String {
+        if rendersMarkdown {
+            return try await uappTranslateChangelogMarkdown(text, usingBatch: batch)
+        }
+        return try await single(text)
+    }
+
     static func sourceIdentifier(for text: String, targetIdentifier: String) -> String? {
         let recognizer = NLLanguageRecognizer()
         recognizer.processString(text)
@@ -20,6 +33,19 @@ enum UAPPReviewTranslation {
               language != Locale(identifier: targetIdentifier).language.languageCode?.identifier
         else { return nil }
         return language
+    }
+}
+
+private struct UAPPSystemTranslationEnabledKey: EnvironmentKey {
+    static let defaultValue = true
+}
+
+extension EnvironmentValues {
+    /// Permite desligar a tradução automática do sistema onde ela não está disponível,
+    /// como nos testes, mantendo o texto original sem acionar o framework Translation.
+    var uappSystemTranslationEnabled: Bool {
+        get { self[UAPPSystemTranslationEnabledKey.self] }
+        set { self[UAPPSystemTranslationEnabledKey.self] = newValue }
     }
 }
 
@@ -48,6 +74,7 @@ struct UAPPReviewTranslationContent: View {
     let rendersMarkdown: Bool
     let lineLimit: Int?
     let displayTransform: (String) -> String
+    @Environment(\.uappSystemTranslationEnabled) private var systemTranslationEnabled
 
     init(text: String, targetIdentifier: String, model: UAPPReviewTextModel? = nil, rendersMarkdown: Bool = false,
          lineLimit: Int? = nil, displayTransform: @escaping (String) -> String = { $0 }) {
@@ -62,6 +89,7 @@ struct UAPPReviewTranslationContent: View {
     var body: some View {
         #if canImport(Translation)
         if #available(iOS 18.0, macOS 15.0, *),
+           systemTranslationEnabled,
            model.translated == nil,
            UAPPReviewTranslation.shouldTranslate(text, targetIdentifier: targetIdentifier)
         {
@@ -70,19 +98,18 @@ struct UAPPReviewTranslationContent: View {
                     .map { Locale.Language(identifier: $0) },
                 target: Locale.Language(identifier: targetIdentifier)
             ) { session in
+                nonisolated(unsafe) let session = session
                 await model.translate(waitForPending: rendersMarkdown) { text in
-                    nonisolated(unsafe) let session = session
-                    if rendersMarkdown {
-                        return try await uappTranslateChangelogMarkdown(text, usingBatch: { fragments in
+                    try await UAPPReviewTranslation.translate(
+                        text, rendersMarkdown: rendersMarkdown,
+                        single: { try await session.translate($0).targetText },
+                        batch: { fragments in
                             nonisolated(unsafe) let requests = fragments.enumerated().map { index, fragment in
                                 TranslationSession.Request(sourceText: fragment, clientIdentifier: String(index))
                             }
-                            let responses = try await session.translations(from: requests)
-                            return responses.map(\.targetText)
-                        })
-                    }
-                    let response = try await session.translate(text)
-                    return response.targetText
+                            return try await session.translations(from: requests).map(\.targetText)
+                        }
+                    )
                 }
             }
         } else {

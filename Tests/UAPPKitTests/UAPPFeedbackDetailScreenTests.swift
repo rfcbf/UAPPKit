@@ -111,3 +111,49 @@ func feedbackDetailScreenRendersLoadedContentInHost() async {
     ))
 }
 #endif
+
+@Test("Detalhe mostra conteúdo indisponível, resposta em andamento, anexos e votantes")
+@MainActor
+func feedbackDetailScreenSecondaryStates() async throws {
+    let client = makeClient { _ in response(#"{"ok":true,"comments":[]}"#) }
+    let image = try temporaryFile(sampleJPEG())
+    defer { try? FileManager.default.removeItem(at: image) }
+    let item = UAPPFeedbackItem(
+        id: "item", title: "Título", body: "Corpo", voteCount: 3, likeCount: 0, commentCount: 1,
+        voters: [.init(displayName: "Ana"), .init(displayName: "Bruno", avatarURL: image)],
+        imageURLs: [image]
+    )
+    let parent = UAPPComment(
+        id: "parent", body: "Comentário", likeCount: 0, createdAt: Date(), authorKind: .community,
+        viewerLiked: false, authorName: "Ana", imageURLs: [image]
+    )
+    await render(UAPPFeedbackDetailScreen(
+        client: client, item: item, testingComments: [], isLoading: false, isAvailable: false
+    ))
+    await render(UAPPFeedbackDetailScreen(
+        client: client, item: item, testingComments: [parent], isLoading: false,
+        commentBody: "Resposta", replyingTo: parent, commentsError: "detail.comments_load_error"
+    ), settling: true)
+}
+
+@Test("Detalhe trata item removido, acesso negado e falha nos comentários")
+@MainActor
+func feedbackDetailScreenRefreshFailures() async {
+    let item = UAPPFeedbackItem(id: "item", title: "Título", body: nil, voteCount: 0, likeCount: 0, commentCount: 0)
+    for status in [403, 404] {
+        let client = makeClient { request in
+            queryValue("resource", in: request) == "comments"
+                ? response(#"{"comments":[],"nextCursor":null}"#)
+                : response(status, #"{"error":"Indisponível"}"#)
+        }
+        await render(UAPPFeedbackDetailScreen(client: client, item: item), settling: true)
+    }
+    let missing = makeClient { request in
+        queryValue("resource", in: request) == "comments"
+            ? response(500, "{}")
+            : response(#"{"items":[],"nextCursor":null}"#)
+    }
+    await render(UAPPFeedbackDetailScreen(client: missing, item: item), settling: true)
+    let temporary = makeClient { _ in response(503, "{}") }
+    await render(UAPPFeedbackDetailScreen(client: temporary, item: item), settling: true)
+}

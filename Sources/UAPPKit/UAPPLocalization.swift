@@ -178,7 +178,7 @@ func uappLocalizedFormat(_ key: String, _ arguments: CVarArg...) -> String {
 import Combine
 import SwiftUI
 
-private struct UAPPOnChangeModifier<Value: Equatable>: ViewModifier {
+struct UAPPOnChangeModifier<Value: Equatable>: ViewModifier {
     let value: Value
     let action: (Value) -> Void
 
@@ -215,8 +215,6 @@ struct UAPPLanguageMenu: View {
     var accentOverride: Color?
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.uappTheme) private var theme
-    @AppStorage(UAPPLocalizationPreferences.presentationStorageKey)
-    private var selectedIdentifier = UAPPLocalizationPreferences.defaultIdentifier
     @State private var isPresented = false
 
     var body: some View {
@@ -228,26 +226,41 @@ struct UAPPLanguageMenu: View {
         }
         .accessibilityLabel(Text(verbatim: uappLocalized("language.menu")))
         .popover(isPresented: $isPresented, attachmentAnchor: .rect(.bounds), arrowEdge: .top) {
-            if #available(iOS 16.4, macOS 13.3, *) {
-                languageOptions.presentationCompactAdaptation(.popover)
-            } else {
-                languageOptions
-            }
+            UAPPLanguageOptions(accentColor: accentColor, isPresented: $isPresented)
+                .uappCompactPopover()
         }
     }
 
-    private var languageOptions: some View {
+    private var accentColor: Color {
+        theme.resolved(for: colorScheme).accent ?? accentOverride ?? .accentColor
+    }
+}
+
+extension View {
+    @ViewBuilder
+    func uappCompactPopover() -> some View {
+        if #available(iOS 16.4, macOS 13.3, *) { presentationCompactAdaptation(.popover) } else { self }
+    }
+}
+
+/// Lista de idiomas do popover; a seleção vale para as telas apresentadas pelo pacote.
+struct UAPPLanguageOptions: View {
+    let accentColor: Color
+    @Binding var isPresented: Bool
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.uappTheme) private var theme
+    @AppStorage(UAPPLocalizationPreferences.presentationStorageKey)
+    private var selectedIdentifier = UAPPLocalizationPreferences.defaultIdentifier
+
+    var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 4) {
                 ForEach(UAPPLanguage.supported) { language in
                     Button {
-                        selectedIdentifier = UAPPLocalizationPreferences.selectPresentation(
-                            identifier: language.identifier
-                        )
-                        isPresented = false
+                        select(language)
                     } label: {
                         HStack(spacing: 10) {
-                            Text(verbatim: language.displayName(in: selectedLocale))
+                            Text(verbatim: language.displayName(in: Locale(identifier: selectedIdentifier)))
                                 .lineLimit(1)
                             Spacer(minLength: 12)
                             if language.identifier == selectedIdentifier {
@@ -269,12 +282,9 @@ struct UAPPLanguageMenu: View {
         .frame(width: 250)
     }
 
-    private var selectedLocale: Locale {
-        Locale(identifier: selectedIdentifier)
-    }
-
-    private var accentColor: Color {
-        theme.resolved(for: colorScheme).accent ?? accentOverride ?? .accentColor
+    func select(_ language: UAPPLanguage) {
+        selectedIdentifier = UAPPLocalizationPreferences.selectPresentation(identifier: language.identifier)
+        isPresented = false
     }
 }
 #endif

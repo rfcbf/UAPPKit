@@ -22,6 +22,13 @@ private final class PresentationProbeViewController: UIViewController {
 }
 #endif
 
+/// Registra os links abertos pelo SDK sem acionar o sistema.
+@MainActor
+private final class OpenerProbe {
+    var opened: [URL] = []
+    var accepts = true
+}
+
 @Suite(.serialized)
 struct UAPPKitTests {
     @Test("UAPPKit exige configuração antes de criar cliente e aceita setup/reset")
@@ -124,6 +131,39 @@ struct UAPPKitTests {
     }
 
     #if canImport(UIKit) && canImport(SwiftUI)
+    @Test("Avaliação na App Store abre o destino do projeto e informa falhas")
+    @MainActor
+    func appKitOpensAppStoreReview() async throws {
+        let previousTransport = UAPPKit.makeTransport
+        let previousOpener = UAPPKit.urlOpener
+        defer {
+            UAPPKit.makeTransport = previousTransport
+            UAPPKit.urlOpener = previousOpener
+            UAPPKit.reset()
+        }
+        let host = try #require(URL(string: "https://review.example"))
+        let opener = OpenerProbe()
+        UAPPKit.urlOpener = { url in
+            opener.opened.append(url)
+            return opener.accepts
+        }
+        UAPPKit.makeTransport = {
+            StubTransport { _ in response(#"{"project":{"slug":"review-test","apple_app_id":"123456789"},"about":{}}"#) }
+        }
+        UAPPKit.setup(projectId: "review-test", host: host)
+        try await UAPPKit.openAppStoreReview()
+        #expect(opener.opened.first?.absoluteString.contains("id123456789") == true)
+
+        opener.accepts = false
+        await #expect(throws: UAPPKitError.appStoreURLCouldNotOpen) { try await UAPPKit.openAppStoreReview() }
+
+        UAPPKit.makeTransport = { StubTransport { _ in response(#"{"about":{"about_apps":[]}}"#) } }
+        UAPPKit.setup(projectId: "review-empty", host: host)
+        await #expect(throws: UAPPKitError.appStoreURLUnavailable) { try await UAPPKit.openAppStoreReview() }
+    }
+    #endif
+
+    #if canImport(UIKit) && canImport(SwiftUI)
     @Test("UAPPKit apresenta uma tela nativa pelo presenter disponível")
     @MainActor
     func appKitPresentsNativeScreen() throws {
@@ -144,6 +184,46 @@ struct UAPPKitTests {
         #expect(presenter.lastPresentedViewController?.modalPresentationStyle == .pageSheet)
         #expect(presenter.lastPresentedViewController?.sheetPresentationController?.detents.count == 1)
         #expect(presenter.lastPresentedViewController?.sheetPresentationController?.detents.first?.identifier == .large)
+    }
+
+    @Test("UAPPKit apresenta todas as telas públicas com conta, token e configuração")
+    @MainActor
+    func appKitPresentsEveryScreen() async throws {
+        let presenter = PresentationProbeViewController()
+        let previousProvider = UAPPKit.presenterProvider
+        let previousTransport = UAPPKit.makeTransport
+        defer {
+            UAPPKit.presenterProvider = previousProvider
+            UAPPKit.makeTransport = previousTransport
+            UAPPKit.reset()
+        }
+        UAPPKit.presenterProvider = { presenter }
+        UAPPKit.makeTransport = { StubTransport { _ in response("{}") } }
+        let host = try #require(URL(string: "https://screens.example"))
+        UAPPKit.setup(projectId: "screens-test", host: host, theme: .init(light: .init(accent: .purple)))
+        let authentication = StubAuthentication()
+        let session = UAPPAuthenticationSession(identity: .init(userId: "verified"), accessToken: "token")
+        let callback = try #require(URL(string: "uappkit-test://auth"))
+        _ = try UAPPKit.makeAuthentication(callbackURL: callback)
+
+        try UAPPKit.showFeedback()
+        try UAPPKit.showUser(session: session, authentication: authentication)
+        try UAPPKit.showAuthentication(authentication: authentication)
+        try await UAPPKit.showFeedback(authentication: authentication)
+        try await UAPPKit.showFeedback(accessTokenProvider: { "token" })
+        try UAPPKit.showRoadmap()
+        try await UAPPKit.showRoadmap(authentication: authentication)
+        try await UAPPKit.showRoadmap(accessTokenProvider: nil)
+        try UAPPKit.showChangelog()
+        try UAPPKit.showReviews(pageSize: 10)
+        try UAPPKit.showAbout(configuration: .init(showsChangelog: true))
+        try UAPPKit.showDeveloperAbout()
+
+        #expect(presenter.presentedViewControllerCount == 12)
+        let hosted = try #require(presenter.lastPresentedViewController)
+        hosted.overrideUserInterfaceStyle = .dark
+        hosted.view.layoutIfNeeded()
+        #expect(hosted.view.backgroundColor != nil)
     }
 
     @Test("UAPPKit não falha quando não há presenter ativo")

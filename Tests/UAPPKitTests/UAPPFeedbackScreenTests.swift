@@ -13,9 +13,9 @@ func feedbackScreenModesHaveTitles() {
 @MainActor
 func feedbackScreenBuildsModes() async {
     let client = makeClient { _ in response(#"{"ok":true,"items":[]}"#) }
-    await render(UAPPFeedbackScreen(client: client, mode: .feedback))
-    await render(UAPPFeedbackScreen(client: client, mode: .roadmap))
-    await render(UAPPFeedbackScreen(client: client, mode: .changelog))
+    await renderInNavigationStack(UAPPFeedbackScreen(client: client, mode: .feedback))
+    await renderInNavigationStack(UAPPFeedbackScreen(client: client, mode: .roadmap))
+    await renderInNavigationStack(UAPPFeedbackScreen(client: client, mode: .changelog))
 }
 
 @Test("UAPPFeedbackScreen constrói estados e conteúdos carregados")
@@ -47,18 +47,18 @@ func feedbackScreenBuildsLoadedStates() async {
         releasedAt: "2026-09-24"
     )
 
-    await render(UAPPFeedbackScreen(
+    await renderInNavigationStack(UAPPFeedbackScreen(
         client: client,
         mode: .feedback,
         testingIsLoading: false,
         feedback: [item]
     ))
-    await render(UAPPRoadmapScreen(
+    await renderInNavigationStack(UAPPRoadmapScreen(
         client: client,
         testingIsLoading: false,
         columns: [roadmap]
     ))
-    await render(UAPPFeedbackScreen(
+    await renderInNavigationStack(UAPPFeedbackScreen(
         client: client,
         mode: .changelog,
         testingIsLoading: false,
@@ -66,14 +66,14 @@ func feedbackScreenBuildsLoadedStates() async {
         changelogNextCursor: "previous",
         changelogLoadMoreError: "Falha ao carregar"
     ))
-    await render(UAPPFeedbackScreen(
+    await renderInNavigationStack(UAPPFeedbackScreen(
         client: client,
         mode: .feedback,
         testingIsLoading: false,
         errorMessage: "Conteúdo indisponível",
         errorMascotState: .unavailable
     ))
-    await render(UAPPFeedbackScreen(
+    await renderInNavigationStack(UAPPFeedbackScreen(
         client: client,
         mode: .changelog,
         testingIsLoading: false
@@ -90,8 +90,8 @@ func feedbackScreenRendersErrorStates() async {
         throw UAPPKitError.transport("offline")
     }
 
-    await render(UAPPFeedbackScreen(client: forbiddenClient, mode: .feedback))
-    await render(UAPPFeedbackScreen(client: transportClient, mode: .roadmap))
+    await renderInNavigationStack(UAPPFeedbackScreen(client: forbiddenClient, mode: .feedback))
+    await renderInNavigationStack(UAPPFeedbackScreen(client: transportClient, mode: .roadmap))
 }
 
 @Test("UAPPSubmitFeedbackScreen renderiza o formulário localizado")
@@ -129,10 +129,10 @@ func feedbackAndRoadmapRenderSearchResults() async {
     let item = UAPPFeedbackItem(id: "1", title: "Notificações", body: nil, voteCount: 0, likeCount: 0, commentCount: 0)
     let column = UAPPRoadmapColumn(status: .init(id: "1", key: "planned", name: "Planejado", position: 0), items: [item])
     for query in ["notificacoes", "ausente"] {
-        await render(UAPPFeedbackScreen(
+        await renderInNavigationStack(UAPPFeedbackScreen(
             client: client, mode: .feedback, testingIsLoading: false, feedback: [item], testingQuery: query
         ))
-        await render(UAPPRoadmapScreen(
+        await renderInNavigationStack(UAPPRoadmapScreen(
             client: client, testingIsLoading: false, columns: [column], testingQuery: query
         ))
     }
@@ -166,18 +166,18 @@ func feedbackScreenRendersLoadedContentInHost() async {
         releasedAt: "2026-09-24"
     )
 
-    await render(UAPPFeedbackScreen(
+    await renderInNavigationStack(UAPPFeedbackScreen(
         client: client,
         mode: .feedback,
         testingIsLoading: false,
         feedback: [item]
     ))
-    await render(UAPPRoadmapScreen(
+    await renderInNavigationStack(UAPPRoadmapScreen(
         client: client,
         testingIsLoading: false,
         columns: [column]
     ))
-    await render(UAPPFeedbackScreen(
+    await renderInNavigationStack(UAPPFeedbackScreen(
         client: client,
         mode: .changelog,
         testingIsLoading: false,

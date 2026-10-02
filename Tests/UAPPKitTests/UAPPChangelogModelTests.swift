@@ -71,7 +71,7 @@ func changelogModelRetries() async throws {
     #expect(model.loadMoreError != nil)
     #expect(model.entries.count == 1)
     #expect(model.nextCursor == "older")
-    await render(UAPPFeedbackScreen(client: client, mode: .changelog, testingIsLoading: false, testingChangelogModel: model))
+    await renderInNavigationStack(UAPPFeedbackScreen(client: client, mode: .changelog, testingIsLoading: false, testingChangelogModel: model))
     await model.loadMore()
     #expect(model.loadMoreError == nil)
     #expect(model.entries.count == 2)
@@ -127,7 +127,7 @@ func changelogModelConcurrentLoads() async throws {
     await model.loadMore()
     try await model.load()
     #expect(recorder.requests.count == 2)
-    await render(UAPPFeedbackScreen(client: client, mode: .changelog, testingIsLoading: false, testingChangelogModel: model))
+    await renderInNavigationStack(UAPPFeedbackScreen(client: client, mode: .changelog, testingIsLoading: false, testingChangelogModel: model))
     await gate.resume()
     await task.value
     #expect(!model.isLoadingMore)

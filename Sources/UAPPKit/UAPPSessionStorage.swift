@@ -7,8 +7,17 @@ protocol UAPPSessionStorage: Sendable {
     func remove() throws
 }
 
+/// Operações do Keychain usadas pelo armazenamento; substituíveis nos testes.
+struct UAPPKeychain: Sendable {
+    var copyMatching: @Sendable (CFDictionary, UnsafeMutablePointer<CFTypeRef?>?) -> OSStatus = SecItemCopyMatching
+    var update: @Sendable (CFDictionary, CFDictionary) -> OSStatus = SecItemUpdate
+    var add: @Sendable (CFDictionary, UnsafeMutablePointer<CFTypeRef?>?) -> OSStatus = SecItemAdd
+    var delete: @Sendable (CFDictionary) -> OSStatus = SecItemDelete
+}
+
 struct UAPPKeychainSessionStorage: UAPPSessionStorage {
     let account: String
+    var keychain = UAPPKeychain()
     private var query: [String: Any] {
         [kSecClass as String: kSecClassGenericPassword,
          kSecAttrService as String: (Bundle.main.bundleIdentifier ?? "UAPPKit") + ".authentication",
@@ -25,7 +34,7 @@ struct UAPPKeychainSessionStorage: UAPPSessionStorage {
         attributes[kSecReturnData as String] = true
         attributes[kSecMatchLimit as String] = kSecMatchLimitOne
         var result: CFTypeRef?
-        let status = SecItemCopyMatching(attributes as CFDictionary, &result)
+        let status = keychain.copyMatching(attributes as CFDictionary, &result)
         if status == errSecItemNotFound { return nil }
         guard status == errSecSuccess else { throw StorageError(status: status) }
         return result as? Data
@@ -33,12 +42,12 @@ struct UAPPKeychainSessionStorage: UAPPSessionStorage {
 
     func save(_ data: Data) throws {
         let changes = [kSecValueData as String: data]
-        let status = SecItemUpdate(query as CFDictionary, changes as CFDictionary)
+        let status = keychain.update(query as CFDictionary, changes as CFDictionary)
         if status == errSecItemNotFound {
             var attributes = query
             attributes[kSecValueData as String] = data
             attributes[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-            let added = SecItemAdd(attributes as CFDictionary, nil)
+            let added = keychain.add(attributes as CFDictionary, nil)
             guard added == errSecSuccess else { throw StorageError(status: added) }
         } else if status != errSecSuccess {
             throw StorageError(status: status)
@@ -46,11 +55,11 @@ struct UAPPKeychainSessionStorage: UAPPSessionStorage {
     }
 
     func remove() throws {
-        let status = SecItemDelete(query as CFDictionary)
+        let status = keychain.delete(query as CFDictionary)
         guard status == errSecSuccess || status == errSecItemNotFound else { throw StorageError(status: status) }
     }
 
-    private struct StorageError: Error { let status: OSStatus }
+    struct StorageError: Error, Equatable { let status: OSStatus }
 }
 
 /// Sem persistência, para provedores temporários e testes determinísticos.

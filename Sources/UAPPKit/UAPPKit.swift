@@ -27,6 +27,9 @@ public enum UAPPKit {
     private static var participationIdentity: UAPPIdentity?
     private static var theme: UAPPTheme = .system
     private static var hostLocaleIdentifier = UAPPLocalizationPreferences.defaultIdentifier
+    /// Transporte e abertura de links substituíveis nos testes, sem rede nem apps externos.
+    static var makeTransport: @MainActor () -> any UAPPTransport = { URLSessionTransport() }
+    static var urlOpener: UAPPURLOpener = uappSystemOpenURL
 
     // MARK: - Configuração
 
@@ -53,7 +56,7 @@ public enum UAPPKit {
         }
         self.configuration = configuration
         self.theme = theme
-        client = UAPPClient(configuration: configuration)
+        client = UAPPClient(configuration: configuration, transport: makeTransport())
         Task { [participationClient] in
             await participationClient?.setLocale(Locale(identifier: localeIdentifier))
         }
@@ -120,8 +123,10 @@ public enum UAPPKit {
         guard let configuration else { throw UAPPKitError.notConfigured }
         let client = UAPPClient(
             configuration: configuration,
+            transport: makeTransport(),
             authentication: UAPPAutomaticAuthentication(
                 configuration: configuration,
+                transport: makeTransport(),
                 sessionStorage: UAPPKeychainSessionStorage(account: UAPPKeychainSessionStorage.account(
                     host: configuration.host, projectId: configuration.projectId
                 ))
@@ -267,7 +272,7 @@ public enum UAPPKit {
         guard let destination = try await client.appStoreReviewDestination() else {
             throw UAPPKitError.appStoreURLUnavailable
         }
-        guard await uappOpenExternalURLAndReportSuccess(destination) else {
+        guard await uappOpenExternalURLAndReportSuccess(destination, opener: urlOpener) else {
             throw UAPPKitError.appStoreURLCouldNotOpen
         }
     }

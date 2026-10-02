@@ -399,7 +399,7 @@ enum UAPPFeedbackImagePreparation {
 
     /// Redimensiona e reencoda sem metadados de localização da imagem original.
     static func jpeg(from data: Data) throws -> Data {
-        guard let source = CGImageSourceCreateWithData(data as CFData, nil) else {
+        guard let source = uappImageSource(from: data) else {
             throw UAPPKitError.invalidResponse
         }
         for pixelSize in [1600, 1280, 1024] {

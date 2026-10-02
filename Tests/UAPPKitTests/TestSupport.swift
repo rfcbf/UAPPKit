@@ -1,4 +1,5 @@
 import Foundation
+import ImageIO
 import SwiftUI
 import Testing
 @testable import UAPPKit
@@ -192,16 +193,23 @@ func queryValue(_ name: String, in request: URLRequest) -> String? {
 
 #if canImport(UIKit)
 @MainActor
-func render(_ view: some View) async {
+func render(
+    _ view: some View, settling: Bool = false,
+    whileVisible interaction: (@MainActor () async -> Void)? = nil
+) async {
     let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
-    let hostingController = UIHostingController(rootView: view)
+    let hostingController = UIHostingController(rootView: testable(view))
     window.rootViewController = hostingController
     window.makeKeyAndVisible()
     hostingController.view.frame = window.bounds
     hostingController.view.setNeedsLayout()
     hostingController.view.layoutIfNeeded()
-    for _ in 0 ..< 10 {
+    if let interaction {
         await Task.yield()
+        await interaction()
+    }
+    for _ in 0 ..< (settling ? 40 : 10) {
+        await settle(settling)
         hostingController.view.setNeedsLayout()
         hostingController.view.layoutIfNeeded()
     }
@@ -209,14 +217,69 @@ func render(_ view: some View) async {
 }
 #elseif canImport(AppKit)
 @MainActor
-func render(_ view: some View) async {
-    let hostingView = NSHostingView(rootView: view)
+func render(
+    _ view: some View, settling: Bool = false,
+    whileVisible interaction: (@MainActor () async -> Void)? = nil
+) async {
+    let hostingView = NSHostingView(rootView: testable(view))
     hostingView.frame = NSRect(x: 0, y: 0, width: 640, height: 800)
     hostingView.layoutSubtreeIfNeeded()
     _ = hostingView.fittingSize
-    for _ in 0 ..< 10 {
+    if let interaction {
         await Task.yield()
+        await interaction()
+    }
+    for _ in 0 ..< (settling ? 40 : 10) {
+        await settle(settling)
         hostingView.layoutSubtreeIfNeeded()
     }
 }
 #endif
+
+/// O framework Translation não está disponível no runner de testes e registraria erros no console.
+@MainActor
+private func testable(_ view: some View) -> some View {
+    view.environment(\.uappSystemTranslationEnabled, false)
+}
+
+/// Com `settling`, dá tempo para as tarefas da tela consumirem o transporte falso.
+@MainActor
+private func settle(_ settling: Bool) async {
+    if settling {
+        try? await Task.sleep(nanoseconds: 2_000_000)
+    } else {
+        await Task.yield()
+    }
+}
+
+/// Telas com `navigationDestination` precisam de uma pilha de navegação,
+/// como acontece no app hospedeiro e em `UAPPKit.present`.
+@MainActor
+func renderInNavigationStack(_ view: some View, settling: Bool = false) async {
+    await render(NavigationStack { view }, settling: settling)
+}
+
+/// JPEG sólido gerado em memória para testes de imagem sem arquivos externos.
+func sampleJPEG(width: Int = 64, height: Int = 48) -> Data {
+    guard let context = CGContext(
+        data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+        space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue
+    ) else { return Data() }
+    context.setFillColor(CGColor(red: 0.2, green: 0.4, blue: 0.8, alpha: 1))
+    context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+    let output = NSMutableData()
+    guard let image = context.makeImage(),
+          let destination = CGImageDestinationCreateWithData(output, "public.jpeg" as CFString, 1, nil)
+    else { return Data() }
+    CGImageDestinationAddImage(destination, image, nil)
+    return CGImageDestinationFinalize(destination) ? output as Data : Data()
+}
+
+/// Grava os dados em um arquivo temporário local, para imagens carregadas por URL sem rede.
+func temporaryFile(_ data: Data, extension pathExtension: String = "jpg") throws -> URL {
+    let url = FileManager.default.temporaryDirectory
+        .appendingPathComponent("uappkit-\(UUID().uuidString)")
+        .appendingPathExtension(pathExtension)
+    try data.write(to: url)
+    return url
+}

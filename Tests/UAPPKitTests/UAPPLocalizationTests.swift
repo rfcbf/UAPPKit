@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import Testing
 @testable import UAPPKit
 
@@ -85,4 +86,87 @@ func hostAndPresentationLanguagesAreIndependent() {
 
     #expect(defaults.string(forKey: hostKey) == "en")
     #expect(defaults.string(forKey: presentationKey) == "pt-BR")
+}
+
+@Test("nome de exibição combina bandeira e nome localizado; idioma desconhecido usa globo")
+func languageDisplayName() {
+    let portuguese = UAPPLanguage.supported[0]
+    #expect(portuguese.displayName(in: Locale(identifier: "en")) == "🇧🇷 Portuguese")
+    let unknown = UAPPLanguage(identifier: "xx", nativeName: "Desconhecido")
+    #expect(unknown.flagEmoji == "🌐")
+    #expect(unknown.displayName(in: Locale(identifier: "en")).hasPrefix("🌐 "))
+}
+
+/// Preserva e restaura as preferências de idioma tocadas pelo teste.
+@MainActor
+private func withLanguagePreferences(_ body: (UserDefaults) -> Void) {
+    let defaults = UserDefaults.standard
+    let keys = [UAPPLocalizationPreferences.storageKey, UAPPLocalizationPreferences.presentationStorageKey]
+    let previous = keys.map { defaults.object(forKey: $0) }
+    defer {
+        for (key, value) in zip(keys, previous) {
+            if let value { defaults.set(value, forKey: key) } else { defaults.removeObject(forKey: key) }
+        }
+    }
+    body(defaults)
+}
+
+@Test("preferência do hospedeiro normaliza valor salvo, aceita inicial e usa padrão")
+@MainActor
+func hostPreferenceIsNormalized() {
+    withLanguagePreferences { defaults in
+        let key = UAPPLocalizationPreferences.storageKey
+        #expect(UAPPLocalizationPreferences.ensureStored(initialIdentifier: "es_MX") == "es")
+        #expect(defaults.string(forKey: key) == "es")
+        defaults.set("en_US", forKey: key)
+        #expect(UAPPLocalizationPreferences.ensureStored() == "en")
+        #expect(defaults.string(forKey: key) == "en")
+        #expect(UAPPLocalizationPreferences.ensureStored() == "en")
+        defaults.set("xx", forKey: key)
+        #expect(UAPPLocalizationPreferences.ensureStored(initialIdentifier: "xx") == UAPPLocalizationPreferences.defaultIdentifier)
+        defaults.removeObject(forKey: key)
+        #expect(UAPPLocalizationPreferences.hostIdentifier == UAPPLocalizationPreferences.defaultIdentifier)
+        #expect(UAPPLocalizationPreferences.select(identifier: "xx") == UAPPLocalizationPreferences.fallbackIdentifier)
+        #expect(UAPPLocalizationPreferences.matchingIdentifier(for: "") == nil)
+        #expect(UAPPLocalizationPreferences.matchingIdentifier(for: "fr_CA") == "fr")
+    }
+}
+
+@Test("lista e menu de idiomas constroem as opções")
+@MainActor
+func languageOptionsRender() async {
+    await render(UAPPLanguageOptions(accentColor: .purple, isPresented: .constant(true)))
+    await render(NavigationStack {
+        Text("Tela").toolbar { ToolbarItem { UAPPLanguageMenu(accentOverride: .orange) } }
+    })
+}
+
+private struct OnChangeProbe: View {
+    let legacy: Bool
+    let action: (Int) -> Void
+    @State private var value = 1
+
+    var body: some View {
+        Group {
+            if legacy {
+                Text("Valor").modifier(UAPPOnChangeModifier(value: value, action: action))
+            } else {
+                Text("Valor").uappOnChange(of: value, perform: action)
+            }
+        }
+        .task {
+            await Task.yield()
+            value = 2
+        }
+    }
+}
+
+@Test("observador de mudanças ignora o valor inicial e notifica alterações")
+@MainActor
+func onChangeModifierNotifiesChanges() async {
+    for legacy in [true, false] {
+        var received: [Int] = []
+        await render(OnChangeProbe(legacy: legacy) { received.append($0) }, settling: true)
+        #expect(received == [2])
+    }
 }

@@ -86,11 +86,11 @@ func changelogTranslationSurvivesNavigationAndReuse() async throws {
     let entry = UAPPChangelogEntry(title: "2.0", slug: "2", bodyMarkdown: original, version: "2.0")
     let cache = UAPPReviewTranslationCache()
     let client = makeClient { _ in response(#"{"ok":true,"items":[]}"#) }
-    let screen = UAPPFeedbackScreen(
+    await renderInNavigationStack(UAPPFeedbackScreen(
         client: client, mode: .changelog, testingIsLoading: false, changelog: [entry],
         testingChangelogTranslationCache: cache
-    )
-    let detail = screen.changelogDetailScreen(for: entry)
+    ))
+    let detail = UAPPFeedbackScreen.changelogDetailScreen(for: entry, accentColor: .blue, translationCache: cache)
     #expect(detail.translationCache === cache)
     #expect(detail.entry == entry)
     let model = cache.model(for: original, targetIdentifier: "en")
@@ -104,7 +104,9 @@ func changelogTranslationSurvivesNavigationAndReuse() async throws {
     for _ in 0 ..< 3 {
         let recreated = UAPPChangelogCard(entry: entry, configuration: .init(), translationCache: cache)
         await render(recreated.environment(\.uappChangelogImageFixture, .success))
-        let reusedCache = try #require(screen.changelogDetailScreen(for: entry).translationCache)
+        let reusedCache = try #require(UAPPFeedbackScreen.changelogDetailScreen(
+            for: entry, accentColor: .blue, translationCache: cache
+        ).translationCache)
         let reusedModel = reusedCache.model(for: original, targetIdentifier: "en")
         await reusedModel.translate { _ in
             calls += 1

@@ -34,7 +34,7 @@ func feedbackCommentsRejectInvalidTimestamp() async {
     let client = makeClient { _ in
         response(#"{"comments":[{"id":"comment","body":"Publicado","parentCommentId":null,"likeCount":0,"createdAt":"invalid","authorKind":"team","viewerLiked":false}],"nextCursor":null}"#)
     }
-    await #expect(throws: DecodingError.self) { try await client.allComments(itemId: "item") }
+    await #expect(throws: UAPPKitError.invalidResponse) { try await client.allComments(itemId: "item") }
 }
 
 @Test("Atualização carrega a última página de comentários publicados")

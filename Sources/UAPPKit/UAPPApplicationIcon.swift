@@ -64,17 +64,20 @@ struct UAPPApplicationIcon: View {
     }
 
     #if canImport(UIKit)
-    private static func loadUIKitImage() -> UIImage? {
-        let bundle = Bundle.main
-        for name in iconNames(from: bundle) {
+    static func loadUIKitImage(from bundle: Bundle = .main) -> UIImage? {
+        let names = iconNames(from: bundle)
+        // Sem catálogo nem ícones declarados (ex.: runner de testes), não consulta o CoreUI.
+        let hasAssetCatalog = bundle.url(forResource: "Assets", withExtension: "car") != nil
+        guard hasAssetCatalog || !names.isEmpty else { return nil }
+        for name in names {
             if let image = UIImage(named: name, in: bundle, compatibleWith: nil) {
                 return image
             }
         }
-        return UIImage(named: "AppIcon", in: bundle, compatibleWith: nil)
+        return hasAssetCatalog ? UIImage(named: "AppIcon", in: bundle, compatibleWith: nil) : nil
     }
 
-    private static func iconNames(from bundle: Bundle) -> [String] {
+    static func iconNames(from bundle: Bundle) -> [String] {
         var names: [String] = []
         for key in ["CFBundleIcons", "CFBundleIcons~ipad"] {
             guard let icons = bundle.object(forInfoDictionaryKey: key) as? [String: Any],

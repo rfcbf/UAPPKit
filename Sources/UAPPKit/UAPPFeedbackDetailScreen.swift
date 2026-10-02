@@ -42,7 +42,8 @@ struct UAPPFeedbackDetailScreen: View {
 
     init(client: UAPPClient, item: UAPPFeedbackItem, testingComments comments: [UAPPComment],
          isLoading: Bool, isSending: Bool = false, pendingReaction: UAPPReactionKind? = nil,
-         message: String? = nil, commentBody: String = "") {
+         message: String? = nil, commentBody: String = "", isAvailable: Bool = true,
+         replyingTo: UAPPComment? = nil, commentsError: String? = nil) {
         self.client = client
         _participation = StateObject(wrappedValue: UAPPParticipationModel(client: client))
         _item = State(initialValue: item)
@@ -52,6 +53,9 @@ struct UAPPFeedbackDetailScreen: View {
         _pendingReaction = State(initialValue: pendingReaction)
         _message = State(initialValue: message)
         _commentBody = State(initialValue: commentBody)
+        _isAvailable = State(initialValue: isAvailable)
+        _replyingTo = State(initialValue: replyingTo)
+        _commentsError = State(initialValue: commentsError)
     }
 
     private var palette: UAPPResolvedPalette { theme.resolved(for: colorScheme) }

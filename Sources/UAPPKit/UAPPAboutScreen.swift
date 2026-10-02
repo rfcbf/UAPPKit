@@ -186,28 +186,36 @@ public struct UAPPAboutScreen: View {
         isOpeningAppStoreReview = true
         Task { @MainActor in
             defer { isOpeningAppStoreReview = false }
-            do {
-                let destination: URL
-                if let appStoreReviewURL {
-                    destination = appStoreReviewURL
-                } else {
-                    guard let client else { return }
-                    guard let loadedDestination = try await client.appStoreReviewDestination() else {
-                        appStoreReviewError = UAPPKitError.appStoreURLUnavailable.localizedDescription
-                        return
-                    }
-                    appStoreReviewURL = loadedDestination
-                    destination = loadedDestination
-                }
+            let result = await Self.openAppStoreReview(cachedURL: appStoreReviewURL, client: client)
+            appStoreReviewURL = result.url
+            appStoreReviewError = result.error
+        }
+    }
 
-                guard await uappOpenExternalURLAndReportSuccess(destination) else {
-                    appStoreReviewError = UAPPKitError.appStoreURLCouldNotOpen.localizedDescription
-                    return
+    /// Abre a avaliação usando o destino já carregado ou consultando o projeto.
+    /// Devolve o destino a manter em cache e a mensagem de erro, quando houver.
+    static func openAppStoreReview(
+        cachedURL: URL?,
+        client: UAPPClient?,
+        opener: UAPPURLOpener = uappSystemOpenURL
+    ) async -> (url: URL?, error: String?) {
+        do {
+            let destination: URL
+            if let cachedURL {
+                destination = cachedURL
+            } else {
+                guard let client else { return (nil, nil) }
+                guard let loaded = try await client.appStoreReviewDestination() else {
+                    return (nil, UAPPKitError.appStoreURLUnavailable.localizedDescription)
                 }
-            } catch {
-                appStoreReviewURL = nil
-                appStoreReviewError = error.localizedDescription
+                destination = loaded
             }
+            guard await uappOpenExternalURLAndReportSuccess(destination, opener: opener) else {
+                return (destination, UAPPKitError.appStoreURLCouldNotOpen.localizedDescription)
+            }
+            return (destination, nil)
+        } catch {
+            return (nil, error.localizedDescription)
         }
     }
 
