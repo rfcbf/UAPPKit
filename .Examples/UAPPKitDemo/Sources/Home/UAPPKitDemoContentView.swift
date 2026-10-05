@@ -137,6 +137,9 @@ struct ContentView: View {
               proxy.size.width > proxy.size.height
         else { return false }
 
+        // As APIs de regiões reservadas e `ArrangementView` só existem no SDK
+        // do iOS 27 (Swift 6.4+); em toolchains anteriores não compilam.
+        #if compiler(>=6.4)
         if #available(iOS 27.1, *) {
             let division = proxy
                 .reservedRegions(kind: .division, options: .includeInactive)
@@ -150,12 +153,14 @@ struct ContentView: View {
                 ?? proxy.size.width / 2
             return min(leftWidth, rightWidth) >= 280
         }
+        #endif
 
         return proxy.size.width >= 640
     }
 
     @ViewBuilder
     private var twoPanelContent: some View {
+        #if compiler(>=6.4)
         if #available(iOS 27.1, *) {
             ArrangementView {
                 homeForm
@@ -164,13 +169,20 @@ struct ContentView: View {
             }
             .arrangementViewStyle(.split.axes(.horizontal))
         } else {
-            HStack(spacing: 0) {
-                homeForm
-                    .frame(maxWidth: .infinity)
-                Divider()
-                screensForm
-                    .frame(maxWidth: .infinity)
-            }
+            sideBySidePanels
+        }
+        #else
+        sideBySidePanels
+        #endif
+    }
+
+    private var sideBySidePanels: some View {
+        HStack(spacing: 0) {
+            homeForm
+                .frame(maxWidth: .infinity)
+            Divider()
+            screensForm
+                .frame(maxWidth: .infinity)
         }
     }
 }

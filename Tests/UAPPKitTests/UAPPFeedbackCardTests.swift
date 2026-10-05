@@ -29,7 +29,7 @@ func feedbackCardRendersBothLayouts() async {
 @MainActor
 @Test("badge de tipo usa ícone próprio por categoria e renderiza sem tipo")
 func feedbackCategoryBadgeSymbols() async {
-    let categories: [UAPPFeedbackCategory?] = UAPPFeedbackCategory.allCases.map { $0 } + [nil]
+    let categories: [UAPPFeedbackCategory?] = UAPPFeedbackCategory.allCases.map(\.self) + [nil]
     let symbols = Set(categories.map(UAPPFeedbackCategoryBadge.symbol(for:)))
     #expect(symbols.count == categories.count)
     #expect(UAPPFeedbackCategoryBadge.symbol(for: .bug) == "ladybug.fill")

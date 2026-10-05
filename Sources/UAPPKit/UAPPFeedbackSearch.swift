@@ -3,7 +3,9 @@ import Foundation
 enum UAPPFeedbackSort: String, CaseIterable {
     case newest, votes, comments
 
-    var titleKey: String { "feedback.sort.\(rawValue)" }
+    var titleKey: String {
+        "feedback.sort.\(rawValue)"
+    }
 }
 
 enum UAPPFeedbackSearch {

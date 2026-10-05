@@ -19,9 +19,11 @@ struct UAPPKeychainSessionStorage: UAPPSessionStorage {
     let account: String
     var keychain = UAPPKeychain()
     private var query: [String: Any] {
-        [kSecClass as String: kSecClassGenericPassword,
-         kSecAttrService as String: (Bundle.main.bundleIdentifier ?? "UAPPKit") + ".authentication",
-         kSecAttrAccount as String: account]
+        [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: (Bundle.main.bundleIdentifier ?? "UAPPKit") + ".authentication",
+            kSecAttrAccount as String: account
+        ]
     }
 
     static func account(host: URL, projectId: String? = nil) -> String {
@@ -35,7 +37,9 @@ struct UAPPKeychainSessionStorage: UAPPSessionStorage {
         attributes[kSecMatchLimit as String] = kSecMatchLimitOne
         var result: CFTypeRef?
         let status = keychain.copyMatching(attributes as CFDictionary, &result)
-        if status == errSecItemNotFound { return nil }
+        if status == errSecItemNotFound {
+            return nil
+        }
         guard status == errSecSuccess else { throw StorageError(status: status) }
         return result as? Data
     }
@@ -64,7 +68,10 @@ struct UAPPKeychainSessionStorage: UAPPSessionStorage {
 
 /// Sem persistência, para provedores temporários e testes determinísticos.
 struct UAPPTransientSessionStorage: UAPPSessionStorage {
-    func read() throws -> Data? { nil }
+    func read() throws -> Data? {
+        nil
+    }
+
     func save(_: Data) throws {}
     func remove() throws {}
 }

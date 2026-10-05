@@ -23,9 +23,13 @@ public actor UAPPClient {
             let value = try container.decode(String.self)
             let formatter = ISO8601DateFormatter()
             formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-            if let date = formatter.date(from: value) { return date }
+            if let date = formatter.date(from: value) {
+                return date
+            }
             formatter.formatOptions = [.withInternetDateTime]
-            if let date = formatter.date(from: value) { return date }
+            if let date = formatter.date(from: value) {
+                return date
+            }
             throw DecodingError.dataCorruptedError(
                 in: container, debugDescription: "Data ISO 8601 inválida: \(value)"
             )
@@ -98,12 +102,16 @@ public actor UAPPClient {
     // MARK: - Leitura
 
     func feedbackLiveConfiguration(itemId: String? = nil) async throws -> UAPPFeedbackLiveConfiguration {
-        if let itemId, UUID(uuidString: itemId) == nil { throw UAPPKitError.invalidResponse }
+        if let itemId, UUID(uuidString: itemId) == nil {
+            throw UAPPKitError.invalidResponse
+        }
         var components = URLComponents(
             url: configuration.functionsBaseURL.appendingPathComponent("public-feedback-live"), resolvingAgainstBaseURL: false
         )
         components?.queryItems = [URLQueryItem(name: "slug", value: configuration.projectId)]
-        if let itemId { components?.queryItems?.append(URLQueryItem(name: "itemId", value: itemId)) }
+        if let itemId {
+            components?.queryItems?.append(URLQueryItem(name: "itemId", value: itemId))
+        }
         guard let url = components?.url else { throw UAPPKitError.invalidResponse }
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
@@ -120,7 +128,8 @@ public actor UAPPClient {
               live.websocketURL.user == nil, live.websocketURL.password == nil,
               !live.apiKey.isEmpty,
               live.topic == (itemId.map { "uapp-feedback:\($0.lowercased())" }
-                            ?? "uapp-feedback-app:\(configuration.projectId)") else {
+                  ?? "uapp-feedback-app:\(configuration.projectId)")
+        else {
             throw UAPPKitError.invalidResponse
         }
         return live
@@ -137,7 +146,9 @@ public actor UAPPClient {
             resolvingAgainstBaseURL: false
         )
         var query = [URLQueryItem(name: "limit", value: String(max(1, min(50, limit))))]
-        if let cursor { query.append(URLQueryItem(name: "cursor", value: cursor)) }
+        if let cursor {
+            query.append(URLQueryItem(name: "cursor", value: cursor))
+        }
         components?.queryItems = query
         guard let url = components?.url else { throw UAPPKitError.invalidResponse }
         var request = URLRequest(url: url)
@@ -167,7 +178,9 @@ public actor UAPPClient {
     }
 
     private func publicProfile(feedbackId: String?, cursor: String?, statusId: String?) async throws -> UAPPPublicAuthorProfile {
-        if let statusId, UUID(uuidString: statusId) == nil { throw UAPPKitError.invalidResponse }
+        if let statusId, UUID(uuidString: statusId) == nil {
+            throw UAPPKitError.invalidResponse
+        }
         var components = URLComponents(
             url: configuration.functionsBaseURL.appendingPathComponent("public-author-profile"),
             resolvingAgainstBaseURL: false
@@ -178,8 +191,12 @@ public actor UAPPClient {
         } else {
             components?.queryItems?.append(URLQueryItem(name: "viewer", value: "installation"))
         }
-        if let cursor { components?.queryItems?.append(URLQueryItem(name: "cursor", value: cursor)) }
-        if let statusId { components?.queryItems?.append(URLQueryItem(name: "statusId", value: statusId)) }
+        if let cursor {
+            components?.queryItems?.append(URLQueryItem(name: "cursor", value: cursor))
+        }
+        if let statusId {
+            components?.queryItems?.append(URLQueryItem(name: "statusId", value: statusId))
+        }
         guard let url = components?.url else { throw UAPPKitError.invalidResponse }
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
@@ -328,8 +345,13 @@ public actor UAPPClient {
         imageData: Data?
     ) async throws -> String? {
         let imagePayload = try Self.feedbackImagePayload(imageData)
-        return try await submitFeedbackWithImages(title: title, body: body, category: category,
-                                                 images: imagePayload.map { [$0] } ?? [], legacy: true)
+        return try await submitFeedbackWithImages(
+            title: title,
+            body: body,
+            category: category,
+            images: imagePayload.map { [$0] } ?? [],
+            legacy: true
+        )
     }
 
     /// Envia até duas imagens compactadas, de no máximo 512 KiB cada.
@@ -360,8 +382,12 @@ public actor UAPPClient {
             payload["body"] = body
         }
         if legacy {
-            if let image = images.first { payload["image"] = image }
-        } else if !images.isEmpty { payload["images"] = images }
+            if let image = images.first {
+                payload["image"] = image
+            }
+        } else if !images.isEmpty {
+            payload["images"] = images
+        }
         if let profile {
             if let email = profile.email {
                 payload["email"] = email
@@ -444,8 +470,13 @@ public actor UAPPClient {
         imageData: Data?
     ) async throws -> String? {
         let imagePayload = try Self.feedbackImagePayload(imageData)
-        return try await submitCommentWithImages(itemId: itemId, body: body, parentCommentId: parentCommentId,
-                                                images: imagePayload.map { [$0] } ?? [], legacy: true)
+        return try await submitCommentWithImages(
+            itemId: itemId,
+            body: body,
+            parentCommentId: parentCommentId,
+            images: imagePayload.map { [$0] } ?? [],
+            legacy: true
+        )
     }
 
     /// Envia até duas imagens compactadas, de no máximo 512 KiB cada.
@@ -477,8 +508,12 @@ public actor UAPPClient {
             payload["parentCommentId"] = parentCommentId
         }
         if legacy {
-            if let image = images.first { payload["image"] = image }
-        } else if !images.isEmpty { payload["images"] = images }
+            if let image = images.first {
+                payload["image"] = image
+            }
+        } else if !images.isEmpty {
+            payload["images"] = images
+        }
         if let name = profile?.displayName {
             payload["displayName"] = name
         }

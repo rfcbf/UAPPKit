@@ -106,7 +106,11 @@ private func withLanguagePreferences(_ body: (UserDefaults) -> Void) {
     let previous = keys.map { defaults.object(forKey: $0) }
     defer {
         for (key, value) in zip(keys, previous) {
-            if let value { defaults.set(value, forKey: key) } else { defaults.removeObject(forKey: key) }
+            if let value {
+                defaults.set(value, forKey: key)
+            } else {
+                defaults.removeObject(forKey: key)
+            }
         }
     }
     body(defaults)

@@ -16,11 +16,15 @@ private final class FakeWebSession: UAPPWebAuthenticationSession, @unchecked Sen
     }
 
     func start() -> Bool {
-        if let reply { completion(reply.0, reply.1) }
+        if let reply {
+            completion(reply.0, reply.1)
+        }
         return startsSuccessfully
     }
 
-    func cancel() { cancelled = true }
+    func cancel() {
+        cancelled = true
+    }
 }
 
 @MainActor
@@ -68,7 +72,9 @@ struct UAPPOAuthBrowserTests {
         var session: FakeWebSession?
         let oauth = browser(reply: nil) { session = $0 }
         let task = Task { try await oauth.open(login, callback: callback) }
-        while session == nil { await Task.yield() }
+        while session == nil {
+            await Task.yield()
+        }
         task.cancel()
         await #expect(throws: UAPPAuthenticationError.cancelled) { try await task.value }
         #expect(session?.cancelled == true)

@@ -18,7 +18,10 @@ final class UAPPUserModel: ObservableObject {
     private let usesInstallationProfile: Bool
     private let client: UAPPClient?
     private var isReconciling = false
-    var profileClient: UAPPClient? { client }
+    var profileClient: UAPPClient? {
+        client
+    }
+
     private let authentication: (any UAPPAuthenticationProvider)?
     private let onSessionChange: @MainActor (UAPPAuthenticationSession?) -> Void
 
@@ -50,7 +53,9 @@ final class UAPPUserModel: ObservableObject {
             do { try await Task.sleep(for: .milliseconds(50)) } catch { return }
         }
         guard !isLoadingActivity, client != nil, publicFeedbackId != nil || usesInstallationProfile else { return }
-        if loadMore && publicProfile?.nextCursor == nil { return }
+        if loadMore, publicProfile?.nextCursor == nil {
+            return
+        }
         isLoadingActivity = true
         activityErrorKey = nil
         defer { isLoadingActivity = false }
@@ -97,13 +102,16 @@ final class UAPPUserModel: ObservableObject {
             activityErrorKey = "user.activity_unavailable"
             return
         }
-        if loadMore && activity?.nextCursor == nil { return }
+        if loadMore, activity?.nextCursor == nil {
+            return
+        }
         isLoadingActivity = true
         activityErrorKey = nil
         defer { isLoadingActivity = false }
         do {
             guard let current = try await authentication.currentSession(),
-                  current.identity.userId == session?.identity.userId else {
+                  current.identity.userId == session?.identity.userId
+            else {
                 throw UAPPAuthenticationError.signInRequired
             }
             let page = try await client.userActivity(session: current, cursor: loadMore ? activity?.nextCursor : nil)
@@ -155,7 +163,9 @@ final class UAPPUserModel: ObservableObject {
                     cursor = page.nextCursor
                 } while refreshed.count < targetCount && cursor.map({ visited.insert($0).inserted }) == true
                 try Task.checkCancellation()
-                guard session?.identity.userId == current.identity.userId else { return }
+                guard session?.identity.userId == current.identity.userId else {
+                    return
+                }
                 history = refreshed
                 activity = lastPage
             }
@@ -177,8 +187,13 @@ final class UAPPUserModel: ObservableObject {
         }
     }
 
-    var supportsProfilePhoto: Bool { session != nil && authentication?.supportsProfilePhoto == true }
-    var avatarURL: URL? { session?.identity.avatarURL }
+    var supportsProfilePhoto: Bool {
+        session != nil && authentication?.supportsProfilePhoto == true
+    }
+
+    var avatarURL: URL? {
+        session?.identity.avatarURL
+    }
 
     /// Envia a nova foto e substitui a sessão; em caso de falha, mantém a última foto definida.
     func updateProfilePhoto(_ data: Data) async {

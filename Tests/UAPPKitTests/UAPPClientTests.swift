@@ -37,8 +37,12 @@ func clientFeedbackIncludesLocalProfilePhoto() async throws {
     defer { try? FileManager.default.removeItem(at: url) }
     let recorder = RequestRecorder()
     let client = makeClient(recorder: recorder) { _ in response(#"{"ok":true,"id":"feedback"}"#) }
-    await client.setIdentity(UAPPIdentity(userId: "profile", email: "visitor@example.test",
-                                         displayName: "Visitante", avatarURL: url))
+    await client.setIdentity(UAPPIdentity(
+        userId: "profile",
+        email: "visitor@example.test",
+        displayName: "Visitante",
+        avatarURL: url
+    ))
     _ = try await client.submitFeedback(title: "Novo feedback")
     let request = try #require(recorder.requests.first)
     let body = try #require(request.httpBody)

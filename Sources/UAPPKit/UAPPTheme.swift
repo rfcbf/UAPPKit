@@ -125,7 +125,13 @@ struct UAPPNavigationBarModifier: ViewModifier {
             .toolbar {
                 if showsCloseButton {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button(action: { if let onClose { onClose() } else { dismiss() } }) {
+                        Button(action: {
+                            if let onClose {
+                                onClose()
+                            } else {
+                                dismiss()
+                            }
+                        }) {
                             Image(systemName: "xmark")
                                 .foregroundStyle(accentColor)
                         }

@@ -49,7 +49,9 @@ public struct UAPPFeedbackItem: Identifiable, Sendable, Equatable, Codable {
     public let voters: [UAPPFeedbackVoter]?
     public let imageURL: URL?
     public let imageURLs: [URL]?
-    public var attachmentURLs: [URL] { imageURLs ?? imageURL.map { [$0] } ?? [] }
+    public var attachmentURLs: [URL] {
+        imageURLs ?? imageURL.map { [$0] } ?? []
+    }
 
     public init(
         id: String,
@@ -163,14 +165,22 @@ public struct UAPPComment: Identifiable, Sendable, Equatable, Codable {
     public let authorKind: AuthorKind
     public let viewerLiked: Bool
     /// Votos no comentário; os campos antigos permanecem no contrato de transporte.
-    public var voteCount: Int { likeCount }
-    public var viewerVoted: Bool { viewerLiked }
+    public var voteCount: Int {
+        likeCount
+    }
+
+    public var viewerVoted: Bool {
+        viewerLiked
+    }
+
     public let authorName: String?
     public let authorAvatarURL: URL?
     public let imageURL: URL?
     public let imageURLs: [URL]?
     public let viewerOwned: Bool?
-    public var attachmentURLs: [URL] { imageURLs ?? imageURL.map { [$0] } ?? [] }
+    public var attachmentURLs: [URL] {
+        imageURLs ?? imageURL.map { [$0] } ?? []
+    }
 
     public init(
         id: String, body: String, parentCommentId: String? = nil,
@@ -208,7 +218,9 @@ public struct UAPPComment: Identifiable, Sendable, Equatable, Codable {
 
 extension UAPPComment {
     func avatarURL(viewer: UAPPIdentity?) -> URL? {
-        if viewerOwned == true, let viewer { return viewer.avatarURL }
+        if viewerOwned == true, let viewer {
+            return viewer.avatarURL
+        }
         return authorAvatarURL
     }
 }

@@ -35,18 +35,33 @@ final class UAPPAccountModel: ObservableObject {
         self.onSessionChange = onSessionChange
     }
 
-    var methods: [UAPPLoginMethod] { provider.methods }
-    var supportsProfilePhoto: Bool { provider.supportsProfilePhoto }
-    var isCompletingSignup: Bool { pendingRegistrationSession != nil }
-    var normalizedEmail: String { email.trimmingCharacters(in: .whitespacesAndNewlines) }
+    var methods: [UAPPLoginMethod] {
+        provider.methods
+    }
+
+    var supportsProfilePhoto: Bool {
+        provider.supportsProfilePhoto
+    }
+
+    var isCompletingSignup: Bool {
+        pendingRegistrationSession != nil
+    }
+
+    var normalizedEmail: String {
+        email.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     var validEmail: Bool {
         let parts = normalizedEmail.split(separator: "@", omittingEmptySubsequences: false)
         return parts.count == 2 && !parts[0].isEmpty && parts[1].contains(".")
             && !normalizedEmail.contains(where: \.isWhitespace)
     }
+
     var canSubmit: Bool {
         guard !isBusy else { return false }
-        if isCompletingSignup { return true }
+        if isCompletingSignup {
+            return true
+        }
         switch step {
         case .login: return validEmail && !password.isEmpty
         case .signup:
@@ -57,6 +72,7 @@ final class UAPPAccountModel: ObservableObject {
         case .newPassword: return validNewPassword
         }
     }
+
     private var validNewPassword: Bool {
         password.count >= minimumPasswordLength && password == passwordConfirmation
     }
@@ -75,13 +91,15 @@ final class UAPPAccountModel: ObservableObject {
         await perform(errorKey: "account.operation_error") {
             let current = try await self.provider.currentSession()
             self.session = current
-            if current != nil { self.onSessionChange(current) }
+            if current != nil {
+                self.onSessionChange(current)
+            }
         }
     }
 
     func signIn(_ method: UAPPLoginMethod) async {
         await perform(errorKey: "auth.signin_error") {
-            self.accept(try await self.provider.signIn(method: method))
+            try await self.accept(self.provider.signIn(method: method))
         }
     }
 
@@ -95,7 +113,7 @@ final class UAPPAccountModel: ObservableObject {
             }
             switch submittedStep {
             case .login:
-                self.accept(try await self.provider.signIn(email: self.normalizedEmail, password: self.password))
+                try await self.accept(self.provider.signIn(email: self.normalizedEmail, password: self.password))
             case .signup:
                 let destination = self.normalizedEmail
                 let result = try await self.provider.signUp(
@@ -177,11 +195,10 @@ final class UAPPAccountModel: ObservableObject {
         pendingRegistrationSession = session
         clearSecrets()
         do {
-            let completed: UAPPAuthenticationSession
-            if let photo {
-                completed = try await provider.uploadProfilePhoto(photo)
+            let completed: UAPPAuthenticationSession = if let photo {
+                try await provider.uploadProfilePhoto(photo)
             } else {
-                completed = session
+                session
             }
             pendingRegistrationSession = nil
             photo = nil

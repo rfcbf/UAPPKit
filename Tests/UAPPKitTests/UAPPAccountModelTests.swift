@@ -145,7 +145,7 @@ struct UAPPAccountModelTests {
         #expect(model.photo == nil)
         #expect(model.step == .login)
         #expect(delivered.count == 2)
-        #expect(delivered.last.flatMap { $0 } == nil)
+        #expect(delivered.last.flatMap(\.self) == nil)
     }
 
     @Test("Reenvio de código vale só para confirmação e recuperação")
@@ -201,7 +201,10 @@ actor AccountProviderStub: UAPPAuthenticationProvider {
     private(set) var confirmationAttempts = 0
     private var session: UAPPAuthenticationSession?
     private let result = UAPPAuthenticationSession(identity: .init(userId: "verified"), accessToken: "fake-token")
-    init(failsPhotoOnce: Bool = false) { self.failsPhotoOnce = failsPhotoOnce }
+    init(failsPhotoOnce: Bool = false) {
+        self.failsPhotoOnce = failsPhotoOnce
+    }
+
     func uploadProfilePhoto(_: Data) async throws -> UAPPAuthenticationSession {
         photoAttempts += 1
         if failsPhotoOnce {
@@ -215,25 +218,41 @@ actor AccountProviderStub: UAPPAuthenticationProvider {
         session = updated
         return updated
     }
-    func currentSession() async throws -> UAPPAuthenticationSession? { session }
+
+    func currentSession() async throws -> UAPPAuthenticationSession? {
+        session
+    }
+
     func signIn(method _: UAPPLoginMethod) async throws -> UAPPAuthenticationSession {
         session = result
         return result
     }
+
     func signIn(email _: String, password: String) async throws -> UAPPAuthenticationSession {
         guard password != "wrong" else { throw UAPPAuthenticationError.signInRequired }
         return try await signIn(method: .email)
     }
+
     func signUp(email _: String, password _: String, displayName _: String?) async throws -> UAPPRegistrationResult {
         .confirmationRequired
     }
+
     func resendSignupCode(email _: String) async throws {}
     func verifySignupCode(email _: String, code _: String) async throws -> UAPPAuthenticationSession {
         confirmationAttempts += 1
         return try await signIn(method: .email)
     }
+
     func requestPasswordReset(email _: String) async throws {}
-    func verifyPasswordResetCode(email _: String, code _: String) async throws { session = result }
-    func updatePassword(_: String) async throws -> UAPPAuthenticationSession { result }
-    func signOut() async throws { session = nil }
+    func verifyPasswordResetCode(email _: String, code _: String) async throws {
+        session = result
+    }
+
+    func updatePassword(_: String) async throws -> UAPPAuthenticationSession {
+        result
+    }
+
+    func signOut() async throws {
+        session = nil
+    }
 }

@@ -73,10 +73,18 @@ public struct UAPPAccountScreen: View {
         self.privacyURL = privacyURL
     }
 
-    private var palette: UAPPResolvedPalette { theme.resolved(for: colorScheme) }
-    private var accentColor: Color { palette.accent ?? .accentColor }
+    private var palette: UAPPResolvedPalette {
+        theme.resolved(for: colorScheme)
+    }
+
+    private var accentColor: Color {
+        palette.accent ?? .accentColor
+    }
+
     private func titleKey(for step: UAPPAccountModel.Step) -> String {
-        if model.isCompletingSignup { return "photo.avatar" }
+        if model.isCompletingSignup {
+            return "photo.avatar"
+        }
         switch step {
         case .login: return "account.welcome"
         case .signup: return "account.create"
@@ -86,8 +94,11 @@ public struct UAPPAccountScreen: View {
         case .newPassword: return "account.new_password_title"
         }
     }
+
     private func subtitleKey(for step: UAPPAccountModel.Step) -> String {
-        if model.isCompletingSignup { return "photo.upload_hint" }
+        if model.isCompletingSignup {
+            return "photo.upload_hint"
+        }
         switch step {
         case .login: return "account.welcome_message"
         case .signup: return "account.create_message"
@@ -109,16 +120,16 @@ public struct UAPPAccountScreen: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .background(palette.background.ignoresSafeArea())
                         .uappNavigationBar(verbatimTitle: "", accentColor: accentColor, onClose: {
-                guard !model.isBusy else { return }
-                dismiss()
-            })
+                            guard !model.isBusy else { return }
+                            dismiss()
+                        })
                 }
             }
             .navigationDestination(for: UAPPAccountModel.Step.self) { step in
                 page(isWelcome: false, step: step)
                     .navigationBarBackButtonHidden(true)
                     .toolbar {
-                        if !model.isBusy && step != .newPassword && !model.isCompletingSignup {
+                        if !model.isBusy, step != .newPassword, !model.isCompletingSignup {
                             ToolbarItem(placement: .navigation) {
                                 Button {
                                     guard !path.isEmpty else { return }
@@ -140,14 +151,18 @@ public struct UAPPAccountScreen: View {
             guard !isReady else { return }
             selectedLanguage = UAPPLocalizationPreferences.preparePresentation(initialIdentifier: locale.identifier)
             await model.refresh()
-            if model.session != nil { dismiss(); return }
+            if model.session != nil {
+                dismiss(); return
+            }
             await loadAppIdentity()
             await loadAppIcon()
             guard !Task.isCancelled else { return }
             isReady = true
         }
         .uappOnChange(of: model.session != nil) { connected in
-            if connected { dismiss() }
+            if connected {
+                dismiss()
+            }
         }
         .uappOnChange(of: model.step) { step in
             guard !path.isEmpty, path.last != step else { return }
@@ -155,12 +170,13 @@ public struct UAPPAccountScreen: View {
         }
         .uappOnChange(of: path) { routes in
             let step = routes.last ?? .login
-            if model.step != step { model.navigate(to: step) }
+            if model.step != step {
+                model.navigate(to: step)
+            }
             focusedField = nil
         }
         .onDisappear { Task { await model.cancelRecovery() } }
     }
-
 }
 
 private extension UAPPAccountScreen {
@@ -196,11 +212,15 @@ private extension UAPPAccountScreen {
         }
         .background(palette.background.ignoresSafeArea())
         .foregroundStyle(palette.primaryText)
-        .uappNavigationBar(verbatimTitle: "", accentColor: accentColor,
-                           showsCloseButton: isWelcome || (step != .login && step != .signup && step != .recover), onClose: {
+        .uappNavigationBar(
+            verbatimTitle: "",
+            accentColor: accentColor,
+            showsCloseButton: isWelcome || (step != .login && step != .signup && step != .recover),
+            onClose: {
                 guard !model.isBusy else { return }
                 dismiss()
-            })
+            }
+        )
     }
 
     var welcomeContent: some View {
@@ -244,10 +264,15 @@ private extension UAPPAccountScreen {
     func identityHeader(isWelcome: Bool, step: UAPPAccountModel.Step) -> some View {
         VStack(spacing: 12) {
             if !isWelcome, !model.isCompletingSignup, let symbol = stepSymbol(for: step) {
-                UAPPAccentIconBadge(systemImage: symbol, accent: accentColor, size: 72, cornerRadius: 20,
-                                    font: .title.weight(.semibold))
-                    .id(step)
-                    .transition(.scale(scale: 0.85).combined(with: .opacity))
+                UAPPAccentIconBadge(
+                    systemImage: symbol,
+                    accent: accentColor,
+                    size: 72,
+                    cornerRadius: 20,
+                    font: .title.weight(.semibold)
+                )
+                .id(step)
+                .transition(.scale(scale: 0.85).combined(with: .opacity))
             } else {
                 Group {
                     if let loadedIcon {
@@ -352,10 +377,10 @@ private extension UAPPAccountScreen {
                 primaryButton(for: step)
             }
             .disabled(model.isBusy)
-            if !model.isCompletingSignup && (step == .login || step == .signup) {
+            if !model.isCompletingSignup, step == .login || step == .signup {
                 socialButtons
                 legalLinks
-            } else if !model.isCompletingSignup && step != .newPassword && step != .recover {
+            } else if !model.isCompletingSignup, step != .newPassword, step != .recover {
                 Button(localized("account.back_login")) {
                     focusedField = nil
                     path = [.login]
@@ -394,7 +419,11 @@ private extension UAPPAccountScreen {
                 #endif
                 .submitLabel(model.step == .recover ? .go : .next)
                 .onSubmit {
-                    if model.step == .recover { submit() } else { focusedField = .password }
+                    if model.step == .recover {
+                        submit()
+                    } else {
+                        focusedField = .password
+                    }
                 }
         }
     }
@@ -409,7 +438,11 @@ private extension UAPPAccountScreen {
                 #endif
                 .submitLabel(model.step == .login || isConfirmation ? .go : .next)
                 .onSubmit {
-                    if model.step == .login || isConfirmation { submit() } else { focusedField = .confirmation }
+                    if model.step == .login || isConfirmation {
+                        submit()
+                    } else {
+                        focusedField = .confirmation
+                    }
                 }
         }
     }
@@ -433,11 +466,11 @@ private extension UAPPAccountScreen {
         }
     }
 
-    private func fieldShell<Content: View>(
+    private func fieldShell(
         _ key: String,
         field: Field,
         symbol: String,
-        @ViewBuilder content: () -> Content
+        @ViewBuilder content: () -> some View
     ) -> some View {
         let isFocused = focusedField == field
         return VStack(alignment: .leading, spacing: 8) {
@@ -463,17 +496,16 @@ private extension UAPPAccountScreen {
     }
 
     private func primaryButton(for step: UAPPAccountModel.Step) -> some View {
-        let key: String
-        if model.isCompletingSignup {
-            key = "photo.save"
+        let key = if model.isCompletingSignup {
+            "photo.save"
         } else {
-        switch step {
-        case .login: key = "account.connect"
-        case .signup: key = "account.create"
-        case .confirmSignup, .verifyRecovery: key = "auth.verify"
-        case .recover: key = "account.send_recovery"
-        case .newPassword: key = "account.save_password"
-        }
+            switch step {
+            case .login: "account.connect"
+            case .signup: "account.create"
+            case .confirmSignup, .verifyRecovery: "auth.verify"
+            case .recover: "account.send_recovery"
+            case .newPassword: "account.save_password"
+            }
         }
         return Button(action: submit) {
             UAPPPrimaryButtonLabel(
@@ -491,7 +523,9 @@ private extension UAPPAccountScreen {
     }
 
     private func primarySymbol(for step: UAPPAccountModel.Step) -> String {
-        if model.isCompletingSignup { return "checkmark" }
+        if model.isCompletingSignup {
+            return "checkmark"
+        }
         switch step {
         case .login: return "arrow.right.circle.fill"
         case .signup: return "person.badge.plus"
@@ -520,8 +554,10 @@ private extension UAPPAccountScreen {
                             UAPPLoginServiceIcon(method: method)
                                 .frame(maxWidth: .infinity, minHeight: 56)
                                 .uappCardSurface(palette, cornerRadius: UAPPSurface.largeCornerRadius)
-                                .contentShape(RoundedRectangle(cornerRadius: UAPPSurface.largeCornerRadius,
-                                                               style: .continuous))
+                                .contentShape(RoundedRectangle(
+                                    cornerRadius: UAPPSurface.largeCornerRadius,
+                                    style: .continuous
+                                ))
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel(Text(verbatim: localized("auth.\(method.rawValue)")))
@@ -536,8 +572,12 @@ private extension UAPPAccountScreen {
     private var legalLinks: some View {
         if termsURL != nil || privacyURL != nil {
             VStack(spacing: 8) {
-                if let termsURL { Link(localized("about.terms"), destination: termsURL).frame(minHeight: 32) }
-                if let privacyURL { Link(localized("about.privacy"), destination: privacyURL).frame(minHeight: 32) }
+                if let termsURL {
+                    Link(localized("about.terms"), destination: termsURL).frame(minHeight: 32)
+                }
+                if let privacyURL {
+                    Link(localized("about.privacy"), destination: privacyURL).frame(minHeight: 32)
+                }
             }
             .font(.footnote.weight(.medium))
         }

@@ -109,8 +109,13 @@ struct UAPPAppleTranslatedBio: View {
     @State private var translatedText: String?
     @State private var isTranslating: Bool
 
-    init(text: String, sourceIdentifier: String, targetIdentifier: String,
-         translatedText: String? = nil, isTranslating: Bool = false) {
+    init(
+        text: String,
+        sourceIdentifier: String,
+        targetIdentifier: String,
+        translatedText: String? = nil,
+        isTranslating: Bool = false
+    ) {
         self.text = text
         self.sourceIdentifier = sourceIdentifier
         self.targetIdentifier = targetIdentifier

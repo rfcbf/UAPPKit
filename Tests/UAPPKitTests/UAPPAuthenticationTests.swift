@@ -31,10 +31,16 @@ func profilePhotoUpload() async throws {
             #expect(avatar.hasPrefix("https://example.test/storage/v1/object/public/avatars/verified/"))
             #expect(payload["data"]?["uapp_avatar_url"] == avatar)
             // O provedor social pode manter a própria foto em `avatar_url`; a escolhida prevalece.
-            let user: [String: Any] = ["id": "verified", "email": "person@example.test",
-                                      "user_metadata": ["full_name": "Pessoa", "avatar_url": "https://example.test/social.png",
-                                                        "uapp_avatar_url": avatar]]
-            return (200, try JSONSerialization.data(withJSONObject: user))
+            let user: [String: Any] = [
+                "id": "verified",
+                "email": "person@example.test",
+                "user_metadata": [
+                    "full_name": "Pessoa",
+                    "avatar_url": "https://example.test/social.png",
+                    "uapp_avatar_url": avatar
+                ]
+            ]
+            return try (200, JSONSerialization.data(withJSONObject: user))
         }
         return response(sessionJSON)
     })
@@ -65,8 +71,12 @@ func profilePhotoFailure() async throws {
     let recorder = RequestRecorder()
     let auth = UAPPAuthentication(configuration: authConfiguration(), transport: StubTransport { request in
         recorder.record(request)
-        if request.url?.lastPathComponent == "user" { return response(400, "{}") }
-        if request.url?.path.contains("/storage/") == true { return response("{}") }
+        if request.url?.lastPathComponent == "user" {
+            return response(400, "{}")
+        }
+        if request.url?.path.contains("/storage/") == true {
+            return response("{}")
+        }
         return response(sessionJSON)
     })
     let initial = try await auth.verifySignupCode(email: "person@example.test", code: "123456")
@@ -104,7 +114,7 @@ func registrationResponse(_ confirmed: Bool) async throws {
     let result = try await auth.signUp(email: "person@example.test", password: "test-password")
     if confirmed {
         let current = try await auth.currentSession()
-        #expect(result == .signedIn(try #require(current)))
+        #expect(try result == .signedIn(#require(current)))
     } else {
         #expect(result == .confirmationRequired)
         #expect(try await auth.currentSession() == nil)

@@ -239,7 +239,11 @@ struct UAPPLanguageMenu: View {
 extension View {
     @ViewBuilder
     func uappCompactPopover() -> some View {
-        if #available(iOS 16.4, macOS 13.3, *) { presentationCompactAdaptation(.popover) } else { self }
+        if #available(iOS 16.4, macOS 13.3, *) {
+            presentationCompactAdaptation(.popover)
+        } else {
+            self
+        }
     }
 }
 

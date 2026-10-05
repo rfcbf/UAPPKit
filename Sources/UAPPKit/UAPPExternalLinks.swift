@@ -22,7 +22,9 @@ func uappOpenExternalURLAndReportSuccess(
     _ url: URL,
     opener: UAPPURLOpener = uappSystemOpenURL
 ) async -> Bool {
-    if await opener(url) { return true }
+    if await opener(url) {
+        return true
+    }
     guard let fallbackURL = uappAppStoreWebFallback(for: url) else { return false }
     return await opener(fallbackURL)
 }

@@ -57,7 +57,9 @@ public final class UAPPOAuthBrowser: NSObject, ASWebAuthenticationPresentationCo
 
     /// Converte o retorno do sistema em callback, cancelamento ou callback inválido.
     nonisolated static func result(url: URL?, error: (any Error)?) -> Result<URL, Error> {
-        if let url { return .success(url) }
+        if let url {
+            return .success(url)
+        }
         if let error = error as? ASWebAuthenticationSessionError, error.code == .canceledLogin {
             return .failure(UAPPAuthenticationError.cancelled)
         }

@@ -34,7 +34,7 @@ struct UAPPFeedbackControls: View {
                 Menu {
                     Picker(selection: $category) {
                         Text(verbatim: uappLocalized("feedback.filter.all_categories"))
-                            .tag(Optional<UAPPFeedbackCategory>.none)
+                            .tag(UAPPFeedbackCategory?.none)
                         ForEach(UAPPFeedbackCategory.allCases, id: \.self) { category in
                             Text(verbatim: uappLocalized("category.\(category.rawValue)"))
                                 .tag(Optional(category))
@@ -77,7 +77,7 @@ struct UAPPFeedbackControls: View {
                 Text(verbatim: [
                     category.map { uappLocalized("category.\($0.rawValue)") },
                     statuses.first { $0.id == statusId }.map { uappFeedbackStatusTitle($0) }
-                ].compactMap { $0 }.joined(separator: " · "))
+                ].compactMap(\.self).joined(separator: " · "))
                     .font(.caption)
                     .foregroundStyle(palette.secondaryText)
             }
@@ -162,7 +162,11 @@ struct UAPPFeedbackItemNavigation: ViewModifier {
         content
             .navigationDestination(isPresented: Binding(
                 get: { selectedFeedback != nil },
-                set: { if !$0 { selectedFeedback = nil } }
+                set: {
+                    if !$0 {
+                        selectedFeedback = nil
+                    }
+                }
             )) {
                 if let selectedFeedback {
                     UAPPFeedbackDetailScreen(
@@ -174,7 +178,11 @@ struct UAPPFeedbackItemNavigation: ViewModifier {
             }
             .alert(uappLocalized("detail.reaction_error"), isPresented: Binding(
                 get: { reactionError != nil },
-                set: { if !$0 { reactionError = nil } }
+                set: {
+                    if !$0 {
+                        reactionError = nil
+                    }
+                }
             )) {
                 Button("OK", role: .cancel) { reactionError = nil }
             }
@@ -184,8 +192,8 @@ struct UAPPFeedbackItemNavigation: ViewModifier {
                     displayName: author.authorName ?? uappLocalized("comments.community"),
                     avatarURL: author.authorAvatarURL
                 ), theme: theme, client: client, feedbackId: author.id)
-                .environment(\.locale, Locale(identifier: selectedLanguage))
-                .uappPresentationBackground(theme.resolved(for: colorScheme).background)
+                    .environment(\.locale, Locale(identifier: selectedLanguage))
+                    .uappPresentationBackground(theme.resolved(for: colorScheme).background)
             }
     }
 }
@@ -230,7 +238,6 @@ struct UAPPFeedbackLoadFailure: Equatable {
 struct UAPPFeedbackListSpacing: ViewModifier {
     let enabled: Bool
 
-    @ViewBuilder
     func body(content: Content) -> some View {
         if enabled {
             if #available(iOS 17, macOS 14, *) {

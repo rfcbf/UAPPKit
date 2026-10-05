@@ -165,8 +165,10 @@ struct UAPPSecondaryButtonLabel: View {
         .frame(maxWidth: expands ? .infinity : nil, minHeight: minHeight)
         .background(
             accent.opacity(UAPPSurface.selectionFillOpacity(colorScheme)),
-            in: RoundedRectangle(cornerRadius: expands ? UAPPSurface.largeCornerRadius : UAPPSurface.cornerRadius,
-                                 style: .continuous)
+            in: RoundedRectangle(
+                cornerRadius: expands ? UAPPSurface.largeCornerRadius : UAPPSurface.cornerRadius,
+                style: .continuous
+            )
         )
         .contentShape(RoundedRectangle(cornerRadius: UAPPSurface.largeCornerRadius, style: .continuous))
     }

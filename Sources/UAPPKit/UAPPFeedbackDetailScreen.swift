@@ -30,8 +30,13 @@ struct UAPPFeedbackDetailScreen: View {
     @StateObject private var participation: UAPPParticipationModel
     @FocusState private var focusesComment: Bool
 
-    init(client: UAPPClient, item: UAPPFeedbackItem, accentColor: Color? = nil,
-         status: UAPPRoadmapColumn.Status? = nil, onUpdate: @escaping (UAPPFeedbackItem) -> Void = { _ in }) {
+    init(
+        client: UAPPClient,
+        item: UAPPFeedbackItem,
+        accentColor: Color? = nil,
+        status: UAPPRoadmapColumn.Status? = nil,
+        onUpdate: @escaping (UAPPFeedbackItem) -> Void = { _ in }
+    ) {
         self.client = client
         self.accentColor = accentColor
         self.onUpdate = onUpdate
@@ -40,10 +45,19 @@ struct UAPPFeedbackDetailScreen: View {
         _status = State(initialValue: status)
     }
 
-    init(client: UAPPClient, item: UAPPFeedbackItem, testingComments comments: [UAPPComment],
-         isLoading: Bool, isSending: Bool = false, pendingReaction: UAPPReactionKind? = nil,
-         message: String? = nil, commentBody: String = "", isAvailable: Bool = true,
-         replyingTo: UAPPComment? = nil, commentsError: String? = nil) {
+    init(
+        client: UAPPClient,
+        item: UAPPFeedbackItem,
+        testingComments comments: [UAPPComment],
+        isLoading: Bool,
+        isSending: Bool = false,
+        pendingReaction: UAPPReactionKind? = nil,
+        message: String? = nil,
+        commentBody: String = "",
+        isAvailable: Bool = true,
+        replyingTo: UAPPComment? = nil,
+        commentsError: String? = nil
+    ) {
         self.client = client
         _participation = StateObject(wrappedValue: UAPPParticipationModel(client: client))
         _item = State(initialValue: item)
@@ -58,8 +72,14 @@ struct UAPPFeedbackDetailScreen: View {
         _commentsError = State(initialValue: commentsError)
     }
 
-    private var palette: UAPPResolvedPalette { theme.resolved(for: colorScheme) }
-    private var resolvedAccent: Color { palette.accent ?? accentColor ?? .accentColor }
+    private var palette: UAPPResolvedPalette {
+        theme.resolved(for: colorScheme)
+    }
+
+    private var resolvedAccent: Color {
+        palette.accent ?? accentColor ?? .accentColor
+    }
+
     private var canSend: Bool {
         !isSending && !isProcessingImage && !participation.isBusy &&
             !commentBody.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -70,10 +90,10 @@ struct UAPPFeedbackDetailScreen: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     if isAvailable {
-                    feedbackContent
-                    Divider().overlay(palette.separator)
-                    composer.id("comment-composer")
-                    commentsContent
+                        feedbackContent
+                        Divider().overlay(palette.separator)
+                        composer.id("comment-composer")
+                        commentsContent
                     } else {
                         VStack(spacing: 12) {
                             UAPPAccentIconBadge(systemImage: "eye.slash", accent: resolvedAccent)
@@ -99,8 +119,12 @@ struct UAPPFeedbackDetailScreen: View {
         }
         .background(palette.background).tint(resolvedAccent)
         .modifier(UAPPParticipationModifier(model: participation, accentColor: resolvedAccent))
-        .uappNavigationBar(titleKey: "feedback.detail_title", accentColor: resolvedAccent,
-                           showsCloseButton: false, showsLanguageMenu: false)
+        .uappNavigationBar(
+            titleKey: "feedback.detail_title",
+            accentColor: resolvedAccent,
+            showsCloseButton: false,
+            showsLanguageMenu: false
+        )
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: backButtonPlacement) {
@@ -138,7 +162,9 @@ struct UAPPFeedbackDetailScreen: View {
                 UAPPFeedbackAvatar(name: authorName, url: item.authorAvatarURL).accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(verbatim: authorName).font(.subheadline.weight(.semibold))
-                    if let date = item.createdAt { dateLabel(date) }
+                    if let date = item.createdAt {
+                        dateLabel(date)
+                    }
                 }
             }
             UAPPFeedbackTranslatedText(text: item.title).font(.title2.bold())
@@ -232,8 +258,9 @@ struct UAPPFeedbackDetailScreen: View {
                         .accessibilityLabel(Text(verbatim: uappLocalized("comments.discard_draft")))
                     }
                     Button { Task { await participation.perform { await submitComment() } } } label: {
-                        if isSending { ProgressView().controlSize(.small).frame(width: 32, height: 32) }
-                        else {
+                        if isSending {
+                            ProgressView().controlSize(.small).frame(width: 32, height: 32)
+                        } else {
                             Image(systemName: "paperplane.fill")
                                 .font(.system(size: 14, weight: .semibold)).frame(width: 32, height: 32)
                                 .foregroundStyle(canSend ? Color.white : palette.secondaryText)
@@ -248,35 +275,53 @@ struct UAPPFeedbackDetailScreen: View {
             .padding(.horizontal, 16)
             .padding(.top, 16)
             .padding(.bottom, 4)
-            .background(UAPPFieldBackground(isFocused: focusesComment, accent: resolvedAccent,
-                                            palette: palette, cornerRadius: 20))
+            .background(UAPPFieldBackground(
+                isFocused: focusesComment,
+                accent: resolvedAccent,
+                palette: palette,
+                cornerRadius: 20
+            ))
             if let message {
-                UAPPInlineBanner(message: uappLocalized(message), style: bannerStyle(for: message),
-                                 accent: resolvedAccent)
-                    .transition(.opacity)
+                UAPPInlineBanner(
+                    message: uappLocalized(message),
+                    style: bannerStyle(for: message),
+                    accent: resolvedAccent
+                )
+                .transition(.opacity)
             }
         }
     }
 
     private var commentsContent: some View {
         VStack(alignment: .leading, spacing: 24) {
-            if isLoading { ProgressView().frame(maxWidth: .infinity) }
-            else if let commentsError {
+            if isLoading {
+                ProgressView().frame(maxWidth: .infinity)
+            } else if let commentsError {
                 VStack(alignment: .leading, spacing: 10) {
                     UAPPInlineBanner(message: uappLocalized(commentsError), style: .error, accent: resolvedAccent)
                     Button {
                         Task { await refresh(showError: true) }
                     } label: {
-                        UAPPSecondaryButtonLabel(title: uappLocalized("common.retry"), systemImage: "arrow.clockwise",
-                                                 accent: resolvedAccent, expands: false, minHeight: 44)
+                        UAPPSecondaryButtonLabel(
+                            title: uappLocalized("common.retry"),
+                            systemImage: "arrow.clockwise",
+                            accent: resolvedAccent,
+                            expands: false,
+                            minHeight: 44
+                        )
                     }
                     .buttonStyle(.plain)
                     .disabled(isRefreshing)
                 }
             } else if comments.isEmpty {
                 HStack(spacing: 12) {
-                    UAPPAccentIconBadge(systemImage: "bubble.left.and.bubble.right", accent: resolvedAccent,
-                                        size: 40, cornerRadius: 12, font: .body.weight(.semibold))
+                    UAPPAccentIconBadge(
+                        systemImage: "bubble.left.and.bubble.right",
+                        accent: resolvedAccent,
+                        size: 40,
+                        cornerRadius: 12,
+                        font: .body.weight(.semibold)
+                    )
                     Text(verbatim: uappLocalized("comments.empty"))
                         .font(.subheadline)
                         .foregroundStyle(palette.secondaryText)
@@ -376,7 +421,9 @@ struct UAPPFeedbackDetailScreen: View {
             .font(.caption).foregroundStyle(palette.secondaryText)
     }
 
-    private var authorName: String { normalizedName(item.authorName, fallback: "comments.community") }
+    private var authorName: String {
+        normalizedName(item.authorName, fallback: "comments.community")
+    }
 
     private func displayName(_ comment: UAPPComment) -> String {
         normalizedName(comment.authorName, fallback: comment.authorKind == .team ? "comments.team" : "comments.community")
@@ -398,7 +445,9 @@ struct UAPPFeedbackDetailScreen: View {
         do {
             let updated = try await client.allComments(itemId: item.id)
             try Task.checkCancellation()
-            if comments != updated { comments = updated }
+            if comments != updated {
+                comments = updated
+            }
             commentsError = nil
         } catch is CancellationError { return }
         catch {
@@ -454,8 +503,12 @@ struct UAPPFeedbackDetailScreen: View {
         isSending = true
         defer { isSending = false }
         do {
-            _ = try await client.submitComment(itemId: item.id, body: body,
-                                               parentCommentId: replyingTo?.id, imagesData: commentImage)
+            _ = try await client.submitComment(
+                itemId: item.id,
+                body: body,
+                parentCommentId: replyingTo?.id,
+                imagesData: commentImage
+            )
             commentBody = ""
             commentImage = []
             replyingTo = nil
@@ -492,8 +545,12 @@ enum UAPPCommentThread {
                 })
             }
         }
-        for root in roots { append(root, depth: 0) }
-        for comment in comments where !seen.contains(comment.id) { append(comment, depth: 0) }
+        for root in roots {
+            append(root, depth: 0)
+        }
+        for comment in comments where !seen.contains(comment.id) {
+            append(comment, depth: 0)
+        }
         return result
     }
 }

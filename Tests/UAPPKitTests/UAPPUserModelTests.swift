@@ -59,7 +59,7 @@ struct UAPPUserModelTests {
         let provider = UserProviderStub(mode: .success)
         let session = try #require(await provider.currentSession())
         let client = UAPPClient(configuration: .init(projectId: "demo-app"), transport: StubTransport { request in
-            let query = URLComponents(url: try #require(request.url), resolvingAgainstBaseURL: false)?.queryItems
+            let query = try URLComponents(url: #require(request.url), resolvingAgainstBaseURL: false)?.queryItems
             if query?.contains(where: { $0.name == "cursor" && $0.value == "next" }) == true {
                 return response(#"{"totals":{"likes":2,"comments":1,"feedbacks":2},"items":[{"id":"first","title":"First","app_name":"First app","state":"published","created_at":"2026-10-01T12:00:00Z"},{"id":"second","title":"Second","app_name":"Second app","state":"pending","created_at":"2026-10-01T10:00:00Z"}],"nextCursor":null}"#)
             }
@@ -124,10 +124,12 @@ struct UAPPUserModelTests {
     }
 
     @Test("Trocar a foto envia ao provedor, atualiza a sessão e mantém a última foto")
-    func updateProfilePhoto() async throws {
+    func updateProfilePhoto() async {
         let provider = AccountProviderStub()
-        let session = UAPPAuthenticationSession(identity: .init(userId: "verified", displayName: "Pessoa"),
-                                                accessToken: "fake-token")
+        let session = UAPPAuthenticationSession(
+            identity: .init(userId: "verified", displayName: "Pessoa"),
+            accessToken: "fake-token"
+        )
         var delivered: [UAPPAuthenticationSession?] = []
         let model = UAPPUserModel(session: session, authentication: provider) { delivered.append($0) }
         #expect(model.supportsProfilePhoto)
@@ -147,7 +149,7 @@ struct UAPPUserModelTests {
     }
 
     @Test("Falha ao trocar a foto preserva a anterior e permite nova tentativa")
-    func updateProfilePhotoFailure() async throws {
+    func updateProfilePhotoFailure() async {
         let provider = AccountProviderStub(failsPhotoOnce: true)
         let session = UAPPAuthenticationSession(identity: .init(userId: "verified"), accessToken: "fake-token")
         var delivered = 0
@@ -204,9 +206,18 @@ private actor UserProviderStub: UAPPAuthenticationProvider {
         identity: .init(userId: "test-user", displayName: "Visitante"), accessToken: "fake-token"
     )
 
-    init(mode: Mode) { self.mode = mode }
-    func setMode(_ mode: Mode) { self.mode = mode }
-    func currentSession() async -> UAPPAuthenticationSession? { session }
+    init(mode: Mode) {
+        self.mode = mode
+    }
+
+    func setMode(_ mode: Mode) {
+        self.mode = mode
+    }
+
+    func currentSession() async -> UAPPAuthenticationSession? {
+        session
+    }
+
     func signOut() async throws {
         switch mode {
         case .success: session = nil
@@ -216,15 +227,19 @@ private actor UserProviderStub: UAPPAuthenticationProvider {
             throw UAPPAuthenticationError.invalidConfiguration
         }
     }
+
     func signIn(method _: UAPPLoginMethod) async throws -> UAPPAuthenticationSession {
         throw UAPPAuthenticationError.unsupportedMethod
     }
+
     func signIn(email _: String, password _: String) async throws -> UAPPAuthenticationSession {
         throw UAPPAuthenticationError.unsupportedMethod
     }
+
     func requestEmailCode(email _: String) async throws {
         throw UAPPAuthenticationError.unsupportedMethod
     }
+
     func verifyEmailCode(email _: String, code _: String) async throws -> UAPPAuthenticationSession {
         throw UAPPAuthenticationError.unsupportedMethod
     }

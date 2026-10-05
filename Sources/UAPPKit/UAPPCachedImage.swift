@@ -84,9 +84,11 @@ final class UAPPRemoteImageCache {
     }
 
     static let shared: UAPPRemoteImageCache = {
-        let diskCache = URLCache(memoryCapacity: 16 * 1024 * 1024,
-                                 diskCapacity: 64 * 1024 * 1024,
-                                 diskPath: "UAPPKit.Images")
+        let diskCache = URLCache(
+            memoryCapacity: 16 * 1024 * 1024,
+            diskCapacity: 64 * 1024 * 1024,
+            diskPath: "UAPPKit.Images"
+        )
         let configuration = URLSessionConfiguration.default
         configuration.urlCache = diskCache
         configuration.requestCachePolicy = .useProtocolCachePolicy
@@ -119,7 +121,9 @@ final class UAPPRemoteImageCache {
     }
 
     func load(_ url: URL) async throws -> Image {
-        if let image = cachedImage(for: url) { return image }
+        if let image = cachedImage(for: url) {
+            return image
+        }
         guard let scheme = url.scheme?.lowercased(), ["https", "http", "file"].contains(scheme) else {
             throw URLError(.unsupportedURL)
         }
@@ -140,8 +144,9 @@ final class UAPPRemoteImageCache {
                     return Download(data: data, lifetime: 300)
                 }
                 let (data, response) = try await transport.send(URLRequest(url: url))
-                guard (200..<300).contains(response.statusCode),
-                      !data.isEmpty, data.count <= 10 * 1024 * 1024 else {
+                guard (200 ..< 300).contains(response.statusCode),
+                      !data.isEmpty, data.count <= 10 * 1024 * 1024
+                else {
                     throw URLError(.badServerResponse)
                 }
                 let directives = (response.value(forHTTPHeaderField: "Cache-Control") ?? "")
@@ -161,21 +166,28 @@ final class UAPPRemoteImageCache {
             ownsRequest = true
         }
         defer {
-            if ownsRequest, capturedGeneration == generation { pending[url] = nil }
+            if ownsRequest, capturedGeneration == generation {
+                pending[url] = nil
+            }
         }
         let download = try await task.value
         guard capturedGeneration == generation else { throw CancellationError() }
-        if let image = cachedImage(for: url) { return image }
+        if let image = cachedImage(for: url) {
+            return image
+        }
         guard let source = uappImageSource(from: download.data),
               let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
-                kCGImageSourceCreateThumbnailFromImageAlways: true,
-                kCGImageSourceCreateThumbnailWithTransform: true,
-                kCGImageSourceThumbnailMaxPixelSize: 2048,
+                  kCGImageSourceCreateThumbnailFromImageAlways: true,
+                  kCGImageSourceCreateThumbnailWithTransform: true,
+                  kCGImageSourceThumbnailMaxPixelSize: 2048
               ] as CFDictionary) else { throw URLError(.cannotDecodeContentData) }
         let result = Image(decorative: image, scale: 1)
         if download.lifetime > 0 {
-            memory.setObject(Entry(image: result, expiresAt: Date().addingTimeInterval(download.lifetime)),
-                             forKey: url as NSURL, cost: image.bytesPerRow * image.height)
+            memory.setObject(
+                Entry(image: result, expiresAt: Date().addingTimeInterval(download.lifetime)),
+                forKey: url as NSURL,
+                cost: image.bytesPerRow * image.height
+            )
         }
         return result
     }

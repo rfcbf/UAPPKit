@@ -146,12 +146,14 @@ public actor UAPPAuthentication: UAPPAuthenticationProvider {
         guard methods.contains(.email) else { throw UAPPAuthenticationError.unsupportedMethod }
         let capturedGeneration = generation
         var body: [String: Any] = ["email": email, "password": password]
-        if let displayName, !displayName.isEmpty { body["data"] = ["full_name": displayName] }
+        if let displayName, !displayName.isEmpty {
+            body["data"] = ["full_name": displayName]
+        }
         let data = try await request(path: "signup", body: body)
         guard capturedGeneration == generation else { throw UAPPAuthenticationError.cancelled }
         let result = try JSONDecoder().decode(RegistrationResponse.self, from: data)
         if let token = result.accessToken, !token.isEmpty {
-            return .signedIn(try store(try decodeSession(data), recovery: false))
+            return try .signedIn(store(decodeSession(data), recovery: false))
         }
         guard let userId = result.id ?? result.user?.id, !userId.isEmpty else { throw UAPPKitError.invalidResponse }
         return .confirmationRequired
@@ -214,7 +216,7 @@ public actor UAPPAuthentication: UAPPAuthenticationProvider {
             let userData = try await request(
                 path: "user", body: ["data": [
                     "avatar_url": avatarURL.absoluteString,
-                    SessionResponse.User.chosenAvatarKey: avatarURL.absoluteString,
+                    SessionResponse.User.chosenAvatarKey: avatarURL.absoluteString
                 ]],
                 accessToken: session.accessToken, method: "PUT"
             )
@@ -223,7 +225,8 @@ public actor UAPPAuthentication: UAPPAuthenticationProvider {
             }
             let user = try JSONDecoder().decode(SessionResponse.User.self, from: userData)
             guard user.id == session.identity.userId,
-                  user.metadata[SessionResponse.User.chosenAvatarKey] == avatarURL.absoluteString else {
+                  user.metadata[SessionResponse.User.chosenAvatarKey] == avatarURL.absoluteString
+            else {
                 throw UAPPKitError.invalidResponse
             }
             let updated = SessionResponse(
@@ -265,6 +268,7 @@ public actor UAPPAuthentication: UAPPAuthenticationProvider {
             case accessToken = "access_token"
             case id, user
         }
+
         struct RegisteredUser: Decodable {
             let id: String
             enum CodingKeys: String, CodingKey { case id }
@@ -373,7 +377,6 @@ public actor UAPPAuthentication: UAPPAuthenticationProvider {
         else { return nil }
         return persisted.publishableKey
     }
-
 
     private func token(grant: String, body: [String: String]) async throws -> SessionResponse {
         let data = try await request(path: "token", body: body, query: [URLQueryItem(name: "grant_type", value: grant)])
