@@ -130,9 +130,13 @@ struct UAPPAccountScreenTests {
 /// Provedor mínimo: somente métodos sociais, usando as implementações padrão.
 private struct SocialOnlyProvider: UAPPAuthenticationProvider {
     let methods: [UAPPLoginMethod] = [.apple, .google]
-    func currentSession() async throws -> UAPPAuthenticationSession? { nil }
+    func currentSession() async throws -> UAPPAuthenticationSession? {
+        nil
+    }
+
     func signIn(method _: UAPPLoginMethod) async throws -> UAPPAuthenticationSession {
         throw UAPPAuthenticationError.cancelled
     }
+
     func signOut() async throws {}
 }

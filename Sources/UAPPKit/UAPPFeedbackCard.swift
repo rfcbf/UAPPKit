@@ -21,7 +21,10 @@ struct UAPPFeedbackCard: View {
     @AppStorage(UAPPLocalizationPreferences.presentationStorageKey)
     private var selectedLanguage = UAPPLocalizationPreferences.defaultIdentifier
 
-    private var palette: UAPPResolvedPalette { theme.resolved(for: colorScheme) }
+    private var palette: UAPPResolvedPalette {
+        theme.resolved(for: colorScheme)
+    }
+
     private var authorName: String {
         let name = item.authorName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         return name.isEmpty ? uappLocalized("comments.community", languageIdentifier: selectedLanguage) : name
@@ -167,7 +170,9 @@ struct UAPPFeedbackCard: View {
 
 enum UAPPFeedbackStatusStyle {
     static func color(for status: UAPPRoadmapColumn.Status?) -> Color {
-        if let hex = status?.color, let color = Color(hex: hex) { return color }
+        if let hex = status?.color, let color = Color(hex: hex) {
+            return color
+        }
         switch status?.key {
         case "reviewing": return Color(red: 0.49, green: 0.35, blue: 0.12)
         case "planned": return Color(red: 0.32, green: 0.36, blue: 0.63)

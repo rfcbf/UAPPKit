@@ -2,8 +2,8 @@
 import AVFoundation
 import SwiftUI
 import Testing
-import UIKit
 @testable import UAPPKit
+import UIKit
 
 @MainActor
 struct UAPPProfilePhotoPickerTests {
@@ -14,8 +14,12 @@ struct UAPPProfilePhotoPickerTests {
         await render(UAPPProfilePhotoPicker(photo: binding, theme: .init(light: .init(accent: .purple))))
         await render(UAPPProfilePhotoPicker(photo: .constant(nil), languageIdentifier: "en").controlSize(.small))
         await render(UAPPProfilePhotoPicker(photo: .constant(nil), isProcessing: true, errorKey: nil))
-        await render(UAPPProfilePhotoPicker(photo: .constant(nil), languageIdentifier: "xx",
-                                            isProcessing: false, errorKey: "photo.camera_denied"))
+        await render(UAPPProfilePhotoPicker(
+            photo: .constant(nil),
+            languageIdentifier: "xx",
+            isProcessing: false,
+            errorKey: "photo.camera_denied"
+        ))
         #expect(photo != nil)
     }
 
@@ -25,13 +29,24 @@ struct UAPPProfilePhotoPickerTests {
         let avatarOnly = UAPPProfilePhotoPicker.AvatarOnly(
             remoteURL: URL(string: "https://example.test/avatar.jpg"), size: 104
         ) { reported.append($0) }
-        await render(UAPPProfilePhotoPicker(photo: .constant(sampleJPEG()), theme: .system,
-                                            languageIdentifier: "pt-BR", avatarOnly: avatarOnly))
-        await render(UAPPProfilePhotoPicker(photo: .constant(nil), theme: .system,
-                                            languageIdentifier: "en", avatarOnly: avatarOnly))
-        await render(UAPPProfilePhotoPicker(photo: .constant(nil), theme: .init(light: .init(accent: .purple)),
-                                            languageIdentifier: nil,
-                                            avatarOnly: .init(remoteURL: nil, size: 56) { _ in }))
+        await render(UAPPProfilePhotoPicker(
+            photo: .constant(sampleJPEG()),
+            theme: .system,
+            languageIdentifier: "pt-BR",
+            avatarOnly: avatarOnly
+        ))
+        await render(UAPPProfilePhotoPicker(
+            photo: .constant(nil),
+            theme: .system,
+            languageIdentifier: "en",
+            avatarOnly: avatarOnly
+        ))
+        await render(UAPPProfilePhotoPicker(
+            photo: .constant(nil),
+            theme: .init(light: .init(accent: .purple)),
+            languageIdentifier: nil,
+            avatarOnly: .init(remoteURL: nil, size: 56) { _ in }
+        ))
         #expect(reported.isEmpty)
     }
 
@@ -57,7 +72,7 @@ struct UAPPProfilePhotoPickerTests {
         coordinator.imagePickerControllerDidCancel(controller)
         #expect(received.count == 2)
         #expect(received.first??.size == image?.size)
-        #expect(received.last! == nil)
+        #expect(received.last == nil)
     }
 }
 #endif

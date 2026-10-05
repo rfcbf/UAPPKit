@@ -62,7 +62,7 @@ struct UAPPUserScreenTests {
     }
 
     @Test("Conta conectada mostra e-mail, histórico de apps e falhas")
-    func accountRendersActivity() async throws {
+    func accountRendersActivity() async {
         let authentication = StubAuthentication()
         let session = UAPPAuthenticationSession(
             identity: UAPPIdentity(userId: "verified", email: "person@example.test", displayName: "Pessoa Conectada"),
@@ -89,12 +89,19 @@ struct UAPPUserScreenTests {
     @Test("Conta com suporte a foto mostra o avatar editável com a foto atual")
     func accountRendersEditablePhoto() async {
         let session = UAPPAuthenticationSession(
-            identity: UAPPIdentity(userId: "verified", email: "person@example.test", displayName: "Pessoa Conectada",
-                                   avatarURL: URL(string: "https://example.test/avatar.jpg")),
+            identity: UAPPIdentity(
+                userId: "verified",
+                email: "person@example.test",
+                displayName: "Pessoa Conectada",
+                avatarURL: URL(string: "https://example.test/avatar.jpg")
+            ),
             accessToken: "fake-token"
         )
-        await render(UAPPUserScreen(session: session, authentication: AccountProviderStub(),
-                                    client: profileClient()), settling: true)
+        await render(UAPPUserScreen(
+            session: session,
+            authentication: AccountProviderStub(),
+            client: profileClient()
+        ), settling: true)
         let withoutPhoto = UAPPAuthenticationSession(identity: UAPPIdentity(userId: "verified"), accessToken: "fake-token")
         await render(UAPPUserScreen(session: withoutPhoto, authentication: AccountProviderStub()), settling: true)
     }
@@ -111,8 +118,10 @@ struct UAPPUserScreenTests {
             UAPPProfileFeedbackDestination(model: loaded, itemId: profileFeedbackId, accentColor: .blue),
             settling: true
         )
-        let missing = UAPPUserModel(client: makeClient { _ in response(#"{"items":[],"nextCursor":null}"#) },
-                                    feedbackId: profileFeedbackId)
+        let missing = UAPPUserModel(
+            client: makeClient { _ in response(#"{"items":[],"nextCursor":null}"#) },
+            feedbackId: profileFeedbackId
+        )
         await renderInNavigationStack(
             UAPPProfileFeedbackDestination(model: missing, itemId: profileFeedbackId, accentColor: .blue),
             settling: true

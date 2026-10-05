@@ -47,20 +47,33 @@ public struct UAPPProfilePhotoPicker: View {
     }
 
     /// Estado inicial injetável para renderizar processamento e erros nos testes.
-    init(photo: Binding<Data?>, theme: UAPPTheme = .system, languageIdentifier: String? = nil,
-         isProcessing: Bool, errorKey: String?) {
+    init(
+        photo: Binding<Data?>,
+        theme: UAPPTheme = .system,
+        languageIdentifier: String? = nil,
+        isProcessing: Bool,
+        errorKey: String?
+    ) {
         self.init(photo: photo, theme: theme, languageIdentifier: languageIdentifier)
         _isProcessing = State(initialValue: isProcessing)
         _errorKey = State(initialValue: errorKey)
     }
 
-    private var accent: Color { theme.resolved(for: colorScheme).accent ?? .accentColor }
+    private var accent: Color {
+        theme.resolved(for: colorScheme).accent ?? .accentColor
+    }
+
     private var avatarSize: CGFloat {
-        if let avatarOnly { return avatarOnly.size }
+        if let avatarOnly {
+            return avatarOnly.size
+        }
         return controlSize == .small || controlSize == .mini ? 56 : 88
     }
+
     private var cameraBadgeSize: CGFloat {
-        if avatarOnly != nil { return 36 }
+        if avatarOnly != nil {
+            return 36
+        }
         return controlSize == .small || controlSize == .mini ? 24 : 36
     }
 
@@ -108,14 +121,17 @@ public struct UAPPProfilePhotoPicker: View {
             }
             do {
                 guard let data = try await selection.loadTransferable(type: Data.self),
-                      let image = UIImage(data: data) else {
+                      let image = UIImage(data: data)
+                else {
                     errorKey = "photo.error"
                     return
                 }
                 guard !Task.isCancelled else { return }
                 imageToCrop = image
             } catch {
-                if !Task.isCancelled { errorKey = "photo.error" }
+                if !Task.isCancelled {
+                    errorKey = "photo.error"
+                }
             }
         }
         .sheet(isPresented: $showsCamera, onDismiss: {
@@ -132,7 +148,11 @@ public struct UAPPProfilePhotoPicker: View {
         }
         .fullScreenCover(isPresented: Binding(
             get: { imageToCrop != nil },
-            set: { if !$0 { imageToCrop = nil } }
+            set: {
+                if !$0 {
+                    imageToCrop = nil
+                }
+            }
         )) {
             if let imageToCrop {
                 ImageCropper(image: imageToCrop)
@@ -160,7 +180,7 @@ public struct UAPPProfilePhotoPicker: View {
                 Label(localized("photo.camera"), systemImage: "camera")
             }
             .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
-            if photo != nil && avatarOnly == nil {
+            if photo != nil, avatarOnly == nil {
                 Button(role: .destructive) { photo = nil } label: {
                     Label(localized("photo.remove"), systemImage: "trash")
                 }
@@ -258,17 +278,28 @@ struct UAPPProfileCameraPicker: UIViewControllerRepresentable {
         controller.delegate = context.coordinator
         return controller
     }
+
     func updateUIViewController(_: UIImagePickerController, context _: Context) {}
-    func makeCoordinator() -> Coordinator { Coordinator(onImage: onImage) }
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onImage: onImage)
+    }
 
     @MainActor
     final class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
         let onImage: (UIImage?) -> Void
-        init(onImage: @escaping (UIImage?) -> Void) { self.onImage = onImage }
+        init(onImage: @escaping (UIImage?) -> Void) {
+            self.onImage = onImage
+        }
+
         func imagePickerController(
             _: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
-        ) { onImage(info[.originalImage] as? UIImage) }
-        func imagePickerControllerDidCancel(_: UIImagePickerController) { onImage(nil) }
+        ) {
+            onImage(info[.originalImage] as? UIImage)
+        }
+
+        func imagePickerControllerDidCancel(_: UIImagePickerController) {
+            onImage(nil)
+        }
     }
 }
 #endif

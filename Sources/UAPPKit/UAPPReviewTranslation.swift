@@ -76,8 +76,14 @@ struct UAPPReviewTranslationContent: View {
     let displayTransform: (String) -> String
     @Environment(\.uappSystemTranslationEnabled) private var systemTranslationEnabled
 
-    init(text: String, targetIdentifier: String, model: UAPPReviewTextModel? = nil, rendersMarkdown: Bool = false,
-         lineLimit: Int? = nil, displayTransform: @escaping (String) -> String = { $0 }) {
+    init(
+        text: String,
+        targetIdentifier: String,
+        model: UAPPReviewTextModel? = nil,
+        rendersMarkdown: Bool = false,
+        lineLimit: Int? = nil,
+        displayTransform: @escaping (String) -> String = { $0 }
+    ) {
         self.text = text
         self.targetIdentifier = targetIdentifier
         _model = StateObject(wrappedValue: model ?? UAPPReviewTextModel(original: text))

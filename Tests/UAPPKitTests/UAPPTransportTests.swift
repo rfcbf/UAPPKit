@@ -82,9 +82,13 @@ private final class NonHTTPURLProtocol: URLProtocol {
 }
 
 private final class PendingURLProtocol: URLProtocol {
-    override class func canInit(with _: URLRequest) -> Bool { true }
+    override class func canInit(with _: URLRequest) -> Bool {
+        true
+    }
 
-    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest {
+        request
+    }
 
     override func startLoading() {
         // Simula um servidor que nunca entrega a resposta, sem rede externa.
@@ -94,9 +98,13 @@ private final class PendingURLProtocol: URLProtocol {
 }
 
 private final class TimedOutURLProtocol: URLProtocol {
-    override class func canInit(with _: URLRequest) -> Bool { true }
+    override class func canInit(with _: URLRequest) -> Bool {
+        true
+    }
 
-    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest {
+        request
+    }
 
     override func startLoading() {
         client?.urlProtocol(self, didFailWithError: URLError(.timedOut))
@@ -106,9 +114,13 @@ private final class TimedOutURLProtocol: URLProtocol {
 }
 
 private final class RequestTimeoutURLProtocol: URLProtocol {
-    override class func canInit(with _: URLRequest) -> Bool { true }
+    override class func canInit(with _: URLRequest) -> Bool {
+        true
+    }
 
-    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest {
+        request
+    }
 
     override func startLoading() {
         guard let url = request.url,

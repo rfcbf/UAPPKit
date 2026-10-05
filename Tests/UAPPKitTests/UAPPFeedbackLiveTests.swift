@@ -76,17 +76,28 @@ private final class ScriptedSocket: UAPPLiveSocket, @unchecked Sendable {
         self.holdsOpen = holdsOpen
     }
 
-    func resume() { lock.withLock { resumed = true } }
-    func close() { lock.withLock { closed = true } }
+    func resume() {
+        lock.withLock { resumed = true }
+    }
+
+    func close() {
+        lock.withLock { closed = true }
+    }
 
     func send(_ message: URLSessionWebSocketTask.Message) async throws {
-        if case let .string(value) = message { lock.withLock { sent.append(value) } }
+        if case let .string(value) = message {
+            lock.withLock { sent.append(value) }
+        }
     }
 
     func receive() async throws -> URLSessionWebSocketTask.Message {
-        if let next = lock.withLock({ script.isEmpty ? nil : script.removeFirst() }) { return next }
+        if let next = lock.withLock({ script.isEmpty ? nil : script.removeFirst() }) {
+            return next
+        }
         if holdsOpen {
-            while !Task.isCancelled { try await Task.sleep(for: .milliseconds(5)) }
+            while !Task.isCancelled {
+                try await Task.sleep(for: .milliseconds(5))
+            }
             throw CancellationError()
         }
         throw URLError(.networkConnectionLost)
@@ -119,7 +130,9 @@ func liveStreamYieldsJoinAndChanges() async throws {
     }
     var signals = 0
     do {
-        for try await _ in stream { signals += 1 }
+        for try await _ in stream {
+            signals += 1
+        }
         Issue.record("O fim do roteiro deveria encerrar com erro")
     } catch {
         #expect(error is URLError)
@@ -128,7 +141,7 @@ func liveStreamYieldsJoinAndChanges() async throws {
     #expect(socket.resumed)
     #expect(socket.closed)
     #expect(socket.sent.first?.contains("phx_join") == true)
-    let query = URLComponents(url: try #require(requested), resolvingAgainstBaseURL: false)?.queryItems
+    let query = try URLComponents(url: #require(requested), resolvingAgainstBaseURL: false)?.queryItems
     #expect(query?.contains(URLQueryItem(name: "apikey", value: "public-key")) == true)
 }
 
@@ -182,7 +195,7 @@ private final class ChangeCounter {
 
 @Test("modificador live recarrega ao receber invalidações, reconecta e mantém atualização periódica")
 @MainActor
-func liveModifierRefreshesOnChanges() async throws {
+func liveModifierRefreshesOnChanges() async {
     let client = makeClient { _ in
         response(#"{"websocketURL":"wss://exemplo.uapp.com/realtime/v1/websocket","apiKey":"public-key","topic":"uapp-feedback-app:meu-app"}"#)
     }

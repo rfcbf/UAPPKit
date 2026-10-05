@@ -2,8 +2,8 @@ import Foundation
 import ImageIO
 import SwiftUI
 import Testing
-import UniformTypeIdentifiers
 @testable import UAPPKit
+import UniformTypeIdentifiers
 
 @Test("Feedback e resposta enviam a imagem sem alterar o texto ou o pai")
 func feedbackImagesSendPayload() async throws {
@@ -88,11 +88,27 @@ func feedbackCommentAvatarUsesConfirmedOwnership() throws {
         #expect(comment.avatarURL(viewer: viewer) == (owned ? viewerURL : serverURL))
         #expect(comment.avatarURL(viewer: nil) == serverURL)
     }
-    let legacy = UAPPComment(id: "legacy", body: "Teste", likeCount: 0, createdAt: Date(),
-                             authorKind: .community, viewerLiked: false, authorName: "Pessoa", authorAvatarURL: serverURL)
+    let legacy = UAPPComment(
+        id: "legacy",
+        body: "Teste",
+        likeCount: 0,
+        createdAt: Date(),
+        authorKind: .community,
+        viewerLiked: false,
+        authorName: "Pessoa",
+        authorAvatarURL: serverURL
+    )
     #expect(legacy.avatarURL(viewer: viewer) == serverURL)
-    let own = UAPPComment(id: "own", body: "Teste", likeCount: 0, createdAt: Date(),
-                          authorKind: .community, viewerLiked: false, authorAvatarURL: serverURL, viewerOwned: true)
+    let own = UAPPComment(
+        id: "own",
+        body: "Teste",
+        likeCount: 0,
+        createdAt: Date(),
+        authorKind: .community,
+        viewerLiked: false,
+        authorAvatarURL: serverURL,
+        viewerOwned: true
+    )
     #expect(own.avatarURL(viewer: UAPPIdentity(userId: "viewer")) == nil)
 }
 
@@ -177,9 +193,15 @@ func feedbackTwoImagesOptionalAndServerFailure() async throws {
 
 @Test("Preparação limita tamanho e resolução e remove localização")
 func feedbackImagePreparationCompresses() throws {
-    let context = try #require(CGContext(data: nil, width: 2400, height: 1200, bitsPerComponent: 8,
-                                       bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
-                                       bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue))
+    let context = try #require(CGContext(
+        data: nil,
+        width: 2400,
+        height: 1200,
+        bitsPerComponent: 8,
+        bytesPerRow: 0,
+        space: CGColorSpaceCreateDeviceRGB(),
+        bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue
+    ))
     context.setFillColor(CGColor(red: 0.2, green: 0.6, blue: 0.3, alpha: 1))
     context.fill(CGRect(x: 0, y: 0, width: 2400, height: 1200))
     let image = try #require(context.makeImage())

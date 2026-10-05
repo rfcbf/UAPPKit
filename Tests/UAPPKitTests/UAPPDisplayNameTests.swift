@@ -9,7 +9,7 @@ struct UAPPDisplayNameTests {
         ("Álvaro Luís Carvalho Martins Santos", "Álvaro Luís C. M. Santos"),
         ("Ana", "Ana"),
         ("  Ana   Beatriz  ", "Ana Beatriz"),
-        ("", ""),
+        ("", "")
     ])
     func abbreviation(_ example: (String, String)) {
         #expect(UAPPDisplayName.abbreviated(example.0) == example.1)

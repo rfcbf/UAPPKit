@@ -40,7 +40,8 @@ struct UAPPFeedbackAttachment: Identifiable {
 
     var id: String {
         guard url.path.contains("/storage/v1/object/sign/feedback-images/"),
-              var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
+              var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+        else {
             return url.absoluteString
         }
         components.query = nil
@@ -65,18 +66,23 @@ struct UAPPFeedbackImageGallery: View {
 private struct UAPPFeedbackImageRow: Layout {
     private let spacing: CGFloat = 8
 
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache _: inout ()) -> CGSize {
         let sizes = imageSizes(width: proposal.width, subviews: subviews)
-        return CGSize(width: sizes.reduce(0) { $0 + $1.width } + spacing * CGFloat(max(0, sizes.count - 1)),
-                      height: sizes.map(\.height).max() ?? 0)
+        return CGSize(
+            width: sizes.reduce(0) { $0 + $1.width } + spacing * CGFloat(max(0, sizes.count - 1)),
+            height: sizes.map(\.height).max() ?? 0
+        )
     }
 
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache _: inout ()) {
         let sizes = imageSizes(width: proposal.width, subviews: subviews)
         var x = bounds.minX
         for (index, subview) in subviews.enumerated() {
-            subview.place(at: CGPoint(x: x, y: bounds.minY), anchor: .topLeading,
-                          proposal: ProposedViewSize(sizes[index]))
+            subview.place(
+                at: CGPoint(x: x, y: bounds.minY),
+                anchor: .topLeading,
+                proposal: ProposedViewSize(sizes[index])
+            )
             x += sizes[index].width + spacing
         }
     }
@@ -127,8 +133,12 @@ struct UAPPFeedbackRemoteImage: View {
         }
         .task(id: url) {
             let identity = UAPPFeedbackAttachment(url: url).id
-            if loadedIdentity == identity, case .success = phase { return }
-            if loadedIdentity != identity { phase = .empty }
+            if loadedIdentity == identity, case .success = phase {
+                return
+            }
+            if loadedIdentity != identity {
+                phase = .empty
+            }
             do {
                 let image = try await UAPPRemoteImageCache.shared.load(url)
                 try Task.checkCancellation()
@@ -143,26 +153,24 @@ struct UAPPFeedbackRemoteImage: View {
         }
     }
 
+    @ViewBuilder
     private var thumbnail: some View {
-        Group {
-            if case let .success(image) = phase {
-                image.resizable().scaledToFit()
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-            } else {
-                remoteImage
-            }
+        if case let .success(image) = phase {
+            image.resizable().scaledToFit()
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+        } else {
+            remoteImage
         }
     }
 
+    @ViewBuilder
     private var remoteImage: some View {
-        Group {
-            switch phase {
-            case let .success(image): image.resizable().scaledToFit()
-            case .failure:
-                Label(uappLocalized("photo.error"), systemImage: "photo")
-                    .font(.caption).foregroundStyle(.secondary)
-            default: ProgressView()
-            }
+        switch phase {
+        case let .success(image): image.resizable().scaledToFit()
+        case .failure:
+            Label(uappLocalized("photo.error"), systemImage: "photo")
+                .font(.caption).foregroundStyle(.secondary)
+        default: ProgressView()
         }
     }
 }
@@ -182,7 +190,8 @@ struct UAPPFeedbackImagePicker: View {
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
                 ForEach(data.indices, id: \.self) { index in
                     if let source = CGImageSourceCreateWithData(data[index] as CFData, nil),
-                       let image = CGImageSourceCreateImageAtIndex(source, 0, nil) {
+                       let image = CGImageSourceCreateImageAtIndex(source, 0, nil)
+                    {
                         Rectangle().fill(.clear)
                             .aspectRatio(4 / 3, contentMode: .fit)
                             .overlay {
@@ -226,7 +235,9 @@ struct UAPPFeedbackImagePicker: View {
                 catch { self.error = true }
             }
             #endif
-            if isProcessing { ProgressView() }
+            if isProcessing {
+                ProgressView()
+            }
             if error {
                 Text(verbatim: uappLocalized("photo.error", languageIdentifier: selectedLanguage))
                     .font(.caption).foregroundStyle(.red)
@@ -293,7 +304,8 @@ struct UAPPFeedbackComposerAttachments: View {
     @ViewBuilder
     private func thumbnail(at index: Int) -> some View {
         if let source = CGImageSourceCreateWithData(data[index] as CFData, nil),
-           let image = CGImageSourceCreateImageAtIndex(source, 0, nil) {
+           let image = CGImageSourceCreateImageAtIndex(source, 0, nil)
+        {
             Rectangle().fill(.clear)
                 .aspectRatio(4 / 3, contentMode: .fit)
                 .overlay {
@@ -415,7 +427,9 @@ enum UAPPFeedbackImagePreparation {
                 }
                 CGImageDestinationAddImage(destination, image, [kCGImageDestinationLossyCompressionQuality: quality] as CFDictionary)
                 guard CGImageDestinationFinalize(destination) else { throw UAPPKitError.invalidResponse }
-                if output.length <= maximumJPEGBytes { return output as Data }
+                if output.length <= maximumJPEGBytes {
+                    return output as Data
+                }
             }
         }
         throw UAPPKitError.invalidResponse

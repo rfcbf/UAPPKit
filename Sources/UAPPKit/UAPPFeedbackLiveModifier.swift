@@ -10,6 +10,7 @@ struct UAPPFeedbackLiveModifier: ViewModifier {
     var updates: (UAPPFeedbackLiveConfiguration) throws -> AsyncThrowingStream<Void, any Error> = {
         try UAPPFeedbackLive.updates($0)
     }
+
     var debounce: Duration = .milliseconds(250)
     var reconnectDelay: Duration = .seconds(10)
     var fallbackInterval: Duration = .seconds(15)

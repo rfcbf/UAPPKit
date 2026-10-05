@@ -13,15 +13,15 @@ func commentVotingUsesCompatibleTransport() {
 }
 
 @Test("voto otimista usa o campo de votos sem alterar curtidas ou dados do feedback")
-func feedbackOptimisticVoteKeepsOtherFields() {
-    let original = UAPPFeedbackItem(
+func feedbackOptimisticVoteKeepsOtherFields() throws {
+    let original = try UAPPFeedbackItem(
         id: "item", title: "Title", body: "Body", voteCount: 2, likeCount: 7, commentCount: 3,
         category: .feature, priority: 1, viewerLiked: true,
         createdAt: Date(timeIntervalSince1970: 1), authorName: "Author",
         authorAvatarURL: URL(string: "https://example.com/avatar.jpg"), statusId: "planned",
         voters: [.init(displayName: "Voter", avatarURL: nil)],
         imageURL: URL(string: "https://example.com/image.jpg"),
-        imageURLs: [URL(string: "https://example.com/second.jpg")!]
+        imageURLs: [#require(URL(string: "https://example.com/second.jpg"))]
     )
     let voted = original.settingVote(enabled: true)
     #expect(voted.voteCount == 3)

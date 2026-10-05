@@ -22,7 +22,7 @@ func livePublicProfilePreservesLoadedHistory() async throws {
     #expect(model.history.map(\.id) == ["first", "second"])
     #expect(model.publicProfile?.totals?.comments == 3)
     #expect(model.publicProfile?.nextCursor == nil)
-    #expect(queryValue("statusId", in: try #require(recorder.requests.last)) == statusId)
+    #expect(try queryValue("statusId", in: #require(recorder.requests.last)) == statusId)
     #expect(recorder.requests.count == 4)
 }
 
@@ -77,7 +77,7 @@ func publicProfileFiltersHistoryByStatus() async throws {
     #expect(model.history.first?.likeCount == 3)
     #expect(model.history.first?.commentCount == 4)
     await model.filterPublicHistory(statusId: nil)
-    #expect(queryValue("statusId", in: try #require(recorder.requests.last)) == nil)
+    #expect(try queryValue("statusId", in: #require(recorder.requests.last)) == nil)
 }
 
 @Test("perfil público rejeita filtro de status inválido antes da consulta")
@@ -105,7 +105,7 @@ func publicProfileModelLoadsFeedbackHistory() async throws {
     #expect(model.history.first?.statusName == "Planejado")
     await model.loadPublicProfile(loadMore: true)
     #expect(model.history.map(\.id) == ["first", "second"])
-    #expect(queryValue("cursor", in: try #require(recorder.requests.last)) == "1")
+    #expect(try queryValue("cursor", in: #require(recorder.requests.last)) == "1")
     #expect(model.publicProfile?.nextCursor == nil)
     await model.loadPublicProfile(loadMore: true)
     #expect(recorder.requests.count == 2)
@@ -115,7 +115,9 @@ func publicProfileModelLoadsFeedbackHistory() async throws {
 @MainActor
 func publicProfilePaginationKeepsHistoryOnFailure() async {
     let client = makeClient { request in
-        if queryValue("cursor", in: request) != nil { throw UAPPKitError.transport("offline") }
+        if queryValue("cursor", in: request) != nil {
+            throw UAPPKitError.transport("offline")
+        }
         return response(#"{"author":{"name":"Ana"},"totals":{"likes":0,"comments":0,"feedbacks":2},"items":[{"id":"first","title":"Feedback","state":"published","created_at":"2026-10-01T12:00:00Z"}],"nextCursor":"1"}"#)
     }
     let model = UAPPUserModel(client: client, feedbackId: publicFeedbackId)
