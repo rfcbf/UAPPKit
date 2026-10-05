@@ -24,11 +24,16 @@ struct DemoFormLayout: ViewModifier {
 
 struct PersistentNavigationBar: ViewModifier {
     func body(content: Content) -> some View {
+        // `toolbarMinimizationBehavior` só existe no SDK do iOS 27 (Swift 6.4+).
+        #if compiler(>=6.4)
         if #available(iOS 27.0, *) {
             content.toolbarMinimizationBehavior(.never, for: .navigationBar)
         } else {
             content
         }
+        #else
+        content
+        #endif
     }
 }
 

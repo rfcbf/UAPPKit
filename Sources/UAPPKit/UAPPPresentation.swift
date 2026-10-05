@@ -4,7 +4,9 @@ import SwiftUI
 extension View {
     @ViewBuilder
     func uappPresentationPlacement(_ placement: UAPPPresentationPlacement) -> some View {
-        #if os(iOS)
+        // `presentationPlacement` só existe no SDK do iOS 27 (Swift 6.4+);
+        // em toolchains anteriores o símbolo não compila, mesmo sob `#available`.
+        #if os(iOS) && compiler(>=6.4)
         if #available(iOS 27, *) {
             presentationPlacement(placement.swiftUIValue)
         } else {
@@ -28,7 +30,7 @@ extension View {
 enum UAPPPresentationPlacement {
     case trailing
 
-    #if os(iOS)
+    #if os(iOS) && compiler(>=6.4)
     @available(iOS 27, *)
     var swiftUIValue: PresentationPlacement {
         switch self {
