@@ -87,8 +87,8 @@ Mantenha README, arquitetura, decisões, roadmap e changelog independentes do
 checkout privado do UAPP. Exemplos de instalação devem apontar ao repositório
 público do pacote e usar uma tag existente.
 
-Use Conventional Commits e tags SemVer sem prefixo (`0.1.0`, `0.1.1`, `0.2.0`,
-`1.0.0`).
+Use Conventional Commits e tags SemVer sem prefixo (`1.0.0`, `1.0.1`, `1.1.0`,
+`2.0.0`).
 
 ### Fluxo de branches e Pull Requests
 
@@ -119,7 +119,7 @@ ferramenta sugere incluir por padrão:
 Um pacote Swift não tem arquivo de versão: a versão é a tag. A fonte da versão
 é o `CHANGELOG.md`. O primeiro título no formato `## X.Y.Z - AAAA-MM-DD`,
 logo abaixo de `## Não lançado`, é a versão atual. A primeira versão do pacote
-é `0.1.0`.
+é `1.0.0`.
 
 A casa a incrementar depende do tipo da mudança mergeada:
 

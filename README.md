@@ -63,8 +63,8 @@ targets: [
 ]
 ```
 
-Quando a release `0.1.0` for publicada, será possível trocar por
-`.package(url: "https://github.com/rfcbf/UAPPKit", from: "0.1.0")`.
+Quando a release `1.0.0` for publicada, será possível trocar por
+`.package(url: "https://github.com/rfcbf/UAPPKit", from: "1.0.0")`.
 
 ## Setup
 
