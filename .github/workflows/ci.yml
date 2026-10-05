@@ -44,6 +44,9 @@ jobs:
       - name: Check generated project is current
         run: git diff --exit-code -- .Examples/UAPPKitDemo/UAPPKitDemo.xcodeproj/project.pbxproj
 
+      # O ícone UAPPKit.icon foi criado no Icon Composer do Xcode 27 e o actool
+      # do Xcode 26 não consegue abri-lo. Até existir runner com Xcode 27, a CI
+      # compila o Demo sem o ícone; o restante do build é validado normalmente.
       - name: Build demo for iOS Simulator
         run: >-
           xcodebuild -quiet
@@ -51,4 +54,6 @@ jobs:
           -scheme UAPPKitDemo
           -destination 'generic/platform=iOS Simulator'
           CODE_SIGNING_ALLOWED=NO
+          EXCLUDED_SOURCE_FILE_NAMES=UAPPKit.icon
+          ASSETCATALOG_COMPILER_APPICON_NAME=
           build
