@@ -1,0 +1,48 @@
+name: Release tag
+
+# Cria a tag da versão atual do CHANGELOG.md depois que a CI da main termina
+# verde. A versão é registrada no Pull Request; este workflow só cria a tag e
+# não faz nenhum commit.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-tag
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Create tag from CHANGELOG version
+        run: |
+          version="$(sed -nE 's/^## \[?([0-9]+\.[0-9]+\.[0-9]+)\]?.*$/\1/p' CHANGELOG.md | head -n 1)"
+
+          if [ -z "$version" ]; then
+            echo "O CHANGELOG.md ainda não tem versão lançada; nada a fazer."
+            exit 0
+          fi
+
+          if git ls-remote --exit-code --tags origin "refs/tags/$version" >/dev/null; then
+            echo "A tag $version já existe; nada a fazer."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$version" -m "$version"
+          git push origin "$version"

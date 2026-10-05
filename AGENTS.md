@@ -87,6 +87,77 @@ Mantenha README, arquitetura, decisões, roadmap e changelog independentes do
 checkout privado do UAPP. Exemplos de instalação devem apontar ao repositório
 público do pacote e usar uma tag existente.
 
-Use Conventional Commits e tags SemVer (`0.1.0`, `0.1.1`, `0.2.0`, `1.0.0`).
-Não crie tag de release enquanto a versão correspondente não estiver pronta e
-validada pela CI.
+Use Conventional Commits e tags SemVer sem prefixo (`1.0.0`, `1.0.1`, `1.1.0`,
+`2.0.0`).
+
+### Fluxo de branches e Pull Requests
+
+Nenhuma alteração entra direto na `main`. Todo trabalho segue este fluxo:
+
+1. Crie uma branch a partir da `main` atualizada, com prefixo pelo tipo da
+   mudança: `feat/`, `fix/`, `refactor/`, `docs/`, `test/` ou `chore/` (por
+   exemplo, `feat/tela-de-avaliacoes`).
+2. Faça os commits na branch seguindo Conventional Commits.
+3. Abra um Pull Request da branch para a `main` e aguarde a CI ficar verde.
+4. O merge na `main` acontece somente pelo Pull Request, nunca por `git push`
+   direto.
+
+### Sem referência ao uso de IA
+
+Commits, Pull Requests, tags, comentários de código e documentação não podem
+mencionar que foram produzidos com ajuda de IA. Isso vale mesmo quando a
+ferramenta sugere incluir por padrão:
+
+- Não adicione trailers como `Co-Authored-By:` de assistentes ou modelos nas
+  mensagens de commit.
+- Não inclua linhas como "Generated with ..." no corpo de Pull Requests.
+- Não cite nomes de assistentes, modelos ou ferramentas de IA em títulos,
+  descrições ou comentários.
+
+### Versionamento e tags
+
+Um pacote Swift não tem arquivo de versão: a versão é a tag. A fonte da versão
+é o `CHANGELOG.md`. O primeiro título no formato `## X.Y.Z - AAAA-MM-DD`,
+logo abaixo de `## Não lançado`, é a versão atual. A primeira versão do pacote
+é `1.0.0`.
+
+A casa a incrementar depende do tipo da mudança mergeada:
+
+| Tipo da mudança                    | Casa incrementada | Exemplo           |
+| ---------------------------------- | ----------------- | ----------------- |
+| Reestruturação ou grande alteração | Primeira (major)  | `1.4.2` → `2.0.0` |
+| Nova funcionalidade (`feat`)       | Segunda (minor)   | `1.4.2` → `1.5.0` |
+| Correção de bug (`fix`)            | Terceira (patch)  | `1.4.2` → `1.4.3` |
+
+Ao incrementar uma casa, as casas à direita voltam a zero. Se o Pull Request
+misturar tipos, vale o de maior impacto. Remover ou mudar API `public` de forma
+incompatível conta como grande alteração. Pull Requests que só mexem em
+documentação, testes ou tarefas internas (`docs`, `test`, `chore`) não criam
+versão e não geram tag.
+
+#### Atualização automática da versão pelo agente
+
+Atualizar a versão é responsabilidade do agente, não do proprietário. Sempre
+que o proprietário pedir o commit e disser que vai abrir (ou pedir para abrir)
+o Pull Request para a `main`, o agente deve, sem pedir confirmação:
+
+1. Identificar o tipo da mudança da branch e escolher a casa a incrementar
+   pela tabela acima, a partir da versão que está no `CHANGELOG.md` da `main`.
+2. No `CHANGELOG.md`, mover as entradas de `## Não lançado` para um novo
+   título `## X.Y.Z - AAAA-MM-DD`, mantendo `## Não lançado` vazio no topo.
+3. Atualizar os exemplos de instalação do README que citam a versão, quando
+   houver.
+4. Incluir essas alterações no commit da branch, antes de abrir o Pull Request.
+5. Informar ao proprietário a versão anterior, a nova e o motivo da casa
+   escolhida.
+
+Se a branch já tiver criado a versão em relação à `main`, não crie outra.
+Nunca altere a versão direto na `main`.
+
+#### Tag automática no merge
+
+A tag não é criada na mão. O workflow `.github/workflows/release-tag.yml` roda
+quando a CI da `main` termina verde, lê a versão atual do `CHANGELOG.md` e
+cria a tag correspondente no commit mergeado, se ela ainda não existir. O
+workflow só cria a tag; ele não faz commit nem altera arquivos. Enquanto o
+`CHANGELOG.md` não tiver nenhum título de versão, nenhuma tag é criada.
