@@ -216,8 +216,8 @@ struct UAPPFeedbackImagePicker: View {
             }
             #if canImport(PhotosUI)
             PhotosPicker(selection: $selection, matching: .images) {
-                Label(uappLocalized("feedback.image.attach"), systemImage: "paperclip")
-                    .labelStyle(.iconOnly)
+                Image(systemName: "paperclip")
+                    .accessibilityLabel(Text(verbatim: uappLocalized("feedback.image.attach")))
                     .font(.body).frame(width: 44, height: 44, alignment: .leading)
                     .contentShape(Rectangle())
             }
