@@ -24,13 +24,17 @@ jobs:
       - name: Validate package manifest
         run: swift package dump-package
 
+      # O build system "swiftbuild" compila o Localizable.xcstrings; o nativo só
+      # copia o arquivo e os testes de localização falham.
       - name: Build and test package
         run: |
-          swift build
-          swift build -c release
-          swift test --enable-code-coverage
+          swift build --build-system swiftbuild
+          swift build --build-system swiftbuild -c release
+          swift test --build-system swiftbuild --enable-code-coverage
 
       - name: Check SDK coverage
+        env:
+          UAPP_SWIFT_BUILD_FLAGS: --build-system swiftbuild
         run: bash Scripts/check-coverage.sh
 
       - name: Regenerate demo project

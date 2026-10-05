@@ -201,10 +201,9 @@ func urlSessionTransportMapsFailures() async throws {
         _ = try await transport.send(request)
         Issue.record("era esperada uma falha de transporte")
     } catch let error as UAPPKitError {
-        if case .transport = error {
-            #expect(true)
-        } else {
+        guard case .transport = error else {
             Issue.record("erro inesperado: \(error)")
+            return
         }
     } catch {
         Issue.record("erro não convertido: \(error)")
