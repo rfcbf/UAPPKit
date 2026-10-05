@@ -18,10 +18,21 @@ protocol UAPPLiveSocket: Sendable {
 struct URLSessionLiveSocket: UAPPLiveSocket {
     let task: URLSessionWebSocketTask
 
-    func resume() { task.resume() }
-    func send(_ message: URLSessionWebSocketTask.Message) async throws { try await task.send(message) }
-    func receive() async throws -> URLSessionWebSocketTask.Message { try await task.receive() }
-    func close() { task.cancel(with: .goingAway, reason: nil) }
+    func resume() {
+        task.resume()
+    }
+
+    func send(_ message: URLSessionWebSocketTask.Message) async throws {
+        try await task.send(message)
+    }
+
+    func receive() async throws -> URLSessionWebSocketTask.Message {
+        try await task.receive()
+    }
+
+    func close() {
+        task.cancel(with: .goingAway, reason: nil)
+    }
 }
 
 /// Recebe apenas invalidações. Os dados continuam vindo da API pública filtrada.
@@ -33,8 +44,10 @@ enum UAPPFeedbackLive {
         makeSocket: (URL) -> any UAPPLiveSocket = { URLSessionLiveSocket(task: URLSession.shared.webSocketTask(with: $0)) }
     ) throws -> AsyncThrowingStream<Void, any Error> {
         var components = URLComponents(url: configuration.websocketURL, resolvingAgainstBaseURL: false)
-        components?.queryItems = [URLQueryItem(name: "apikey", value: configuration.apiKey),
-                                  URLQueryItem(name: "vsn", value: "1.0.0")]
+        components?.queryItems = [
+            URLQueryItem(name: "apikey", value: configuration.apiKey),
+            URLQueryItem(name: "vsn", value: "1.0.0")
+        ]
         guard let url = components?.url else { throw UAPPKitError.invalidResponse }
         let socket = makeSocket(url)
         let topic = "realtime:\(configuration.topic)"
@@ -69,8 +82,11 @@ enum UAPPFeedbackLive {
                 }
                 do {
                     try await socket.send(message(topic: topic, event: "phx_join", ref: "1", payload: [
-                        "config": ["broadcast": ["ack": false, "self": false],
-                                   "presence": ["enabled": false], "private": false]
+                        "config": [
+                            "broadcast": ["ack": false, "self": false],
+                            "presence": ["enabled": false],
+                            "private": false
+                        ]
                     ]))
                     while !Task.isCancelled {
                         let received = try await socket.receive()
@@ -110,7 +126,9 @@ enum UAPPFeedbackLive {
             "topic": topic, "event": event, "ref": ref,
             "payload": payload
         ]
-        if topic != "phoenix" { object["join_ref"] = "1" }
+        if topic != "phoenix" {
+            object["join_ref"] = "1"
+        }
         let data = try JSONSerialization.data(withJSONObject: object)
         return .string(String(decoding: data, as: UTF8.self))
     }
@@ -129,7 +147,9 @@ enum UAPPFeedbackLive {
         enum Action: Equatable { case joined, changed, ignore }
 
         func action() throws -> Action {
-            if event == "phx_error" || event == "phx_close" { throw UAPPKitError.transport("Live channel closed") }
+            if event == "phx_error" || event == "phx_close" {
+                throw UAPPKitError.transport("Live channel closed")
+            }
             if event == "phx_reply", ref == "1" {
                 guard payload?.status == "ok" else { throw UAPPKitError.transport("Live subscription unavailable") }
                 return .joined
@@ -141,12 +161,18 @@ enum UAPPFeedbackLive {
     private actor Health {
         private(set) var joined = false
         private var heartbeatPending = false
-        func markJoined() { joined = true }
+        func markJoined() {
+            joined = true
+        }
+
         func beginHeartbeat() -> Bool {
             guard !heartbeatPending else { return false }
             heartbeatPending = true
             return true
         }
-        func acknowledgeHeartbeat() { heartbeatPending = false }
+
+        func acknowledgeHeartbeat() {
+            heartbeatPending = false
+        }
     }
 }

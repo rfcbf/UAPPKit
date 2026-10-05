@@ -172,7 +172,7 @@ public struct UAPPRoadmapScreen: View {
               let original = columns.flatMap(\.items).first(where: { $0.id == id }) else { return }
         reactingIds.insert(id)
         defer { reactingIds.remove(id) }
-        if !(await UAPPFeedbackVoting.toggle(original, client: client, replace: replace)) {
+        if await !(UAPPFeedbackVoting.toggle(original, client: client, replace: replace)) {
             reactionError = uappLocalized("detail.reaction_error")
         }
     }
@@ -183,8 +183,14 @@ public struct UAPPRoadmapScreen: View {
         }
         guard !Task.isCancelled else { return }
         isRefreshing = true
-        if !silently { isLoading = true; errorMessage = nil }
-        defer { isRefreshing = false; if !silently { isLoading = false } }
+        if !silently {
+            isLoading = true; errorMessage = nil
+        }
+        defer {
+            isRefreshing = false; if !silently {
+                isLoading = false
+            }
+        }
         do {
             let loaded = try await client.roadmap()
             try Task.checkCancellation()
@@ -194,7 +200,9 @@ public struct UAPPRoadmapScreen: View {
             return
         } catch {
             if let failure = UAPPFeedbackLoadFailure.make(for: error, silently: silently, hasContent: !columns.isEmpty) {
-                if failure.clearsContent { columns = [] }
+                if failure.clearsContent {
+                    columns = []
+                }
                 errorMascotState = failure.mascotState
                 errorMessage = failure.messageKey
             }

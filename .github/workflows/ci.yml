@@ -8,7 +8,7 @@ on:
 
 jobs:
   validate:
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
 
@@ -24,13 +24,17 @@ jobs:
       - name: Validate package manifest
         run: swift package dump-package
 
+      # O build system "swiftbuild" compila o Localizable.xcstrings; o nativo só
+      # copia o arquivo e os testes de localização falham.
       - name: Build and test package
         run: |
-          swift build
-          swift build -c release
-          swift test --enable-code-coverage
+          swift build --build-system swiftbuild
+          swift build --build-system swiftbuild -c release
+          swift test --build-system swiftbuild --enable-code-coverage
 
       - name: Check SDK coverage
+        env:
+          UAPP_SWIFT_BUILD_FLAGS: --build-system swiftbuild
         run: bash Scripts/check-coverage.sh
 
       - name: Regenerate demo project
@@ -40,6 +44,9 @@ jobs:
       - name: Check generated project is current
         run: git diff --exit-code -- .Examples/UAPPKitDemo/UAPPKitDemo.xcodeproj/project.pbxproj
 
+      # O ícone UAPPKit.icon foi criado no Icon Composer do Xcode 27 e o actool
+      # do Xcode 26 não consegue abri-lo. Até existir runner com Xcode 27, a CI
+      # compila o Demo sem o ícone; o restante do build é validado normalmente.
       - name: Build demo for iOS Simulator
         run: >-
           xcodebuild -quiet
@@ -47,4 +54,6 @@ jobs:
           -scheme UAPPKitDemo
           -destination 'generic/platform=iOS Simulator'
           CODE_SIGNING_ALLOWED=NO
+          EXCLUDED_SOURCE_FILE_NAMES=UAPPKit.icon
+          ASSETCATALOG_COMPILER_APPICON_NAME=
           build

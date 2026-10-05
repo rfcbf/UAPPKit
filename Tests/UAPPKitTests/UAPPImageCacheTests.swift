@@ -53,7 +53,7 @@ struct UAPPImageCacheTests {
             return response("not an image")
         })
         let url = try #require(URL(string: "https://example.test/invalid.png"))
-        for _ in 0..<2 {
+        for _ in 0 ..< 2 {
             await #expect(throws: URLError.self) { try await cache.load(url) }
         }
         #expect(recorder.requests.count == 2)
@@ -80,7 +80,7 @@ struct UAPPImageCacheTests {
     @Test("Cache-Control no-store impede retenção em memória")
     func noStore() async throws {
         let recorder = RequestRecorder()
-        let transport = ImageHeaderTransport(data: try imageData(), recorder: recorder)
+        let transport = try ImageHeaderTransport(data: imageData(), recorder: recorder)
         let cache = UAPPRemoteImageCache(transport: transport)
         let url = try #require(URL(string: "https://example.test/private.png"))
         _ = try await cache.load(url)

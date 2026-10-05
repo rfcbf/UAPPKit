@@ -7,8 +7,12 @@ import Testing
 @MainActor
 func participationUsesLocalProfile() async {
     let client = makeClient { _ in response(#"{"items":[]}"#) }
-    let identity = UAPPIdentity(userId: "local-profile", email: "visitor@example.test",
-                                displayName: "Visitante", avatarURL: URL(fileURLWithPath: "/tmp/profile.jpg"))
+    let identity = UAPPIdentity(
+        userId: "local-profile",
+        email: "visitor@example.test",
+        displayName: "Visitante",
+        avatarURL: URL(fileURLWithPath: "/tmp/profile.jpg")
+    )
     await client.setIdentity(identity)
     let model = UAPPParticipationModel(client: client)
     await model.refresh()

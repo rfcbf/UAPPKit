@@ -2,10 +2,12 @@ import SwiftUI
 import Testing
 #if canImport(UIKit)
 import UIKit
+
 private let becameActive = UIApplication.didBecomeActiveNotification
 private let resignedActive = UIApplication.willResignActiveNotification
 #elseif canImport(AppKit)
 import AppKit
+
 private let becameActive = NSApplication.didBecomeActiveNotification
 private let resignedActive = NSApplication.didResignActiveNotification
 #endif
@@ -38,7 +40,9 @@ func changelogApplicationActivityRenders() async {
 @MainActor
 private final class ActivityBox {
     var isActive = false
-    var binding: Binding<Bool> { Binding(get: { self.isActive }, set: { self.isActive = $0 }) }
+    var binding: Binding<Bool> {
+        Binding(get: { self.isActive }, set: { self.isActive = $0 })
+    }
 }
 
 @Test("observador acompanha ativação e saída do aplicativo")

@@ -27,7 +27,9 @@ actor UAPPAutomaticAuthentication: UAPPAuthenticationProvider {
     }
 
     func currentSession() async throws -> UAPPAuthenticationSession? {
-        if let provider { return try await provider.currentSession() }
+        if let provider {
+            return try await provider.currentSession()
+        }
         // Sem conta salva, a navegação pública continua sem consultar autenticação.
         guard try sessionStorage.read() != nil else { return nil }
         return try await resolve().currentSession()
@@ -98,7 +100,7 @@ actor UAPPAutomaticAuthentication: UAPPAuthenticationProvider {
         if let loading {
             task = loading
         } else {
-            let savedKey = UAPPAuthentication.savedPublishableKey(try sessionStorage.read())
+            let savedKey = try UAPPAuthentication.savedPublishableKey(sessionStorage.read())
             task = Task {
                 let publishableKey: String
                 if let savedKey {

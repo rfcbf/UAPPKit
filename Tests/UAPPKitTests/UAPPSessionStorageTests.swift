@@ -17,7 +17,9 @@ private final class KeychainDouble: @unchecked Sendable {
         UAPPKeychain(
             copyMatching: { [self] _, result in
                 lock.withLock {
-                    if let copyStatus { return copyStatus }
+                    if let copyStatus {
+                        return copyStatus
+                    }
                     guard let stored else { return errSecItemNotFound }
                     result?.pointee = stored as CFData
                     return errSecSuccess
@@ -25,7 +27,9 @@ private final class KeychainDouble: @unchecked Sendable {
             },
             update: { [self] _, changes in
                 lock.withLock {
-                    if let updateStatus { return updateStatus }
+                    if let updateStatus {
+                        return updateStatus
+                    }
                     guard stored != nil else { return errSecItemNotFound }
                     stored = (changes as NSDictionary)[kSecValueData as String] as? Data
                     return errSecSuccess
@@ -41,7 +45,9 @@ private final class KeychainDouble: @unchecked Sendable {
             },
             delete: { [self] _ in
                 lock.withLock {
-                    if let deleteStatus { return deleteStatus }
+                    if let deleteStatus {
+                        return deleteStatus
+                    }
                     defer { stored = nil }
                     return stored == nil ? errSecItemNotFound : errSecSuccess
                 }

@@ -79,8 +79,15 @@ func feedbackLikeUpdatesPreserveMetadata() {
     #expect(liked.createdAt == original.createdAt)
     #expect(liked.settingLike(enabled: true) == liked)
     #expect(liked.settingLike(enabled: false) == original)
-    let empty = UAPPFeedbackItem(id: "empty", title: "Empty", body: nil,
-                                 voteCount: 0, likeCount: 0, commentCount: 0, viewerLiked: true)
+    let empty = UAPPFeedbackItem(
+        id: "empty",
+        title: "Empty",
+        body: nil,
+        voteCount: 0,
+        likeCount: 0,
+        commentCount: 0,
+        viewerLiked: true
+    )
     #expect(empty.settingLike(enabled: false).likeCount == 0)
 }
 

@@ -2,8 +2,8 @@ import CoreGraphics
 import Foundation
 import ImageIO
 import Testing
-import UniformTypeIdentifiers
 @testable import UAPPKit
+import UniformTypeIdentifiers
 
 struct UAPPProfileImageProcessorTests {
     @Test("Foto é exportada como JPEG quadrado, sem ampliar imagens pequenas", arguments: [1200, 96])

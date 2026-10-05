@@ -3,7 +3,7 @@ import SwiftUI
 
 struct UAPPFeedbackTranslatedText: View {
     let text: String
-    var lineLimit: Int? = nil
+    var lineLimit: Int?
     @AppStorage(UAPPLocalizationPreferences.presentationStorageKey)
     private var selectedLanguage = UAPPLocalizationPreferences.defaultIdentifier
     @Environment(\.uappFeedbackTranslationCache) private var cache
@@ -26,10 +26,12 @@ func uappFeedbackDescriptionPreview(_ text: String, maximumLines: Int) -> String
         .replacingOccurrences(of: "\r", with: "\n").components(separatedBy: "\n")
     guard lines.count > maximumLines,
           !lines.dropFirst(maximumLines).joined(separator: "\n")
-            .trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return text }
+          .trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return text }
     var preview = lines.prefix(maximumLines).joined(separator: "\n")
     // Se o corte cair numa linha vazia, mostre as reticências após o último texto visível.
-    while preview.last?.isWhitespace == true { preview.removeLast() }
+    while preview.last?.isWhitespace == true {
+        preview.removeLast()
+    }
     return preview + "…"
 }
 

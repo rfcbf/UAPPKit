@@ -10,37 +10,102 @@ private let searchItems = [
 @Test("filtros de feedback combinam busca, categoria e status")
 func feedbackFiltersCombineSelections() {
     let items = [
-        UAPPFeedbackItem(id: "1", title: "Tema escuro", body: nil, voteCount: 40, likeCount: 4, commentCount: 2,
-                         category: .feature, statusId: "planned"),
-        UAPPFeedbackItem(id: "2", title: "Erro no tema", body: nil, voteCount: 1, likeCount: 9, commentCount: 1,
-                         category: .bug, statusId: "planned"),
+        UAPPFeedbackItem(
+            id: "1",
+            title: "Tema escuro",
+            body: nil,
+            voteCount: 40,
+            likeCount: 4,
+            commentCount: 2,
+            category: .feature,
+            statusId: "planned"
+        ),
+        UAPPFeedbackItem(
+            id: "2",
+            title: "Erro no tema",
+            body: nil,
+            voteCount: 1,
+            likeCount: 9,
+            commentCount: 1,
+            category: .bug,
+            statusId: "planned"
+        ),
         UAPPFeedbackItem(id: "3", title: "Tema automático", body: nil, voteCount: 90, likeCount: 1, commentCount: 0)
     ]
-    #expect(UAPPFeedbackSearch.presentedItems(items, matching: "tema", category: .feature,
-                                             statusId: "planned", sort: .votes).map(\.id) == ["1"])
-    #expect(UAPPFeedbackSearch.presentedItems(items, matching: "", category: nil,
-                                             statusId: "unknown", sort: .newest).isEmpty)
-    #expect(UAPPFeedbackSearch.presentedItems(items, matching: "", category: nil,
-                                             statusId: nil, sort: .votes).map(\.id) == ["3", "1", "2"])
+    #expect(UAPPFeedbackSearch.presentedItems(
+        items,
+        matching: "tema",
+        category: .feature,
+        statusId: "planned",
+        sort: .votes
+    ).map(\.id) == ["1"])
+    #expect(UAPPFeedbackSearch.presentedItems(
+        items,
+        matching: "",
+        category: nil,
+        statusId: "unknown",
+        sort: .newest
+    ).isEmpty)
+    #expect(UAPPFeedbackSearch.presentedItems(
+        items,
+        matching: "",
+        category: nil,
+        statusId: nil,
+        sort: .votes
+    ).map(\.id) == ["3", "1", "2"])
 }
 
 @Test("ordenação usa datas, votos e comentários com desempate determinístico")
 func feedbackSortHandlesDatesAndTies() {
     let items = [
-        UAPPFeedbackItem(id: "b", title: "B", body: nil, voteCount: 80, likeCount: 8, commentCount: 1,
-                         createdAt: Date(timeIntervalSince1970: 1)),
-        UAPPFeedbackItem(id: "a", title: "A", body: nil, voteCount: 80, likeCount: 8, commentCount: 3,
-                         createdAt: Date(timeIntervalSince1970: 2)),
+        UAPPFeedbackItem(
+            id: "b",
+            title: "B",
+            body: nil,
+            voteCount: 80,
+            likeCount: 8,
+            commentCount: 1,
+            createdAt: Date(timeIntervalSince1970: 1)
+        ),
+        UAPPFeedbackItem(
+            id: "a",
+            title: "A",
+            body: nil,
+            voteCount: 80,
+            likeCount: 8,
+            commentCount: 3,
+            createdAt: Date(timeIntervalSince1970: 2)
+        ),
         UAPPFeedbackItem(id: "c", title: "C", body: nil, voteCount: 90, likeCount: 9, commentCount: 0)
     ]
-    #expect(UAPPFeedbackSearch.presentedItems(items, matching: "", category: nil,
-                                             statusId: nil, sort: .newest).map(\.id) == ["a", "b", "c"])
-    #expect(UAPPFeedbackSearch.presentedItems(items, matching: "", category: nil,
-                                             statusId: nil, sort: .votes).map(\.id) == ["c", "a", "b"])
-    #expect(UAPPFeedbackSearch.presentedItems(items, matching: "", category: nil,
-                                             statusId: nil, sort: .comments).map(\.id) == ["a", "b", "c"])
-    #expect(UAPPFeedbackSearch.presentedItems(Array(searchItems.reversed()), matching: "", category: nil,
-                                             statusId: nil, sort: .newest).map(\.id) == ["1", "2"])
+    #expect(UAPPFeedbackSearch.presentedItems(
+        items,
+        matching: "",
+        category: nil,
+        statusId: nil,
+        sort: .newest
+    ).map(\.id) == ["a", "b", "c"])
+    #expect(UAPPFeedbackSearch.presentedItems(
+        items,
+        matching: "",
+        category: nil,
+        statusId: nil,
+        sort: .votes
+    ).map(\.id) == ["c", "a", "b"])
+    #expect(UAPPFeedbackSearch.presentedItems(
+        items,
+        matching: "",
+        category: nil,
+        statusId: nil,
+        sort: .comments
+    ).map(\.id) == ["a", "b", "c"])
+    #expect(UAPPFeedbackSearch.presentedItems(
+        Array(searchItems.reversed()),
+        matching: "",
+        category: nil,
+        statusId: nil,
+        sort: .newest
+    ).map(\.id) == ["1", "2"])
 }
 
 @Test("busca de feedback normaliza espaços, caixa e acentos")

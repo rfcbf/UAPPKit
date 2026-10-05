@@ -83,8 +83,15 @@ func feedbackDetailFiltersItem() async throws {
 @Test("Respostas seguem o pai; órfãos e ciclos aparecem uma vez")
 func feedbackCommentsGroupThreads() {
     func comment(_ id: String, parent: String? = nil) -> UAPPComment {
-        UAPPComment(id: id, body: id, parentCommentId: parent, likeCount: 0,
-                    createdAt: Date(timeIntervalSince1970: 0), authorKind: .community, viewerLiked: false)
+        UAPPComment(
+            id: id,
+            body: id,
+            parentCommentId: parent,
+            likeCount: 0,
+            createdAt: Date(timeIntervalSince1970: 0),
+            authorKind: .community,
+            viewerLiked: false
+        )
     }
     let rows = UAPPCommentThread.rows([
         comment("reply", parent: "root"), comment("root"), comment("other"),

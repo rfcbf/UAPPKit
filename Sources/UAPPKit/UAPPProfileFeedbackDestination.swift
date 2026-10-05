@@ -10,8 +10,12 @@ struct UAPPProfileFeedbackDestination: View {
     var body: some View {
         Group {
             if let item = page?.items.first(where: { $0.id == itemId }), let client = model.profileClient {
-                UAPPFeedbackDetailScreen(client: client, item: item, accentColor: accentColor,
-                                         status: page?.statuses.first { $0.id == item.statusId })
+                UAPPFeedbackDetailScreen(
+                    client: client,
+                    item: item,
+                    accentColor: accentColor,
+                    status: page?.statuses.first { $0.id == item.statusId }
+                )
             } else if failed {
                 VStack(spacing: 16) {
                     Text(verbatim: uappLocalized("user.activity_error"))
@@ -37,7 +41,9 @@ struct UAPPProfileFeedbackDestination: View {
             }
             page = result
         } catch {
-            if !Task.isCancelled { failed = true }
+            if !Task.isCancelled {
+                failed = true
+            }
         }
     }
 }

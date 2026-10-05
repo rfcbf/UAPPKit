@@ -252,9 +252,9 @@ public struct UAPPFeedbackScreen: View {
             }
             ForEach(filtered) { item in
                 feedbackCard(item, status: feedbackStatuses.first { $0.id == item.statusId })
-                .listRowBackground(palette.cardBackground)
-                .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
-                .alignmentGuide(.listRowSeparatorTrailing) { $0.width }
+                    .listRowBackground(palette.cardBackground)
+                    .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
+                    .alignmentGuide(.listRowSeparatorTrailing) { $0.width }
             }
         case .roadmap:
             // Apresentado por UAPPRoadmapScreen.
@@ -328,7 +328,7 @@ public struct UAPPFeedbackScreen: View {
               let original = feedback.first(where: { $0.id == id }) else { return }
         reactingIds.insert(id)
         defer { reactingIds.remove(id) }
-        if !(await UAPPFeedbackVoting.toggle(original, client: client, replace: replaceFeedback)) {
+        if await !(UAPPFeedbackVoting.toggle(original, client: client, replace: replaceFeedback)) {
             reactionError = uappLocalized("detail.reaction_error")
         }
     }
@@ -339,8 +339,14 @@ public struct UAPPFeedbackScreen: View {
         }
         guard !Task.isCancelled else { return }
         isRefreshing = true
-        if !silently { isLoading = true; errorMessage = nil }
-        defer { isRefreshing = false; if !silently { isLoading = false } }
+        if !silently {
+            isLoading = true; errorMessage = nil
+        }
+        defer {
+            isRefreshing = false; if !silently {
+                isLoading = false
+            }
+        }
         do {
             switch mode {
             case .feedback:
@@ -361,7 +367,9 @@ public struct UAPPFeedbackScreen: View {
             let project = await client.currentProject()
             projectColor = project?.primaryColor.flatMap(Color.init(hex:))
             if let failure = UAPPFeedbackLoadFailure.make(for: error, silently: silently, hasContent: !feedback.isEmpty) {
-                if failure.clearsContent { feedback = [] }
+                if failure.clearsContent {
+                    feedback = []
+                }
                 errorMascotState = failure.mascotState
                 errorMessage = failure.messageKey
             }

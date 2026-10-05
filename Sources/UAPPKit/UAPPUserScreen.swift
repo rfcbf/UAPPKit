@@ -38,11 +38,18 @@ public struct UAPPUserScreen: View {
     }
 
     /// Perfil público sem e-mail ou ações da conta; com cliente e feedback, consulta nome e estatísticas públicos.
-    public init(publicIdentity: UAPPIdentity, theme: UAPPTheme = .system,
-                client: UAPPClient? = nil, feedbackId: String? = nil) {
+    public init(
+        publicIdentity: UAPPIdentity,
+        theme: UAPPTheme = .system,
+        client: UAPPClient? = nil,
+        feedbackId: String? = nil
+    ) {
         _model = StateObject(wrappedValue: UAPPUserModel(client: client, feedbackId: feedbackId))
-        identity = UAPPIdentity(userId: publicIdentity.userId, displayName: publicIdentity.displayName,
-                                avatarURL: publicIdentity.avatarURL)
+        identity = UAPPIdentity(
+            userId: publicIdentity.userId,
+            displayName: publicIdentity.displayName,
+            avatarURL: publicIdentity.avatarURL
+        )
         self.theme = theme
         isPublicProfile = true
         isLocalProfile = false
@@ -57,10 +64,21 @@ public struct UAPPUserScreen: View {
         isLocalProfile = true
     }
 
-    private var palette: UAPPResolvedPalette { theme.resolved(for: colorScheme) }
-    private var accentColor: Color { palette.accent ?? .accentColor }
-    private var name: String? { nonempty(isLocalProfile ? identity.displayName : model.publicProfile?.author.name ?? identity.displayName) }
-    private var email: String? { nonempty(identity.email) }
+    private var palette: UAPPResolvedPalette {
+        theme.resolved(for: colorScheme)
+    }
+
+    private var accentColor: Color {
+        palette.accent ?? .accentColor
+    }
+
+    private var name: String? {
+        nonempty(isLocalProfile ? identity.displayName : model.publicProfile?.author.name ?? identity.displayName)
+    }
+
+    private var email: String? {
+        nonempty(identity.email)
+    }
 
     public var body: some View {
         NavigationStack {
@@ -85,7 +103,11 @@ public struct UAPPUserScreen: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    if isPublicProfile { publicActivityContent } else { activityContent }
+                    if isPublicProfile {
+                        publicActivityContent
+                    } else {
+                        activityContent
+                    }
                     if let key = photoErrorKey ?? model.errorKey {
                         UAPPInlineBanner(message: localized(key), style: .error, accent: accentColor)
                     }
@@ -121,7 +143,11 @@ public struct UAPPUserScreen: View {
             }
             .navigationDestination(isPresented: Binding(
                 get: { selectedFeedbackId != nil },
-                set: { if !$0 { selectedFeedbackId = nil } }
+                set: {
+                    if !$0 {
+                        selectedFeedbackId = nil
+                    }
+                }
             )) {
                 if let selectedFeedbackId {
                     UAPPProfileFeedbackDestination(model: model, itemId: selectedFeedbackId, accentColor: accentColor)
@@ -134,14 +160,20 @@ public struct UAPPUserScreen: View {
             guard !hasPreparedLanguage else { return }
             hasPreparedLanguage = true
             selectedLanguage = UAPPLocalizationPreferences.preparePresentation(initialIdentifier: locale.identifier)
-            if isPublicProfile { await model.loadPublicProfile() } else { await model.loadActivity() }
+            if isPublicProfile {
+                await model.loadPublicProfile()
+            } else {
+                await model.loadActivity()
+            }
         }
         .interactiveDismissDisabled(model.isBusy || model.isUploadingPhoto)
         .modifier(UAPPFeedbackLiveModifier(client: model.profileClient) {
             await model.reconcileActivity()
         })
         .uappOnChange(of: model.session == nil) { signedOut in
-            if signedOut && !isPublicProfile { dismiss() }
+            if signedOut, !isPublicProfile {
+                dismiss()
+            }
         }
         #if os(iOS)
         .presentationDetents([.medium, .large], selection: $profileDetent)
@@ -159,7 +191,7 @@ public struct UAPPUserScreen: View {
     @ViewBuilder
     private var avatarFrame: some View {
         #if os(iOS)
-        if !isPublicProfile && model.supportsProfilePhoto {
+        if !isPublicProfile, model.supportsProfilePhoto {
             UAPPProfilePhotoPicker(
                 photo: Binding(
                     get: { model.profilePhoto },
@@ -204,10 +236,16 @@ public struct UAPPUserScreen: View {
     }
 
     private var profileAvatarURL: URL? {
-        if isLocalProfile, let avatarURL = identity.avatarURL { return avatarURL }
-        if !isPublicProfile { return model.avatarURL ?? identity.avatarURL }
+        if isLocalProfile, let avatarURL = identity.avatarURL {
+            return avatarURL
+        }
+        if !isPublicProfile {
+            return model.avatarURL ?? identity.avatarURL
+        }
         // Um perfil carregado sem foto não deve recuperar uma imagem antiga do card.
-        if let profile = model.publicProfile { return profile.author.avatarURL }
+        if let profile = model.publicProfile {
+            return profile.author.avatarURL
+        }
         return identity.avatarURL
     }
 
@@ -256,9 +294,12 @@ public struct UAPPUserScreen: View {
                         set: { statusId in Task { await model.filterPublicHistory(statusId: statusId) } }
                     ))
                 } label: {
-                    Label(model.publicProfile?.statuses.first { $0.id == model.publicStatusId }?.name
-                          ?? localized("feedback.filter.status"), systemImage: "line.3.horizontal.decrease.circle")
-                        .font(.subheadline)
+                    Label(
+                        model.publicProfile?.statuses.first { $0.id == model.publicStatusId }?.name
+                            ?? localized("feedback.filter.status"),
+                        systemImage: "line.3.horizontal.decrease.circle"
+                    )
+                    .font(.subheadline)
                 }
                 .disabled(model.isLoadingActivity)
             }
@@ -296,10 +337,10 @@ public struct UAPPUserScreen: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(model.isLoadingActivity)
-            } else if model.publicProfile != nil && model.history.isEmpty {
+            } else if model.publicProfile != nil, model.history.isEmpty {
                 emptyHistory(model.publicStatusId == nil ? "user.history_empty" : "feedback.filter.empty")
             }
-            if model.publicProfile?.nextCursor != nil && model.activityErrorKey == nil {
+            if model.publicProfile?.nextCursor != nil, model.activityErrorKey == nil {
                 Button { Task { await model.loadPublicProfile(loadMore: true) } } label: {
                     secondaryLabel("user.more", symbol: "chevron.down")
                 }
@@ -333,10 +374,10 @@ public struct UAPPUserScreen: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(model.isLoadingActivity || model.isBusy)
-            } else if model.activity != nil && model.history.isEmpty {
+            } else if model.activity != nil, model.history.isEmpty {
                 emptyHistory("user.history_empty")
             }
-            if model.activity?.nextCursor != nil && model.activityErrorKey == nil {
+            if model.activity?.nextCursor != nil, model.activityErrorKey == nil {
                 Button { Task { await model.loadActivity(loadMore: true) } } label: {
                     secondaryLabel("user.more", symbol: "chevron.down")
                 }
@@ -366,14 +407,23 @@ public struct UAPPUserScreen: View {
     }
 
     private func secondaryLabel(_ key: String, symbol: String) -> some View {
-        UAPPSecondaryButtonLabel(title: localized(key), systemImage: symbol, accent: accentColor,
-                                 minHeight: 44)
+        UAPPSecondaryButtonLabel(
+            title: localized(key),
+            systemImage: symbol,
+            accent: accentColor,
+            minHeight: 44
+        )
     }
 
     private func emptyHistory(_ key: String) -> some View {
         HStack(spacing: 12) {
-            UAPPAccentIconBadge(systemImage: "tray", accent: accentColor, size: 40, cornerRadius: 12,
-                                font: .body.weight(.semibold))
+            UAPPAccentIconBadge(
+                systemImage: "tray",
+                accent: accentColor,
+                size: 40,
+                cornerRadius: 12,
+                font: .body.weight(.semibold)
+            )
             Text(verbatim: localized(key))
                 .font(.subheadline)
                 .foregroundStyle(palette.secondaryText)
@@ -431,8 +481,13 @@ public struct UAPPUserScreen: View {
 
     private func activityCard(_ key: String, symbol: String, count: Int?) -> some View {
         VStack(spacing: 8) {
-            UAPPAccentIconBadge(systemImage: symbol, accent: accentColor, size: 34, cornerRadius: 10,
-                                font: .subheadline.weight(.semibold))
+            UAPPAccentIconBadge(
+                systemImage: symbol,
+                accent: accentColor,
+                size: 34,
+                cornerRadius: 10,
+                font: .subheadline.weight(.semibold)
+            )
             Text(verbatim: count.map { String($0) } ?? "—")
                 .font(.title2.bold()).monospacedDigit()
             Text(verbatim: localized(key))
@@ -447,10 +502,14 @@ public struct UAPPUserScreen: View {
     }
 
     private func statusLabel(_ item: UAPPUserActivityPage.Item) -> String {
-        if item.state != "published" { return localized("user.state.\(item.state)") }
+        if item.state != "published" {
+            return localized("user.state.\(item.state)")
+        }
         if let key = item.statusKey {
             let translated = uappLocalized("status.\(key)", languageIdentifier: selectedLanguage)
-            if translated != "status.\(key)" { return translated }
+            if translated != "status.\(key)" {
+                return translated
+            }
         }
         return item.statusName ?? localized("user.state.published")
     }

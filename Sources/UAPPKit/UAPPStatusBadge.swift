@@ -2,7 +2,7 @@ import SwiftUI
 
 struct UAPPStatusBadge: View {
     let status: UAPPRoadmapColumn.Status?
-    var title: String? = nil
+    var title: String?
     @AppStorage(UAPPLocalizationPreferences.presentationStorageKey)
     private var selectedLanguage = UAPPLocalizationPreferences.defaultIdentifier
 
@@ -47,7 +47,7 @@ struct UAPPStatusFilterOptions: View {
     var body: some View {
         Picker(selection: $selection) {
             Text(verbatim: uappLocalized("feedback.filter.all_statuses"))
-                .tag(Optional<String>.none)
+                .tag(String?.none)
             ForEach(statuses.sorted { $0.position < $1.position }, id: \.id) { status in
                 Label {
                     Text(verbatim: uappFeedbackStatusTitle(status, languageIdentifier: selectedLanguage))
@@ -66,9 +66,13 @@ struct UAPPStatusFilterOptions: View {
         let renderer = ImageRenderer(content: UAPPStatusProgress(status: status, statuses: statuses))
         renderer.scale = 3
         #if canImport(UIKit)
-        if let image = renderer.uiImage { return Image(uiImage: image).renderingMode(.original) }
+        if let image = renderer.uiImage {
+            return Image(uiImage: image).renderingMode(.original)
+        }
         #elseif canImport(AppKit)
-        if let image = renderer.nsImage { return Image(nsImage: image).renderingMode(.original) }
+        if let image = renderer.nsImage {
+            return Image(nsImage: image).renderingMode(.original)
+        }
         #endif
         return Image(systemName: "circle")
     }

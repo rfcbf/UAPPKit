@@ -40,18 +40,18 @@ struct UAPPExternalLinksTests {
     func failuresReportFalse() async throws {
         let recorder = OpenerRecorder()
         let web = try #require(URL(string: "https://example.test"))
-        #expect(!(await uappOpenExternalURLAndReportSuccess(web, opener: recorder.open)))
+        #expect(await !uappOpenExternalURLAndReportSuccess(web, opener: recorder.open))
         let store = try #require(URL(string: "itms-apps://apps.apple.com/app/id123456789"))
-        #expect(!(await uappOpenExternalURLAndReportSuccess(store, opener: recorder.open)))
+        #expect(await !uappOpenExternalURLAndReportSuccess(store, opener: recorder.open))
         #expect(recorder.opened.count == 3)
         #expect(recorder.opened.last?.absoluteString == "https://apps.apple.com/app/id123456789")
     }
 
     @Test("Somente links itms-apps recebem alternativa web")
     func fallbackOnlyForAppStoreScheme() throws {
-        #expect(uappAppStoreWebFallback(for: try #require(URL(string: "https://example.test"))) == nil)
-        #expect(uappAppStoreWebFallback(for: try #require(URL(string: "mailto:suporte@example.test"))) == nil)
-        #expect(uappAppStoreWebFallback(for: try #require(URL(string: "ITMS-APPS://apps.apple.com/app/id1")))?
+        #expect(try uappAppStoreWebFallback(for: #require(URL(string: "https://example.test"))) == nil)
+        #expect(try uappAppStoreWebFallback(for: #require(URL(string: "mailto:suporte@example.test"))) == nil)
+        #expect(try uappAppStoreWebFallback(for: #require(URL(string: "ITMS-APPS://apps.apple.com/app/id1")))?
             .absoluteString == "https://apps.apple.com/app/id1")
     }
 }

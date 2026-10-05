@@ -53,7 +53,9 @@ public protocol UAPPAuthenticationProvider: Sendable {
 }
 
 public extension UAPPAuthenticationProvider {
-    var supportsProfilePhoto: Bool { false }
+    var supportsProfilePhoto: Bool {
+        false
+    }
 
     func uploadProfilePhoto(_: Data) async throws -> UAPPAuthenticationSession {
         throw UAPPAuthenticationError.unsupportedMethod
