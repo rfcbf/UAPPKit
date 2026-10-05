@@ -6,6 +6,21 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+- O transporte padrão limita cada requisição a 15 segundos, cancela a espera
+  e retorna erro de comunicação com mensagem de tempo limite. Novo parâmetro
+  opcional `URLSessionTransport(session:timeoutInterval:)`, compatível com as
+  chamadas existentes. O Demo encerra o indicador de teste de conexão ao
+  receber sucesso ou erro e impede testes simultâneos.
+
+- No iOS, `UAPPUserScreen(session:authentication:...)` permite trocar a foto da
+  conta tocando no avatar, quando o provedor declara `supportsProfilePhoto`.
+  O kit reutiliza o seletor/recorte e `uploadProfilePhoto(_:)`, mostra a última
+  foto definida durante e após o envio, entrega a sessão atualizada em
+  `onSessionChange` e preserva a foto anterior se o envio falhar. Sem mudança
+  de API pública nem de backend. A foto escolhida também é gravada em
+  `uapp_avatar_url`, que tem prioridade sobre `avatar_url`/`picture`; assim,
+  um novo login com Apple, Google ou GitHub não substitui a última foto definida.
+
 - Nova view pública `UAPPRoadmapScreen(client:)`. `UAPPKit.showRoadmap` passa a
   apresentá-la, e `UAPPFeedbackScreen(client:mode: .roadmap)` continua
   disponível, delegando à mesma view. No Roadmap, o card mostra o tipo e o voto

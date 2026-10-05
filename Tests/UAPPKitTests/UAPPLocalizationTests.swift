@@ -46,7 +46,8 @@ func accountTranslations(_ language: UAPPLanguage) {
         "account.name", "account.password", "account.password_confirmation", "account.forgot",
         "account.connect", "account.send_recovery", "account.save_password", "account.or",
         "account.back", "account.back_login", "account.resend", "account.login_error",
-        "account.operation_error", "account.unsupported", "user.account", "photo.hint", "photo.error"
+        "account.operation_error", "account.unsupported", "user.account", "photo.hint", "photo.error",
+        "photo.update_error", "photo.uploading"
     ]
     for key in keys {
         #expect(uappLocalized(key, languageIdentifier: language.identifier) != key)

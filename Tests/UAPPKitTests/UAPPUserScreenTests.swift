@@ -86,6 +86,19 @@ struct UAPPUserScreenTests {
         await render(UAPPUserScreen(session: emailOnly, authentication: authentication), settling: true)
     }
 
+    @Test("Conta com suporte a foto mostra o avatar editável com a foto atual")
+    func accountRendersEditablePhoto() async {
+        let session = UAPPAuthenticationSession(
+            identity: UAPPIdentity(userId: "verified", email: "person@example.test", displayName: "Pessoa Conectada",
+                                   avatarURL: URL(string: "https://example.test/avatar.jpg")),
+            accessToken: "fake-token"
+        )
+        await render(UAPPUserScreen(session: session, authentication: AccountProviderStub(),
+                                    client: profileClient()), settling: true)
+        let withoutPhoto = UAPPAuthenticationSession(identity: UAPPIdentity(userId: "verified"), accessToken: "fake-token")
+        await render(UAPPUserScreen(session: withoutPhoto, authentication: AccountProviderStub()), settling: true)
+    }
+
     @Test("Destino do perfil carrega o item, informa falha e item ausente")
     func profileFeedbackDestination() async {
         let item = #"{"id":"\#(profileFeedbackId)","title":"Modo escuro","body":"Detalhes","vote_count":1,"like_count":0,"public_comment_count":0,"priority":0,"viewer_voted":false,"viewer_liked":false,"created_at":"2026-10-01T12:00:00Z"}"#

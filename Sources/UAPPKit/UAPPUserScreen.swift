@@ -16,6 +16,7 @@ public struct UAPPUserScreen: View {
     private var selectedLanguage = UAPPLocalizationPreferences.hostIdentifier
     @State private var hasPreparedLanguage = false
     @State private var selectedFeedbackId: String?
+    @State private var photoErrorKey: String?
     #if os(iOS)
     @State private var profileDetent: PresentationDetent = .medium
     #endif
@@ -66,17 +67,7 @@ public struct UAPPUserScreen: View {
             ScrollView {
                 VStack(spacing: 28) {
                     HStack(spacing: 20) {
-                        avatar
-                            .frame(width: 104, height: 104)
-                            .clipShape(Circle())
-                            .padding(4)
-                            .overlay {
-                                Circle().strokeBorder(
-                                    accentColor.opacity(UAPPSurface.accentFillOpacity(colorScheme) * 2),
-                                    lineWidth: 2
-                                )
-                            }
-                            .accessibilityHidden(true)
+                        avatarFrame
                         VStack(alignment: .leading, spacing: 10) {
                             Text(verbatim: name.map { isPublicProfile ? $0 : UAPPDisplayName.abbreviated($0) } ?? email ?? localized("user.account"))
                                 .font(.headline)
@@ -95,7 +86,7 @@ public struct UAPPUserScreen: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     if isPublicProfile { publicActivityContent } else { activityContent }
-                    if let key = model.errorKey {
+                    if let key = photoErrorKey ?? model.errorKey {
                         UAPPInlineBanner(message: localized(key), style: .error, accent: accentColor)
                     }
                 }
@@ -124,7 +115,7 @@ public struct UAPPUserScreen: View {
                             }
                         }
                         .accessibilityLabel(Text(verbatim: localized("auth.signout")))
-                        .disabled(model.isBusy)
+                        .disabled(model.isBusy || model.isUploadingPhoto)
                     }
                 }
             }
@@ -145,7 +136,7 @@ public struct UAPPUserScreen: View {
             selectedLanguage = UAPPLocalizationPreferences.preparePresentation(initialIdentifier: locale.identifier)
             if isPublicProfile { await model.loadPublicProfile() } else { await model.loadActivity() }
         }
-        .interactiveDismissDisabled(model.isBusy)
+        .interactiveDismissDisabled(model.isBusy || model.isUploadingPhoto)
         .modifier(UAPPFeedbackLiveModifier(client: model.profileClient) {
             await model.reconcileActivity()
         })
@@ -158,8 +149,63 @@ public struct UAPPUserScreen: View {
         #endif
     }
 
+    private var avatarRing: some View {
+        Circle().strokeBorder(
+            accentColor.opacity(UAPPSurface.accentFillOpacity(colorScheme) * 2),
+            lineWidth: 2
+        )
+    }
+
+    @ViewBuilder
+    private var avatarFrame: some View {
+        #if os(iOS)
+        if !isPublicProfile && model.supportsProfilePhoto {
+            UAPPProfilePhotoPicker(
+                photo: Binding(
+                    get: { model.profilePhoto },
+                    set: { data in
+                        guard let data else { return }
+                        Task { await model.updateProfilePhoto(data) }
+                    }
+                ),
+                theme: theme,
+                languageIdentifier: selectedLanguage,
+                avatarOnly: .init(remoteURL: profileAvatarURL, size: 104) { key in photoErrorKey = key }
+            )
+            .overlay {
+                if model.isUploadingPhoto {
+                    ZStack {
+                        Circle().fill(.ultraThinMaterial)
+                        ProgressView().tint(accentColor)
+                    }
+                    .frame(width: 104, height: 104)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(Text(verbatim: localized("photo.uploading")))
+                }
+            }
+            .padding(4)
+            .overlay { avatarRing.allowsHitTesting(false) }
+            .disabled(model.isUploadingPhoto || model.isBusy)
+        } else {
+            readOnlyAvatar
+        }
+        #else
+        readOnlyAvatar
+        #endif
+    }
+
+    private var readOnlyAvatar: some View {
+        avatar
+            .frame(width: 104, height: 104)
+            .clipShape(Circle())
+            .padding(4)
+            .overlay { avatarRing }
+            .accessibilityHidden(true)
+    }
+
     private var profileAvatarURL: URL? {
         if isLocalProfile, let avatarURL = identity.avatarURL { return avatarURL }
+        if !isPublicProfile { return model.avatarURL ?? identity.avatarURL }
         // Um perfil carregado sem foto não deve recuperar uma imagem antiga do card.
         if let profile = model.publicProfile { return profile.author.avatarURL }
         return identity.avatarURL

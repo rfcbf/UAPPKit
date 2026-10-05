@@ -11,6 +11,9 @@ final class UAPPUserModel: ObservableObject {
     @Published private(set) var activityErrorKey: String?
     @Published private(set) var publicProfile: UAPPPublicAuthorProfile?
     @Published private(set) var publicStatusId: String?
+    /// Última foto definida nesta tela, exibida antes que a URL da sessão seja carregada.
+    @Published private(set) var profilePhoto: Data?
+    @Published private(set) var isUploadingPhoto = false
     private let publicFeedbackId: String?
     private let usesInstallationProfile: Bool
     private let client: UAPPClient?
@@ -174,20 +177,46 @@ final class UAPPUserModel: ObservableObject {
         }
     }
 
+    var supportsProfilePhoto: Bool { session != nil && authentication?.supportsProfilePhoto == true }
+    var avatarURL: URL? { session?.identity.avatarURL }
+
+    /// Envia a nova foto e substitui a sessão; em caso de falha, mantém a última foto definida.
+    func updateProfilePhoto(_ data: Data) async {
+        guard !isBusy, !isUploadingPhoto, supportsProfilePhoto, let authentication,
+              let userId = session?.identity.userId else { return }
+        let previous = profilePhoto
+        profilePhoto = data
+        isUploadingPhoto = true
+        errorKey = nil
+        defer { isUploadingPhoto = false }
+        do {
+            let updated = try await authentication.uploadProfilePhoto(data)
+            guard session?.identity.userId == userId else { return }
+            session = updated
+            onSessionChange(updated)
+        } catch {
+            guard session?.identity.userId == userId else { return }
+            profilePhoto = previous
+            errorKey = "photo.update_error"
+        }
+    }
+
     func signOut() async {
-        guard !isBusy, session != nil, let authentication else { return }
+        guard !isBusy, !isUploadingPhoto, session != nil, let authentication else { return }
         isBusy = true
         errorKey = nil
         defer { isBusy = false }
         do {
             try await authentication.signOut()
             session = nil
+            profilePhoto = nil
             onSessionChange(nil)
         } catch {
             // Alguns provedores limpam a sessão local mesmo quando a rede falha.
             do {
                 if try await authentication.currentSession() == nil {
                     session = nil
+                    profilePhoto = nil
                     onSessionChange(nil)
                     return
                 }

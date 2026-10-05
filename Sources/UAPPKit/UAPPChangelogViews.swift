@@ -85,6 +85,8 @@ struct UAPPChangelogImage: View {
     let item: UAPPChangelogItem
     var parallaxOffset: CGFloat = 0
     @Environment(\.uappChangelogImageFixture) private var fixture
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.uappTheme) private var theme
 
     var body: some View {
         GeometryReader { proxy in
@@ -101,7 +103,10 @@ struct UAPPChangelogImage: View {
                             .font(.caption).multilineTextAlignment(.center)
                     }
                 default:
-                    UAPPImageLoadingPlaceholder()
+                    // Sem o círculo claro do placeholder de imagem: só o indicador, na cor de destaque.
+                    ProgressView()
+                        .tint(theme.resolved(for: colorScheme).accent ?? .accentColor)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .accessibilityLabel(Text(verbatim: uappLocalized("changelog.image_loading")))
                 }
             }

@@ -19,6 +19,22 @@ struct UAPPProfilePhotoPickerTests {
         #expect(photo != nil)
     }
 
+    @Test("Avatar editável do perfil mostra foto local, URL remota e ausência de foto")
+    func avatarOnlyStatesRender() async {
+        var reported: [String?] = []
+        let avatarOnly = UAPPProfilePhotoPicker.AvatarOnly(
+            remoteURL: URL(string: "https://example.test/avatar.jpg"), size: 104
+        ) { reported.append($0) }
+        await render(UAPPProfilePhotoPicker(photo: .constant(sampleJPEG()), theme: .system,
+                                            languageIdentifier: "pt-BR", avatarOnly: avatarOnly))
+        await render(UAPPProfilePhotoPicker(photo: .constant(nil), theme: .system,
+                                            languageIdentifier: "en", avatarOnly: avatarOnly))
+        await render(UAPPProfilePhotoPicker(photo: .constant(nil), theme: .init(light: .init(accent: .purple)),
+                                            languageIdentifier: nil,
+                                            avatarOnly: .init(remoteURL: nil, size: 56) { _ in }))
+        #expect(reported.isEmpty)
+    }
+
     @Test("Câmera exige descrição de uso e respeita a permissão do sistema")
     func cameraAccessRules() async {
         typealias Picker = UAPPProfilePhotoPicker

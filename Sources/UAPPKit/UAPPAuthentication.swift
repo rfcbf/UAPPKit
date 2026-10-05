@@ -212,14 +212,18 @@ public actor UAPPAuthentication: UAPPAuthenticationProvider {
         do {
             guard capturedGeneration == generation else { throw UAPPAuthenticationError.cancelled }
             let userData = try await request(
-                path: "user", body: ["data": ["avatar_url": avatarURL.absoluteString]],
+                path: "user", body: ["data": [
+                    "avatar_url": avatarURL.absoluteString,
+                    SessionResponse.User.chosenAvatarKey: avatarURL.absoluteString,
+                ]],
                 accessToken: session.accessToken, method: "PUT"
             )
             guard capturedGeneration == generation, let current = storedSession else {
                 throw UAPPAuthenticationError.cancelled
             }
             let user = try JSONDecoder().decode(SessionResponse.User.self, from: userData)
-            guard user.id == session.identity.userId, user.metadata["avatar_url"] == avatarURL.absoluteString else {
+            guard user.id == session.identity.userId,
+                  user.metadata[SessionResponse.User.chosenAvatarKey] == avatarURL.absoluteString else {
                 throw UAPPKitError.invalidResponse
             }
             let updated = SessionResponse(
@@ -231,7 +235,7 @@ public actor UAPPAuthentication: UAPPAuthenticationProvider {
             return updated.session
         } catch {
             // Evita deixar um arquivo novo sem vínculo quando a atualização do perfil falha.
-            if storedSession?.user.metadata["avatar_url"] != avatarURL.absoluteString {
+            if storedSession?.user.metadata[SessionResponse.User.chosenAvatarKey] != avatarURL.absoluteString {
                 var removal = URLRequest(url: configuration.host.appendingPathComponent("storage/v1/object/avatars"))
                 removal.httpMethod = "DELETE"
                 removal.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -458,6 +462,9 @@ private struct SessionResponse: Codable, Sendable {
     }
 
     struct User: Codable, Sendable {
+        /// Foto escolhida no kit. Provedores sociais podem sobrescrever `avatar_url` a cada login,
+        /// mas não esta chave; assim a última foto definida pelo usuário prevalece.
+        static let chosenAvatarKey = "uapp_avatar_url"
         let id: String
         let email: String?
         let metadata: [String: String]
@@ -485,7 +492,8 @@ private struct SessionResponse: Codable, Sendable {
             identity: UAPPIdentity(
                 userId: user.id, email: user.email,
                 displayName: user.metadata["full_name"] ?? user.metadata["name"],
-                avatarURL: (user.metadata["avatar_url"] ?? user.metadata["picture"]).flatMap(URL.init(string:))
+                avatarURL: (user.metadata[User.chosenAvatarKey] ?? user.metadata["avatar_url"] ?? user.metadata["picture"])
+                    .flatMap(URL.init(string:))
             ),
             accessToken: accessToken
         )

@@ -78,10 +78,25 @@ remover a foto para continuar, sem repetir o cadastro ou a confirmação.
 
 `UAPPAuthentication` salva o JPEG no bucket público `avatars`, em um caminho
 `<id-do-usuário>/<identificador-único>.jpg`, e associa a URL aos metadados da
-conta. O servidor deve permitir leitura pública e gravação/exclusão somente
+conta em `avatar_url` e `uapp_avatar_url`. Provedores sociais (Apple, Google,
+GitHub) podem reescrever `avatar_url` a cada login, mas não `uapp_avatar_url`;
+por isso a sessão prioriza `uapp_avatar_url` e a última foto definida pelo
+usuário prevalece, qualquer que seja o provedor usado depois. O servidor deve permitir leitura pública e gravação/exclusão somente
 pelo proprietário desse diretório. A sessão atualizada também é persistida no
 Keychain. O método aceita JPEG de até 512 KB; use o processador do kit antes de
 enviar uma imagem obtida fora do seletor.
+
+## Foto no perfil conectado
+
+`UAPPUserScreen(session:authentication:...)` torna o avatar editável no iOS
+quando o provedor declara `supportsProfilePhoto`. Tocar no avatar abre o mesmo
+menu de biblioteca/câmera e o recorte circular; não há opção de remover, porque
+o provedor só oferece envio. Depois do recorte, a tela mostra imediatamente a
+nova foto, chama `uploadProfilePhoto(_:)` e, ao concluir, exibe a URL da sessão
+atualizada e a entrega em `onSessionChange`. Sair e fechar a tela ficam
+bloqueados durante o envio. Se o envio falhar, a última foto definida volta a
+ser exibida e um aviso permite tentar novamente. No macOS e em provedores sem
+suporte, o avatar continua somente para leitura.
 
 Adaptadores próprios continuam compatíveis: `supportsProfilePhoto` tem valor
 padrão `false` e `uploadProfilePhoto(_:)` lança `unsupportedMethod` por padrão.

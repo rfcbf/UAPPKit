@@ -123,6 +123,66 @@ struct UAPPUserModelTests {
         #expect(delivered)
     }
 
+    @Test("Trocar a foto envia ao provedor, atualiza a sessão e mantém a última foto")
+    func updateProfilePhoto() async throws {
+        let provider = AccountProviderStub()
+        let session = UAPPAuthenticationSession(identity: .init(userId: "verified", displayName: "Pessoa"),
+                                                accessToken: "fake-token")
+        var delivered: [UAPPAuthenticationSession?] = []
+        let model = UAPPUserModel(session: session, authentication: provider) { delivered.append($0) }
+        #expect(model.supportsProfilePhoto)
+        #expect(model.avatarURL == nil)
+        let photo = Data([0xFF, 0xD8, 0xFF, 0x01])
+        await model.updateProfilePhoto(photo)
+        #expect(await provider.photoAttempts == 1)
+        #expect(model.profilePhoto == photo)
+        #expect(model.avatarURL == URL(string: "https://example.test/avatar.jpg"))
+        #expect(model.session?.identity.avatarURL == model.avatarURL)
+        #expect(delivered.count == 1)
+        #expect(delivered.first??.identity.avatarURL == model.avatarURL)
+        #expect(model.errorKey == nil)
+        #expect(!model.isUploadingPhoto)
+        await model.signOut()
+        #expect(model.profilePhoto == nil)
+    }
+
+    @Test("Falha ao trocar a foto preserva a anterior e permite nova tentativa")
+    func updateProfilePhotoFailure() async throws {
+        let provider = AccountProviderStub(failsPhotoOnce: true)
+        let session = UAPPAuthenticationSession(identity: .init(userId: "verified"), accessToken: "fake-token")
+        var delivered = 0
+        let model = UAPPUserModel(session: session, authentication: provider) { _ in delivered += 1 }
+        await model.updateProfilePhoto(Data([0x01]))
+        #expect(model.profilePhoto == nil)
+        #expect(model.session == session)
+        #expect(model.errorKey == "photo.update_error")
+        #expect(delivered == 0)
+        #expect(!model.isUploadingPhoto)
+        await model.updateProfilePhoto(Data([0x02]))
+        #expect(model.profilePhoto == Data([0x02]))
+        #expect(model.errorKey == nil)
+        #expect(delivered == 1)
+        #expect(await provider.photoAttempts == 2)
+    }
+
+    @Test("Provedor sem foto e perfil público não enviam imagem")
+    func updateProfilePhotoUnsupported() async throws {
+        let provider = UserProviderStub(mode: .success)
+        let session = try #require(await provider.currentSession())
+        let model = UAPPUserModel(session: session, authentication: provider) { _ in
+            Issue.record("A sessão não deveria mudar")
+        }
+        #expect(!model.supportsProfilePhoto)
+        await model.updateProfilePhoto(Data([0x01]))
+        #expect(model.profilePhoto == nil)
+        #expect(model.errorKey == nil)
+        let publicModel = UAPPUserModel()
+        #expect(!publicModel.supportsProfilePhoto)
+        await publicModel.updateProfilePhoto(Data([0x01]))
+        #expect(publicModel.profilePhoto == nil)
+        #expect(publicModel.avatarURL == nil)
+    }
+
     @Test("Falha de rede após saída local também atualiza o aplicativo")
     func locallySignedOut() async throws {
         let provider = UserProviderStub(mode: .clearThenFail)

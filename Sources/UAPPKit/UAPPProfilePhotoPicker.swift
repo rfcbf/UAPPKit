@@ -22,11 +22,28 @@ public struct UAPPProfilePhotoPicker: View {
     @Environment(\.controlSize) private var controlSize
     private let theme: UAPPTheme
     private let languageIdentifier: String?
+    private let avatarOnly: AvatarOnly?
+
+    /// Apresentação reduzida ao avatar editável, usada no cabeçalho do perfil conectado.
+    /// Exibe `remoteURL` enquanto não há foto local, não oferece remoção e repassa erros.
+    struct AvatarOnly {
+        var remoteURL: URL?
+        var size: CGFloat
+        var onError: @MainActor (String?) -> Void
+    }
 
     public init(photo: Binding<Data?>, theme: UAPPTheme = .system, languageIdentifier: String? = nil) {
         _photo = photo
         self.theme = theme
         self.languageIdentifier = languageIdentifier
+        avatarOnly = nil
+    }
+
+    init(photo: Binding<Data?>, theme: UAPPTheme, languageIdentifier: String?, avatarOnly: AvatarOnly) {
+        _photo = photo
+        self.theme = theme
+        self.languageIdentifier = languageIdentifier
+        self.avatarOnly = avatarOnly
     }
 
     /// Estado inicial injetável para renderizar processamento e erros nos testes.
@@ -38,53 +55,38 @@ public struct UAPPProfilePhotoPicker: View {
     }
 
     private var accent: Color { theme.resolved(for: colorScheme).accent ?? .accentColor }
-    private var avatarSize: CGFloat { controlSize == .small || controlSize == .mini ? 56 : 88 }
-    private var cameraBadgeSize: CGFloat { controlSize == .small || controlSize == .mini ? 24 : 36 }
+    private var avatarSize: CGFloat {
+        if let avatarOnly { return avatarOnly.size }
+        return controlSize == .small || controlSize == .mini ? 56 : 88
+    }
+    private var cameraBadgeSize: CGFloat {
+        if avatarOnly != nil { return 36 }
+        return controlSize == .small || controlSize == .mini ? 24 : 36
+    }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 16) {
-                Menu {
-                    Button { showsLibrary = true } label: {
-                        Label(localized("photo.library"), systemImage: "photo.on.rectangle")
-                    }
-                    Button { Task { await openCamera() } } label: {
-                        Label(localized("photo.camera"), systemImage: "camera")
-                    }
-                    .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
-                    if photo != nil {
-                        Button(role: .destructive) { photo = nil } label: {
-                            Label(localized("photo.remove"), systemImage: "trash")
+        Group {
+            if avatarOnly != nil {
+                photoMenu
+            } else {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(spacing: 16) {
+                        photoMenu
+                        if isProcessing {
+                            Text(verbatim: localized("photo.processing"))
+                                .font(.footnote).foregroundStyle(.secondary)
+                        } else {
+                            Text(verbatim: localized("photo.hint"))
+                                .font(.footnote).foregroundStyle(.secondary)
                         }
                     }
-                } label: {
-                    ZStack(alignment: .bottomTrailing) {
-                        avatar
-                            .frame(width: avatarSize, height: avatarSize)
-                            .clipShape(Circle())
-                        Image(systemName: "camera.fill")
-                            .font(.system(size: cameraBadgeSize == 24 ? 12 : 16, weight: .semibold))
-                            .foregroundStyle(.white)
-                            .frame(width: cameraBadgeSize, height: cameraBadgeSize)
-                            .background(accent, in: Circle())
+                    if let errorKey {
+                        Text(verbatim: localized(errorKey)).font(.footnote).foregroundStyle(.red)
                     }
-                    .contentShape(Circle())
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel(Text(verbatim: localized("photo.change")))
-                .disabled(isProcessing)
-                if isProcessing {
-                    Text(verbatim: localized("photo.processing"))
-                        .font(.footnote).foregroundStyle(.secondary)
-                } else {
-                    Text(verbatim: localized("photo.hint"))
-                        .font(.footnote).foregroundStyle(.secondary)
-                }
-            }
-            if let errorKey {
-                Text(verbatim: localized(errorKey)).font(.footnote).foregroundStyle(.red)
             }
         }
+        .uappOnChange(of: errorKey) { key in avatarOnly?.onError(key) }
         .photosPicker(isPresented: $showsLibrary, selection: $selection, matching: .images)
         .alert(localized("photo.camera_access"), isPresented: $showsPermissionAlert) {
             Button(localized("photo.settings")) {
@@ -149,15 +151,63 @@ public struct UAPPProfilePhotoPicker: View {
         }
     }
 
+    private var photoMenu: some View {
+        Menu {
+            Button { showsLibrary = true } label: {
+                Label(localized("photo.library"), systemImage: "photo.on.rectangle")
+            }
+            Button { Task { await openCamera() } } label: {
+                Label(localized("photo.camera"), systemImage: "camera")
+            }
+            .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
+            if photo != nil && avatarOnly == nil {
+                Button(role: .destructive) { photo = nil } label: {
+                    Label(localized("photo.remove"), systemImage: "trash")
+                }
+            }
+        } label: {
+            ZStack(alignment: .bottomTrailing) {
+                avatar
+                    .frame(width: avatarSize, height: avatarSize)
+                    .clipShape(Circle())
+                Image(systemName: "camera.fill")
+                    .font(.system(size: cameraBadgeSize == 24 ? 12 : 16, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: cameraBadgeSize, height: cameraBadgeSize)
+                    .background(accent, in: Circle())
+                    .accessibilityHidden(true)
+            }
+            .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text(verbatim: localized("photo.change")))
+        .accessibilityValue(isProcessing ? Text(verbatim: localized("photo.processing")) : Text(verbatim: ""))
+        .disabled(isProcessing)
+    }
+
     @ViewBuilder
     private var avatar: some View {
         if isProcessing {
             UAPPImageLoadingPlaceholder()
         } else if let photo, let image = UIImage(data: photo) {
             Image(uiImage: image).resizable().scaledToFill()
+        } else if let url = avatarOnly?.remoteURL {
+            UAPPCachedImage(url: url) { phase in
+                if let image = phase.image {
+                    image.resizable().scaledToFill()
+                } else if phase.error != nil {
+                    emptyAvatar
+                } else {
+                    UAPPImageLoadingPlaceholder()
+                }
+            }
         } else {
-            Image(systemName: "person.crop.circle.fill").resizable().scaledToFit().foregroundStyle(.secondary)
+            emptyAvatar
         }
+    }
+
+    private var emptyAvatar: some View {
+        Image(systemName: "person.crop.circle.fill").resizable().scaledToFit().foregroundStyle(.secondary)
     }
 
     private func openCamera() async {

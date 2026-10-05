@@ -29,8 +29,11 @@ func profilePhotoUpload() async throws {
             let payload = try #require(JSONSerialization.jsonObject(with: body) as? [String: [String: String]])
             let avatar = try #require(payload["data"]?["avatar_url"])
             #expect(avatar.hasPrefix("https://example.test/storage/v1/object/public/avatars/verified/"))
+            #expect(payload["data"]?["uapp_avatar_url"] == avatar)
+            // O provedor social pode manter a própria foto em `avatar_url`; a escolhida prevalece.
             let user: [String: Any] = ["id": "verified", "email": "person@example.test",
-                                      "user_metadata": ["full_name": "Pessoa", "avatar_url": avatar]]
+                                      "user_metadata": ["full_name": "Pessoa", "avatar_url": "https://example.test/social.png",
+                                                        "uapp_avatar_url": avatar]]
             return (200, try JSONSerialization.data(withJSONObject: user))
         }
         return response(sessionJSON)
@@ -38,9 +41,23 @@ func profilePhotoUpload() async throws {
     _ = try await auth.verifySignupCode(email: "person@example.test", code: "123456")
     let updated = try await auth.uploadProfilePhoto(photo)
     #expect(updated.identity.displayName == "Pessoa")
+    #expect(updated.identity.avatarURL?.absoluteString.contains("/public/avatars/verified/") == true)
     #expect(updated.accessToken == "access")
     #expect(try await auth.currentSession() == updated)
     #expect(recorder.requests.count == 3)
+}
+
+@Test("Foto escolhida no kit prevalece sobre a foto do provedor em novos logins")
+func chosenAvatarWinsOverProviderPicture() async throws {
+    let json = #"{"access_token":"access","refresh_token":"refresh","expires_in":3600,"user":{"id":"verified","user_metadata":{"avatar_url":"https://example.test/social.png","picture":"https://example.test/picture.png","uapp_avatar_url":"https://example.test/chosen.jpg"}}}"#
+    let auth = UAPPAuthentication(configuration: authConfiguration(), transport: StubTransport { _ in response(json) })
+    let session = try await auth.verifySignupCode(email: "person@example.test", code: "123456")
+    #expect(session.identity.avatarURL == URL(string: "https://example.test/chosen.jpg"))
+    let fallback = UAPPAuthentication(configuration: authConfiguration(), transport: StubTransport { _ in
+        response(#"{"access_token":"access","refresh_token":"refresh","expires_in":3600,"user":{"id":"verified","user_metadata":{"picture":"https://example.test/picture.png"}}}"#)
+    })
+    let social = try await fallback.verifySignupCode(email: "person@example.test", code: "123456")
+    #expect(social.identity.avatarURL == URL(string: "https://example.test/picture.png"))
 }
 
 @Test("Erro ao associar foto remove o arquivo novo e preserva o avatar anterior")
