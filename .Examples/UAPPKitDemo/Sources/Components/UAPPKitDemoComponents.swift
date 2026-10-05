@@ -34,6 +34,7 @@ struct PersistentNavigationBar: ViewModifier {
 
 struct DemoAppearanceControl: View {
     let title: String
+    let systemTitle: String
     let lightTitle: String
     let darkTitle: String
     @Binding var selection: String
@@ -41,6 +42,7 @@ struct DemoAppearanceControl: View {
     var body: some View {
         GeometryReader { proxy in
             Picker(title, selection: $selection) {
+                Text(verbatim: systemTitle).tag(DemoAppearance.system.rawValue)
                 Text(verbatim: lightTitle).tag(DemoAppearance.light.rawValue)
                 Text(verbatim: darkTitle).tag(DemoAppearance.dark.rawValue)
             }

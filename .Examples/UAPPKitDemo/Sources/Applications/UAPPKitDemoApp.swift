@@ -39,11 +39,17 @@ enum DemoSettings {
 }
 
 enum DemoAppearance: String {
+    case system
     case light
     case dark
 
-    var colorScheme: ColorScheme {
-        self == .dark ? .dark : .light
+    /// `nil` segue a aparência do aparelho.
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: nil
+        case .light: .light
+        case .dark: .dark
+        }
     }
 }
 
@@ -69,11 +75,16 @@ struct UAPPKitDemoApp: App {
             ?? URL(string: DemoSettings.defaultSupabaseServer)
             ?? UAPPConfiguration.defaultHost
 
+        DemoMockData.activateIfNeeded()
         UAPPKit.setup(
-            projectId: slug,
-            host: server,
+            projectId: DemoMockData.isEnabled ? DemoMockData.projectSlug : slug,
+            host: DemoMockData.isEnabled ? DemoMockData.host : server,
             locale: Locale(identifier: languageIdentifier)
         )
+        
+        #if DEBUG
+        Bundle(path: "/Applications/RocketSim.app/Contents/Frameworks/RocketSimConnectLinker.nocache.framework")?.load()
+        #endif
     }
 
     var body: some Scene {

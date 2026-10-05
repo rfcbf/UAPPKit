@@ -23,10 +23,18 @@ final class DemoAccountModel: ObservableObject {
 
     init(defaults: UserDefaults = .standard, authentication: (any UAPPAuthenticationProvider)? = nil) {
         self.defaults = defaults
-        name = defaults.string(forKey: "demo.profile.name") ?? ""
-        email = defaults.string(forKey: "demo.profile.email") ?? ""
-        photo = defaults.data(forKey: "demo.profile.photo")
-        hasProfile = defaults.bool(forKey: "demo.profile.saved")
+        if DemoMockData.isEnabled {
+            // Perfil fictício em memória; o perfil salvo no aparelho não é lido nem alterado.
+            name = DemoMockData.profileName
+            email = DemoMockData.profileEmail
+            photo = nil
+            hasProfile = true
+        } else {
+            name = defaults.string(forKey: "demo.profile.name") ?? ""
+            email = defaults.string(forKey: "demo.profile.email") ?? ""
+            photo = defaults.data(forKey: "demo.profile.photo")
+            hasProfile = defaults.bool(forKey: "demo.profile.saved")
+        }
         userId = defaults.string(forKey: "demo.profile.id") ?? UUID().uuidString
         defaults.set(userId, forKey: "demo.profile.id")
         self.authentication = authentication ?? UAPPAuthentication.automatic(
@@ -39,6 +47,7 @@ final class DemoAccountModel: ObservableObject {
         if let session {
             return session.identity
         }
+        if let mockIdentity = DemoMockData.identity { return mockIdentity }
         guard hasProfile else { return nil }
         return UAPPIdentity(
             userId: userId,

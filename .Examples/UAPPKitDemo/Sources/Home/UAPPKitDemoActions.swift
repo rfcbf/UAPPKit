@@ -4,6 +4,12 @@ import UAPPKit
 extension ContentView {
     @MainActor
     func saveConfiguration(showSuccessMessage: Bool = true) -> Bool {
+        if DemoMockData.isEnabled {
+            // Dados fictícios: não altera o projeto e o servidor salvos.
+            UAPPKit.setup(projectId: DemoMockData.projectSlug, host: DemoMockData.host, theme: configuredTheme)
+            account.configure(projectId: DemoMockData.projectSlug, host: DemoMockData.host)
+            return true
+        }
         let slug = projectSlug.trimmingCharacters(in: .whitespacesAndNewlines)
         let serverString = normalizedServer
 
@@ -31,12 +37,14 @@ extension ContentView {
 
     @MainActor
     func testConnection() {
+        guard !isTestingConnection else { return }
         guard saveConfiguration(showSuccessMessage: false) else { return }
 
         isTestingConnection = true
         statusMessage = nil
 
         Task {
+            defer { isTestingConnection = false }
             do {
                 let client = try UAPPKit.makeClient()
                 _ = try await client.feedbackPage(limit: 1)
@@ -44,7 +52,6 @@ extension ContentView {
             } catch {
                 showStatus("\(localized("demo.connection_failure")) \(error.localizedDescription)", success: false)
             }
-            isTestingConnection = false
         }
     }
 

@@ -13,6 +13,7 @@ struct ContentView: View {
     var supabaseServer = DemoSettings.defaultSupabaseServer
     @AppStorage(DemoSettings.appearance)
     var appearance = DemoAppearance.light.rawValue
+    @Environment(\.colorScheme) var systemColorScheme
     @AppStorage(DemoSettings.lightBackground)
     var lightBackground = DemoSettings.lightBackgroundDefault
     @AppStorage(DemoSettings.lightCardBackground)
@@ -92,7 +93,7 @@ struct ContentView: View {
                 .environment(\.locale, Locale(identifier: languageIdentifier))
         }
         .preferredColorScheme(
-            DemoAppearance(rawValue: appearance)?.colorScheme ?? .light
+            (DemoAppearance(rawValue: appearance) ?? .light).colorScheme
         )
         .onAppear {
             applyAppearance()

@@ -46,11 +46,20 @@ struct DemoAccountScreen: View {
                         model.saveProfile()
                         dismiss()
                     } label: {
+                        // Fundo próprio: o estilo do sistema escurece demais o botão desabilitado.
                         Text(t("Salvar perfil", "Save profile"))
+                            .font(.headline)
                             .multilineTextAlignment(.center)
+                            .padding(.horizontal, 12)
                             .frame(maxWidth: .infinity, minHeight: 44)
+                            .foregroundStyle(.white.opacity(model.canSaveProfile ? 1 : 0.85))
+                            .background(
+                                .tint.opacity(model.canSaveProfile ? 1 : 0.45),
+                                in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            )
+                            .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.plain)
                     .disabled(!model.canSaveProfile)
                 }
                 .padding(.horizontal, 20)

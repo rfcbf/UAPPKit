@@ -5,7 +5,11 @@ import UIKit
 extension ContentView {
     @MainActor
     func applyAppearance() {
-        let style: UIUserInterfaceStyle = appearance == DemoAppearance.dark.rawValue ? .dark : .light
+        let style: UIUserInterfaceStyle = switch DemoAppearance(rawValue: appearance) ?? .light {
+        case .system: .unspecified
+        case .light: .light
+        case .dark: .dark
+        }
         let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
         for window in scenes.flatMap(\.windows) {
             window.overrideUserInterfaceStyle = style

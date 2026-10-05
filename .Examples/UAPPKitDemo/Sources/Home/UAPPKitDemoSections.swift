@@ -2,6 +2,15 @@ import SwiftUI
 import UAPPKit
 
 extension ContentView {
+    /// No modo Sistema, edita a paleta que o aparelho está exibindo.
+    var isEditingDarkPalette: Bool {
+        switch DemoAppearance(rawValue: appearance) ?? .light {
+        case .system: systemColorScheme == .dark
+        case .light: false
+        case .dark: true
+        }
+    }
+
     var homeForm: some View {
         Form {
             homeSections
@@ -180,6 +189,7 @@ extension ContentView {
         Section {
             DemoAppearanceControl(
                 title: localized("demo.appearance.mode"),
+                systemTitle: localized("demo.appearance.system"),
                 lightTitle: localized("demo.appearance.light"),
                 darkTitle: localized("demo.appearance.dark"),
                 selection: $appearance
@@ -189,7 +199,7 @@ extension ContentView {
         }
 
         Section {
-            if appearance == DemoAppearance.dark.rawValue {
+            if isEditingDarkPalette {
                 ThemePaletteCard(
                     title: localized("demo.theme.dark.title"),
                     subtitle: localized("demo.theme.dark.subtitle"),
@@ -223,7 +233,7 @@ extension ContentView {
         } footer: {
             Text(verbatim: localized("demo.theme.footer"))
         }
-        .animation(.easeInOut(duration: 0.2), value: appearance)
+        .animation(.easeInOut(duration: 0.2), value: isEditingDarkPalette)
 
         Section {
             HStack(spacing: 12) {
@@ -335,7 +345,7 @@ extension ContentView {
             appStoreReviewButton
             Button {
                 present {
-                    try UAPPKit.showAbout(configuration: UAPPAboutConfiguration(
+                    try UAPPKit.showAbout(configuration: DemoMockData.aboutConfiguration ?? UAPPAboutConfiguration(
                         shortDescription: "Feedback, Roadmap, Sobres e mais para seus aplicativos pessoais",
                         descriptionLanguageIdentifier: "pt-BR",
                         websiteURL: URL(string: "https://uapp-dev.renatoferraz.net"),
