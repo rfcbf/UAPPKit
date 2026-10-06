@@ -203,7 +203,7 @@ private extension UAPPAccountScreen {
         GeometryReader { geometry in
             Group {
                 if usesTwoColumnLayout(size: geometry.size, isWelcome: isWelcome, step: step) {
-                    #if os(iOS)
+                    #if os(iOS) && compiler(>=6.4)
                     if #available(iOS 27.1, *) {
                         ArrangementView {
                             identityPanel(for: step)
