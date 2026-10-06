@@ -92,15 +92,16 @@ Use Conventional Commits e tags SemVer sem prefixo (`1.0.0`, `1.0.1`, `1.1.0`,
 
 ### Fluxo de branches e Pull Requests
 
-Nenhuma alteração entra direto na `main`. Todo trabalho segue este fluxo:
+Durante o desenvolvimento solo, antes de iniciar a preparação de uma versão ou
+distribuição no TestFlight, trabalhar diretamente na `main`, sem criar branches
+ou Pull Requests. Manter as mudanças ainda não lançadas sob `## Não lançado` e
+seguir Conventional Commits. Não atualizar a versão nem criar tags nessa etapa.
 
-1. Crie uma branch a partir da `main` atualizada, com prefixo pelo tipo da
-   mudança: `feat/`, `fix/`, `refactor/`, `docs/`, `test/` ou `chore/` (por
-   exemplo, `feat/tela-de-avaliacoes`).
-2. Faça os commits na branch seguindo Conventional Commits.
-3. Abra um Pull Request da branch para a `main` e aguarde a CI ficar verde.
-4. O merge na `main` acontece somente pelo Pull Request, nunca por `git push`
-   direto.
+Ao iniciar preparação de release/TestFlight, ou quando houver trabalho em
+paralelo, voltar ao fluxo com branches: criar uma branch a partir da `main`
+atualizada com prefixo `feat/`, `fix/`, `refactor/`, `docs/`, `test/` ou
+`chore/`; fazer commits Conventional Commits; abrir Pull Request e aguardar a CI
+verde antes do merge.
 
 ### Sem referência ao uso de IA
 
