@@ -120,6 +120,17 @@ struct UAPPFeedbackDetailScreen: View {
             .refreshable { await refresh(showError: true) }
         }
         .background(palette.background).tint(resolvedAccent)
+        .uappToast(
+            message: Binding(
+                get: { message.map { uappLocalized($0) } },
+                set: {
+                    if $0 == nil {
+                        message = nil
+                    }
+                }
+            ),
+            kind: message == "detail.comment_submitted" ? .success : .error
+        )
         .uappKeyboardFieldNavigation(
             focusedField: $focusedField,
             fields: [.comment],
@@ -288,14 +299,6 @@ struct UAPPFeedbackDetailScreen: View {
                 palette: palette,
                 cornerRadius: 20
             ))
-            if let message {
-                UAPPInlineBanner(
-                    message: uappLocalized(message),
-                    style: bannerStyle(for: message),
-                    accent: resolvedAccent
-                )
-                .transition(.opacity)
-            }
         }
     }
 
@@ -342,10 +345,6 @@ struct UAPPFeedbackDetailScreen: View {
                 commentRow(row.comment).padding(.leading, CGFloat(min(row.depth, 3)) * 16)
             }
         }
-    }
-
-    private func bannerStyle(for key: String) -> UAPPInlineBanner.Style {
-        key == "detail.comment_submitted" ? .success : .error
     }
 
     private func discardCommentDraft() {

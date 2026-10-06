@@ -78,6 +78,11 @@ final class UAPPAccountModel: ObservableObject {
             && password == passwordConfirmation
     }
 
+    func dismissStatusMessages() {
+        errorKey = nil
+        noticeKey = nil
+    }
+
     func navigate(to step: Step) {
         guard !isBusy, !recoveryVerified, !isCompletingSignup else { return }
         self.step = step

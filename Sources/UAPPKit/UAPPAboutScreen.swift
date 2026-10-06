@@ -79,21 +79,7 @@ public struct UAPPAboutScreen: View {
                 .presentationDragIndicator(.hidden)
             }
         }
-        .alert(
-            Text(verbatim: uappLocalized("about.rate_app")),
-            isPresented: Binding(
-                get: { appStoreReviewError != nil },
-                set: {
-                    if !$0 {
-                        appStoreReviewError = nil
-                    }
-                }
-            )
-        ) {
-            Button("OK", role: .cancel) { appStoreReviewError = nil }
-        } message: {
-            Text(verbatim: appStoreReviewError ?? "")
-        }
+        .uappToast(message: $appStoreReviewError, title: uappLocalized("about.rate_app"))
         .uappNavigationBar(
             titleKey: "screen.about",
             accentColor: palette.accent ?? .accentColor

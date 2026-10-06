@@ -108,9 +108,6 @@ public struct UAPPUserScreen: View {
                     } else {
                         activityContent
                     }
-                    if let key = photoErrorKey ?? model.errorKey {
-                        UAPPInlineBanner(message: localized(key), style: .error, accent: accentColor)
-                    }
                 }
                 .padding(.horizontal, 24)
                 .padding(.vertical, 28)
@@ -155,6 +152,15 @@ public struct UAPPUserScreen: View {
             }
         }
         .environment(\.uappTheme, theme)
+        .uappToast(message: Binding(
+            get: { (photoErrorKey ?? model.errorKey).map { localized($0) } },
+            set: {
+                if $0 == nil {
+                    photoErrorKey = nil
+                    model.dismissError()
+                }
+            }
+        ))
         .environment(\.locale, Locale(identifier: selectedLanguage))
         .task {
             guard !hasPreparedLanguage else { return }

@@ -176,16 +176,14 @@ struct UAPPFeedbackItemNavigation: ViewModifier {
                     )
                 }
             }
-            .alert(uappLocalized("detail.reaction_error"), isPresented: Binding(
-                get: { reactionError != nil },
+            .uappToast(message: Binding(
+                get: { reactionError.map { uappLocalized($0) } },
                 set: {
-                    if !$0 {
+                    if $0 == nil {
                         reactionError = nil
                     }
                 }
-            )) {
-                Button("OK", role: .cancel) { reactionError = nil }
-            }
+            ), title: uappLocalized("detail.reaction_error"))
             .sheet(item: $selectedAuthor) { author in
                 UAPPUserScreen(publicIdentity: UAPPIdentity(
                     userId: author.id,

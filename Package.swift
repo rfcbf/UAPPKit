@@ -19,7 +19,6 @@ let package = Package(
             name: "UAPPKit",
             dependencies: [.product(name: "Mantis", package: "Mantis", condition: .when(platforms: [.iOS]))],
             path: "Sources/UAPPKit",
-            exclude: ["Helper/StackedToasts.swift"],
             resources: [.process("Resources")]
         ),
         .testTarget(

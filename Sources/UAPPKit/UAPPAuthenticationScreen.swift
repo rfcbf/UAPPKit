@@ -63,11 +63,6 @@ struct UAPPAuthenticationScreen: View {
             if model.isBusy {
                 ProgressView().frame(maxWidth: .infinity)
             }
-            if let error = model.errorKey {
-                UAPPInlineBanner(message: uappLocalized(error), style: .error, accent: accentColor)
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
-            }
         }
         .disabled(model.isBusy)
         .scrollContentBackground(.hidden)
@@ -75,6 +70,14 @@ struct UAPPAuthenticationScreen: View {
         .foregroundStyle(palette.primaryText)
         .uappNavigationBar(titleKey: "auth.title", accentColor: accentColor)
         .interactiveDismissDisabled(model.isBusy)
+        .uappToast(message: Binding(
+            get: { model.errorKey.map { uappLocalized($0) } },
+            set: {
+                if $0 == nil {
+                    model.dismissError()
+                }
+            }
+        ))
     }
 
     private var emailSection: some View {

@@ -93,24 +93,36 @@ public struct UAPPProfilePhotoPicker: View {
                                 .font(.footnote).foregroundStyle(.secondary)
                         }
                     }
-                    if let errorKey {
-                        Text(verbatim: localized(errorKey)).font(.footnote).foregroundStyle(.red)
-                    }
                 }
             }
         }
         .uappOnChange(of: errorKey) { key in avatarOnly?.onError(key) }
         .photosPicker(isPresented: $showsLibrary, selection: $selection, matching: .images)
-        .alert(localized("photo.camera_access"), isPresented: $showsPermissionAlert) {
-            Button(localized("photo.settings")) {
+        .uappToast(message: Binding(
+            get: { avatarOnly == nil ? errorKey.map { localized($0) } : nil },
+            set: {
+                if $0 == nil {
+                    errorKey = nil
+                }
+            }
+        ))
+        .uappToast(
+            message: Binding(
+                get: { showsPermissionAlert ? localized("photo.camera_denied") : nil },
+                set: {
+                    if $0 == nil {
+                        showsPermissionAlert = false
+                    }
+                }
+            ),
+            title: localized("photo.camera_access"),
+            actionTitle: localized("photo.settings"),
+            action: {
                 if let url = URL(string: UIApplication.openSettingsURLString) {
                     UIApplication.shared.open(url)
                 }
             }
-            Button(localized("navigation.close"), role: .cancel) {}
-        } message: {
-            Text(verbatim: localized("photo.camera_denied"))
-        }
+        )
         .task(id: selection) {
             guard let selection else { return }
             isProcessing = true

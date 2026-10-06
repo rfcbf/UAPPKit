@@ -2,6 +2,10 @@ import SwiftUI
 
 @MainActor
 final class UAPPUserModel: ObservableObject {
+    func dismissError() {
+        errorKey = nil
+    }
+
     @Published private(set) var session: UAPPAuthenticationSession?
     @Published private(set) var isBusy = false
     @Published private(set) var errorKey: String?

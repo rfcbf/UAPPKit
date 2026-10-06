@@ -72,6 +72,7 @@ private struct ToastView: View {
     let onDismiss: @MainActor () -> Void
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.locale) private var locale
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -119,7 +120,7 @@ private struct ToastView: View {
         .accessibilityAction(named: Text(verbatim: uappLocalized("navigation.close", languageIdentifier: locale.identifier)), onDismiss)
         .task(id: toast.id) {
             // Keep errors, recovery actions and accessibility notifications available.
-            guard action == nil, !dynamicTypeSize.isAccessibilitySize,
+            guard action == nil, !voiceOverEnabled, !dynamicTypeSize.isAccessibilitySize,
                   let interval = toast.kind.autoDismissInterval else { return }
             do {
                 try await Task.sleep(for: interval)

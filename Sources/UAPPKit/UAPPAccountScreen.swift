@@ -165,6 +165,17 @@ public struct UAPPAccountScreen: View {
         .tint(accentColor)
         .interactiveDismissDisabled(model.isBusy)
         .environment(\.uappTheme, theme)
+        .uappToast(
+            message: Binding(
+                get: { (model.errorKey ?? model.noticeKey).map { localized($0) } },
+                set: {
+                    if $0 == nil {
+                        model.dismissStatusMessages()
+                    }
+                }
+            ),
+            kind: model.errorKey != nil ? .error : (model.noticeKey == "account.password_updated" ? .success : .information)
+        )
         .task {
             guard !isReady else { return }
             selectedLanguage = UAPPLocalizationPreferences.preparePresentation(initialIdentifier: locale.identifier)
@@ -215,7 +226,7 @@ private extension UAPPAccountScreen {
                         splitFallback(for: step)
                     }
                     #else
-                    singleColumnContent(height: geometry.size.height, isWelcome: isWelcome, step: step)
+                    splitFallback(for: step)
                     #endif
                 } else {
                     singleColumnContent(height: geometry.size.height, isWelcome: isWelcome, step: step)
@@ -272,11 +283,8 @@ private extension UAPPAccountScreen {
         ScrollView {
             VStack(spacing: 28) {
                 identityHeader(isWelcome: isWelcome, step: step)
-                if isWelcome {
-                    statusContent
-                } else {
+                if !isWelcome {
                     authenticationContent(for: step)
-                    statusContent
                 }
             }
             .padding(.horizontal, 24)
@@ -299,7 +307,6 @@ private extension UAPPAccountScreen {
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
                     authenticationContent(for: step)
-                    statusContent
                 }
                 .padding(.horizontal, 24)
                 .padding(.vertical, 28)
@@ -710,18 +717,6 @@ private extension UAPPAccountScreen {
                 }
             }
             .font(.footnote.weight(.medium))
-        }
-    }
-
-    @ViewBuilder
-    private var statusContent: some View {
-        if let key = model.errorKey {
-            UAPPInlineBanner(message: localized(key), style: .error, accent: accentColor)
-                .transition(.opacity)
-        }
-        if let key = model.noticeKey {
-            UAPPInlineBanner(message: localized(key), style: .notice, accent: accentColor)
-                .transition(.opacity)
         }
     }
 

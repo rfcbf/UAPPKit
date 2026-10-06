@@ -3,6 +3,10 @@ import SwiftUI
 
 @MainActor
 final class UAPPParticipationModel: ObservableObject {
+    func dismissError() {
+        errorKey = nil
+    }
+
     let client: UAPPClient
     @Published private(set) var session: UAPPAuthenticationSession?
     @Published private(set) var identity: UAPPIdentity?

@@ -6,6 +6,16 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+- Novo modificador público `uappToast(message:kind:title:actionTitle:action:)`
+  para avisos de erro, informação e sucesso, com ações de recuperação,
+  fechamento acessível, Dynamic Type e respeito à redução de movimento.
+  Autenticação, perfil, foto, votos, comentários, envio de feedback e avaliação
+  do app usam o componente. Falhas de carregamento preservam o estado com retry.
+  A adaptação do helper StackedToasts mantém iOS 18+ e macOS 13+, com material
+  nativo e efeito glass somente em sistemas/SDKs compatíveis.
+- O layout de autenticação usa fallback de dois painéis quando o compilador
+  não oferece as APIs do Duo, preservando o alinhamento vertical dos campos.
+
 ## 1.0.0 - 2026-10-06
 
 - Cadastro e troca de senha exigem pelo menos oito caracteres, uma letra

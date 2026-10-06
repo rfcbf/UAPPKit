@@ -500,9 +500,6 @@ struct UAPPSubmitFeedbackScreen: View {
                 titleSection
                 descriptionSection
                 attachmentsSection
-                if let errorMessage {
-                    errorBanner(errorMessage)
-                }
             }
             .padding(.horizontal, 20)
             .padding(.top, 12)
@@ -530,6 +527,14 @@ struct UAPPSubmitFeedbackScreen: View {
         .safeAreaInset(edge: .bottom) {
             sendBar
         }
+        .uappToast(message: Binding(
+            get: { errorMessage.map { uappLocalized($0) } },
+            set: {
+                if $0 == nil {
+                    errorMessage = nil
+                }
+            }
+        ))
     }
 
     // MARK: - Seções
@@ -694,23 +699,6 @@ struct UAPPSubmitFeedbackScreen: View {
                 .foregroundStyle(palette.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
         }
-    }
-
-    private func errorBanner(_ key: String) -> some View {
-        Label {
-            Text(verbatim: uappLocalized(key))
-                .fixedSize(horizontal: false, vertical: true)
-        } icon: {
-            Image(systemName: "exclamationmark.triangle.fill")
-        }
-        .font(.subheadline)
-        .foregroundStyle(.red)
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            Color.red.opacity(colorScheme == .dark ? 0.18 : 0.08),
-            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-        )
     }
 
     private var sendBar: some View {
