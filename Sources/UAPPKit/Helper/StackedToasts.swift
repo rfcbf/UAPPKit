@@ -1,156 +1,218 @@
-//
-//  StackedToasts.swift
-//  SToasts
-//
-//  Created by Balaji Venkatesh on 09/08/26.
-//
-
+// Adapted from StackedToasts by Balaji Venkatesh (09/08/26).
 import SwiftUI
 
-/// Toast Model
-struct Toast: Identifiable, Hashable {
-    var id: String = UUID().uuidString
-    var symbol: String
-    var title: String
-    var description: String
-    var tintColor: Color
-    /// Automatic Dismiss After the given time (In Seconds)
-    var autoDismissInterval: Double? = nil
+/// Severity also controls whether a notification can disappear automatically.
+public enum UAPPToastKind: String, Sendable, CaseIterable {
+    case error, success, information
+
+    var symbol: String {
+        switch self {
+        case .error: "exclamationmark.triangle.fill"
+        case .success: "checkmark.circle.fill"
+        case .information: "info.circle.fill"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .error: .red
+        case .success: .green
+        case .information: .accentColor
+        }
+    }
+
+    var autoDismissInterval: Duration? {
+        self == .success ? .seconds(6) : nil
+    }
 }
 
+struct Toast: Identifiable, Equatable {
+    let id = UUID()
+    let message: String
+    let kind: UAPPToastKind
+}
+
+@MainActor
 struct StackedToasts: View {
-    var glassTintOpacity: CGFloat = 0
     @Binding var toasts: [Toast]
+    var title: String?
+    var actionTitle: String?
+    var action: (@MainActor () -> Void)?
+    var onDismiss: @MainActor () -> Void = {}
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     var body: some View {
-        /// Using ScrollView With VisualEffect API to create stack instead of using ZStack!
-        ScrollView(.vertical) {
-            VStack(spacing: 0) {
-                ForEach(toasts.reversed()) { toast in
-                    let index = toasts.firstIndex(of: toast) ?? 0
-                    
-                    ToastView(glassTintOpacity: glassTintOpacity, toast: toast) {
-                        toasts.removeAll(where: { $0.id == toast.id })
-                    }
-                    .visualEffect({ content, proxy in
-                        let minY = proxy.frame(in: .scrollView).minY
-                        let progress = minY / 65
-                        /// Only Pushing Two toasts!
-                        let offset = min(progress * 10, 20)
-                        let scale = min(progress * 0.05, 0.1)
-                        
-                        return content
-                            .scaleEffect(1 - scale, anchor: .bottom)
-                            .offset(y: -minY)
-                            .offset(y: offset)
-                    })
-                    .zIndex(Double(index))
-                    .transition(.asymmetric(
-                        insertion: .offset(y: 500).combined(with: AnyTransition(.blurReplace)),
-                        removal: .move(edge: .leading).combined(with: AnyTransition(.blurReplace))
-                    ))
+        ZStack(alignment: .bottom) {
+            ForEach(Array(toasts.suffix(3).enumerated()), id: \.element.id) { index, toast in
+                let depth = min(toasts.count, 3) - index - 1
+                ToastView(toast: toast, title: title, actionTitle: actionTitle, action: action) {
+                    toasts.removeAll { $0.id == toast.id }
+                    onDismiss()
                 }
+                .scaleEffect(dynamicTypeSize.isAccessibilitySize ? 1 : 1 - CGFloat(depth) * 0.04, anchor: .bottom)
+                .offset(y: CGFloat(depth) * -10)
+                .zIndex(Double(index))
+                .allowsHitTesting(depth == 0)
+                .accessibilityHidden(depth != 0)
+                .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
             }
-            .frame(maxWidth: .infinity)
         }
-        .scrollDisabled(true)
-        .scrollIndicators(.hidden)
-        .scrollClipDisabled()
-        .frame(height: 90)
-        /// 90-65 = 25!
-        .offset(y: 25 - max(min(CGFloat(toasts.count - 1) * 12.5, 25), 0))
-        .swipeActionsContainer()
-        /// OPTIONAL: (Adding Soft Blur Background)
-        .background {
-            ScrollView(.vertical) { }
-                .frame(height: 0)
-                .allowsHitTesting(false)
-                .safeAreaBar(edge: .bottom, spacing: 0) {
-                    Text(" ")
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 90)
-                }
-                .scrollEdgeEffectStyle(.soft, for: .bottom)
-                .opacity(toasts.isEmpty ? 0 : 1)
-        }
-        .animation(.smooth(duration: 0.3, extraBounce: 0), value: toasts)
-        .allowsHitTesting(!toasts.isEmpty)
+        .padding(.top, toasts.count > 1 ? 20 : 0)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: toasts)
     }
 }
 
-fileprivate struct ToastView: View {
-    var glassTintOpacity: CGFloat
-    var toast: Toast
-    var onDismiss: () -> ()
-    @Environment(\.colorScheme) private var colorScheme
+@MainActor
+private struct ToastView: View {
+    let toast: Toast
+    let title: String?
+    let actionTitle: String?
+    let action: (@MainActor () -> Void)?
+    let onDismiss: @MainActor () -> Void
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.locale) private var locale
+
     var body: some View {
-        HStack(spacing: 15) {
-            Image(systemName: toast.symbol)
-                .font(.title)
-                .foregroundStyle(toast.tintColor.gradient)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(toast.title)
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: toast.kind.symbol)
+                .font(.title2)
+                .foregroundStyle(toast.kind.color)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 8) {
+                if let title {
+                    Text(verbatim: title).font(.callout.weight(.semibold))
+                }
+                Text(verbatim: toast.message)
                     .font(.callout)
-                    .foregroundStyle(Color.primary)
-                
-                Text(toast.description)
-                    .font(.caption2)
-                    .foregroundStyle(Color.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .textSelection(.enabled)
+                if let actionTitle, let action {
+                    Button(actionTitle, action: action)
+                        .font(.callout.weight(.semibold))
+                        .frame(minHeight: 44)
+                }
             }
-            .lineLimit(1)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            Button(action: onDismiss) {
+                Image(systemName: "xmark")
+                    .font(.body.weight(.semibold))
+                    .frame(minWidth: 44, minHeight: 44)
+            }
+            .accessibilityLabel(Text(verbatim: uappLocalized("navigation.close", languageIdentifier: locale.identifier)))
         }
-        .padding(.horizontal, 20)
-        .frame(maxWidth: 310, alignment: .leading)
-        .frame(height: 65)
-        /// Adding Subtle Gradient (Inspired from Siri Bubble Effect)
+        .padding(16)
+        .frame(maxWidth: dynamicTypeSize.isAccessibilitySize ? .infinity : 480)
+        .foregroundStyle(.primary)
         .background {
-            let row1 = Array(repeating: toast.tintColor.opacity(0.15), count: 3)
-            let row2 = Array(repeating: toast.tintColor.opacity(0.1), count: 3)
-            let row3 = Array(repeating: Color.clear, count: 3)
-            
-            MeshGradient(
-                width: 3,
-                height: 3,
-                points: [
-                    [0, 0], [0.5, 0], [1, 0],
-                    [0, 0.5], [0.5, 0.5], [1, 0.5],
-                    [0, 1], [0.5, 1], [1, 1]
-                ],
-                colors: row1 + row2 + row3
-            )
-            .clipShape(.capsule)
+            RoundedRectangle(cornerRadius: 24)
+                .fill(.regularMaterial)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 24)
+                        .fill(toast.kind.color.opacity(0.08))
+                }
         }
-        .glassEffect(.regular.tint(glassTint), in: .capsule)
-        .contentShape(.capsule)
-        .compositingGroup()
-        .shadow(color: .black.opacity(0.06), radius: 5, x: 0, y: 10)
-        /// Simply Adding SwipeAction (As it's supported on any view from iOS 27+)
-        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-            /// Option-1
-            Button(role: .destructive, action: onDismiss) {
-                Image(systemName: "checkmark")
-            }
-            
-            /// Option-2
-//            Button(action: onDismiss) {
-//                Image(systemName: "checkmark")
-//            }
-//            .tint(toast.tintColor)
-        }
-        .task {
-            guard let autoDismissInterval = toast.autoDismissInterval else { return }
-            try? await Task.sleep(for: .seconds(autoDismissInterval))
-            if !Task.isCancelled {
+        .modifier(ToastGlassSurface())
+        .buttonStyle(.plain)
+        .shadow(color: .black.opacity(0.1), radius: 8, y: 4)
+        .accessibilityElement(children: .contain)
+        .accessibilityAction(named: Text(verbatim: uappLocalized("navigation.close", languageIdentifier: locale.identifier)), onDismiss)
+        .task(id: toast.id) {
+            // Keep errors, recovery actions and accessibility notifications available.
+            guard action == nil, !dynamicTypeSize.isAccessibilitySize,
+                  let interval = toast.kind.autoDismissInterval else { return }
+            do {
+                try await Task.sleep(for: interval)
+                guard !Task.isCancelled else { return }
                 onDismiss()
-            }
+            } catch { /* A removed notification cancels its timer. */ }
         }
-    }
-    
-    var glassTint: Color {
-        (colorScheme == .dark ? Color.black : Color.white).opacity(glassTintOpacity)
     }
 }
 
-#Preview {
-    ContentView()
+private struct ToastGlassSurface: ViewModifier {
+    func body(content: Content) -> some View {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, macOS 26.0, *) {
+            content.glassEffect(.regular, in: RoundedRectangle(cornerRadius: 24))
+        } else {
+            content
+        }
+        #else
+        content
+        #endif
+    }
+}
+
+@MainActor
+private struct UAPPToastModifier: ViewModifier {
+    @Binding var message: String?
+    let kind: UAPPToastKind
+    let title: String?
+    let actionTitle: String?
+    let action: (@MainActor () -> Void)?
+    @State private var toasts: [Toast] = []
+
+    func body(content: Content) -> some View {
+        content
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                if !toasts.isEmpty {
+                    StackedToasts(toasts: $toasts, title: title, actionTitle: actionTitle, action: action) {
+                        message = nil
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity)
+                }
+            }
+            .onAppear { update(message) }
+            .uappOnChange(of: message) { update($0) }
+            .uappOnChange(of: kind) { _ in update(message) }
+    }
+
+    private func update(_ message: String?) {
+        guard let message, !message.isEmpty else {
+            toasts.removeAll()
+            return
+        }
+        guard toasts.last?.message != message || toasts.last?.kind != kind else { return }
+        toasts = [Toast(message: message, kind: kind)]
+    }
+}
+
+public extension View {
+    /// Presents a localized notification. Dismissal clears the originating state.
+    /// Full-screen loading failures should keep their persistent retry state.
+    @MainActor
+    func uappToast(
+        message: Binding<String?>,
+        kind: UAPPToastKind = .error,
+        title: String? = nil,
+        actionTitle: String? = nil,
+        action: (@MainActor () -> Void)? = nil
+    ) -> some View {
+        modifier(UAPPToastModifier(message: message, kind: kind, title: title, actionTitle: actionTitle, action: action))
+    }
+}
+
+#Preview("Erro com recuperação") {
+    Color.clear.uappToast(
+        message: .constant(uappLocalized("photo.camera_denied")),
+        title: uappLocalized("photo.camera_access"),
+        actionTitle: uappLocalized("photo.settings"),
+        action: {}
+    )
+}
+
+#Preview("Informação e texto ampliado") {
+    Color.clear.uappToast(message: .constant(uappLocalized("photo.hint")), kind: .information)
+        .environment(\.dynamicTypeSize, .accessibility3)
+}
+
+#Preview("Pilha de avisos") {
+    StackedToasts(toasts: .constant([
+        Toast(message: uappLocalized("photo.error"), kind: .error),
+        Toast(message: uappLocalized("photo.camera_denied"), kind: .information)
+    ]))
+    .padding()
 }
