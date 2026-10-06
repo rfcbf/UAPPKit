@@ -12,15 +12,18 @@ private struct UAPPKeyboardFieldNavigation<Field: Hashable>: ViewModifier {
     }
 
     func body(content: Content) -> some View {
+        #if canImport(UIKit)
         content
             .tint(accentColor)
-            #if canImport(UIKit)
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 if focusedField.wrappedValue != nil {
                     keyboardAccessory
                 }
             }
-            #endif
+        #else
+        content
+            .tint(accentColor)
+        #endif
     }
 
     #if canImport(UIKit)
@@ -82,7 +85,7 @@ public extension View {
     /// Adds reusable previous, next, and keyboard-dismiss controls for focused fields.
     ///
     /// The field array defines the focus order and may change with the current form step.
-    /// On iOS and iPadOS, controls appear in the keyboard accessory toolbar.
+    /// On iOS and iPadOS, controls appear above the software keyboard.
     func uappKeyboardFieldNavigation<Field: Hashable>(
         focusedField: FocusState<Field?>.Binding,
         fields: [Field],
