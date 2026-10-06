@@ -28,8 +28,8 @@ struct UAPPAccountScreenTests {
             let model = model()
             model.navigate(to: step)
             model.email = "person@example.test"
-            model.password = "test-password"
-            model.passwordConfirmation = "test-password"
+            model.password = "Test-password"
+            model.passwordConfirmation = "Test-password"
             model.code = "123456"
             await renderStep(model, path: [step])
         }
@@ -55,8 +55,8 @@ struct UAPPAccountScreenTests {
         photo.navigate(to: .signup)
         photo.name = "Visitante"
         photo.email = "person@example.test"
-        photo.password = "test-password"
-        photo.passwordConfirmation = "test-password"
+        photo.password = "Test-password"
+        photo.passwordConfirmation = "Test-password"
         photo.photo = Data([0xFF, 0xD8, 0xFF])
         await photo.submit()
         photo.code = "123456"
