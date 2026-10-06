@@ -20,6 +20,7 @@ public struct UAPPAuthenticationSession: Sendable, Equatable {
 }
 
 public enum UAPPAuthenticationError: Error, Sendable, Equatable {
+    case weakPassword
     case signInRequired
     case unsupportedMethod
     case invalidConfiguration

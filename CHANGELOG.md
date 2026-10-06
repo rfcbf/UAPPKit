@@ -6,6 +6,15 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+## 1.0.0 - 2026-10-06
+
+- Cadastro e troca de senha exigem pelo menos oito caracteres, uma letra
+  maiúscula e um caractere especial. A orientação está traduzida nos 13 idiomas
+  e a regra é compartilhada entre telas e provedor; login preserva senhas antigas.
+
+- Os símbolos do acessório de navegação do teclado usam a cor de destaque do
+  tema fornecido, respeitando a cor padrão quando nenhuma personalização existe.
+
 - Novo modificador reutilizável `uappKeyboardFieldNavigation`, com controles
   localizados para ir ao campo anterior/próximo e fechar o teclado. Aplicado aos
   fluxos de conta, criação de feedback e comentários.

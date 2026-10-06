@@ -35,6 +35,7 @@ private struct UAPPKeyboardFieldNavigation<Field: Hashable>: ViewModifier {
                         moveFocus(by: -1)
                     } label: {
                         Image(systemName: "chevron.up")
+                            .foregroundStyle(accentColor)
                             .frame(minWidth: 44, minHeight: 44)
                     }
                     .disabled(focusedIndex == nil || focusedIndex == 0)
@@ -44,6 +45,7 @@ private struct UAPPKeyboardFieldNavigation<Field: Hashable>: ViewModifier {
                         moveFocus(by: 1)
                     } label: {
                         Image(systemName: "chevron.down")
+                            .foregroundStyle(accentColor)
                             .frame(minWidth: 44, minHeight: 44)
                     }
                     .disabled(focusedIndex == nil || focusedIndex == fields.count - 1)
@@ -60,6 +62,7 @@ private struct UAPPKeyboardFieldNavigation<Field: Hashable>: ViewModifier {
                 focusedField.wrappedValue = nil
             } label: {
                 Image(systemName: "keyboard.chevron.compact.down")
+                    .foregroundStyle(accentColor)
                     .frame(minWidth: 44, minHeight: 44)
             }
             .buttonStyle(.plain)

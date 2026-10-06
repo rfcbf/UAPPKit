@@ -106,7 +106,7 @@ struct UAPPSessionPersistenceTests: Sendable {
         #expect(try storage.read() == nil)
         try await auth.verifyPasswordResetCode(email: "user@example.test", code: "123456")
         #expect(try storage.read() == nil)
-        _ = try await auth.updatePassword("new-password")
+        _ = try await auth.updatePassword("New-password")
         #expect(try storage.read() != nil)
     }
 }
