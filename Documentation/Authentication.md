@@ -6,7 +6,14 @@ instância de `UAPPAuthenticationProvider` é usada em todas as apresentações 
 em Feedback/Roadmap para reaproveitar a conta conectada.
 
 O fluxo inclui login por e-mail/senha, Google, Apple e GitHub; cadastro com
-nome obrigatório e confirmação de e-mail; recuperação com código, confirmação da
+nome obrigatório e confirmação de e-mail. No cadastro e na troca de senha,
+`UAPPPasswordPolicy` exige pelo menos 8 caracteres, uma letra maiúscula e um
+caractere especial (pontuação ou símbolo; espaços não atendem esse requisito).
+`minimumPasswordLength` pode elevar o mínimo, mas nunca reduzi-lo abaixo de 8.
+O login continua aceitando senhas existentes. Provedores próprios devem aplicar
+a mesma política e configurar a exigência correspondente no servidor de autenticação.
+
+O fluxo também inclui recuperação com código, confirmação da
 nova senha e saída da conta. O kit reutiliza `UAPPApplicationIcon`, o mesmo
 componente do Sobre, com ícone remoto do projeto e fallback para o ícone do
 aplicativo hospedeiro. Os botões seguem o tema configurado. Os novos textos têm

@@ -144,6 +144,7 @@ public actor UAPPAuthentication: UAPPAuthenticationProvider {
 
     public func signUp(email: String, password: String, displayName: String? = nil) async throws -> UAPPRegistrationResult {
         guard methods.contains(.email) else { throw UAPPAuthenticationError.unsupportedMethod }
+        guard UAPPPasswordPolicy.isValid(password) else { throw UAPPAuthenticationError.weakPassword }
         let capturedGeneration = generation
         var body: [String: Any] = ["email": email, "password": password]
         if let displayName, !displayName.isEmpty {
@@ -179,6 +180,7 @@ public actor UAPPAuthentication: UAPPAuthenticationProvider {
 
     public func updatePassword(_ password: String) async throws -> UAPPAuthenticationSession {
         guard let session = try await currentSession() else { throw UAPPAuthenticationError.signInRequired }
+        guard UAPPPasswordPolicy.isValid(password) else { throw UAPPAuthenticationError.weakPassword }
         let capturedGeneration = generation
         _ = try await request(path: "user", body: ["password": password], accessToken: session.accessToken, method: "PUT")
         guard capturedGeneration == generation else { throw UAPPAuthenticationError.cancelled }

@@ -4,6 +4,34 @@ import Testing
 
 @MainActor
 struct UAPPAccountModelTests {
+    @Test("Cadastro e recuperação bloqueiam senha fraca antes de chamar o provedor", arguments: [
+        "Abcdef!", "abcdefgh!", "Abcdefgh", "Abcdefg "
+    ])
+    func weakPasswordCannotSubmit(_ password: String) async {
+        let provider = AccountProviderStub()
+        let model = UAPPAccountModel(provider: provider, minimumPasswordLength: 6) { _ in
+            Issue.record("Senha fraca não deve entregar sessão")
+        }
+        model.navigate(to: .signup)
+        model.name = "Visitante"
+        model.email = "person@example.test"
+        model.password = password
+        model.passwordConfirmation = password
+        #expect(!model.canSubmit)
+        await model.submit()
+        #expect(model.step == .signup)
+        model.navigate(to: .recover)
+        await model.submit()
+        model.code = "123456"
+        await model.submit()
+        model.password = password
+        model.passwordConfirmation = password
+        #expect(!model.canSubmit)
+        await model.submit()
+        #expect(model.step == .newPassword)
+        #expect(model.session == nil)
+    }
+
     @Test("Cadastro confirma e-mail antes de entregar sessão e limpa senhas")
     func signup() async {
         let provider = AccountProviderStub()
@@ -11,7 +39,7 @@ struct UAPPAccountModelTests {
         let model = UAPPAccountModel(provider: provider, minimumPasswordLength: 8) { delivered = $0 }
         model.navigate(to: .signup)
         model.email = " person@example.test "
-        model.password = "test-password"
+        model.password = "Test-password"
         model.passwordConfirmation = "different"
         #expect(!model.canSubmit)
         model.passwordConfirmation = model.password
@@ -44,7 +72,7 @@ struct UAPPAccountModelTests {
         await model.submit()
         #expect(model.step == .newPassword)
         #expect(delivered == nil)
-        model.password = "new-test-password"
+        model.password = "New-test-password"
         model.passwordConfirmation = model.password
         await model.submit()
         #expect(delivered?.identity.userId == "verified")
@@ -62,7 +90,7 @@ struct UAPPAccountModelTests {
         model.navigate(to: .signup)
         model.name = "Visitante"
         model.email = "person@example.test"
-        model.password = "test-password"
+        model.password = "Test-password"
         model.passwordConfirmation = model.password
         model.photo = Data([0xFF, 0xD8, 0xFF])
         await model.submit()
@@ -90,7 +118,7 @@ struct UAPPAccountModelTests {
         model.navigate(to: .signup)
         model.name = "Visitante"
         model.email = "person@example.test"
-        model.password = "test-password"
+        model.password = "Test-password"
         model.passwordConfirmation = model.password
         model.photo = Data([0xFF, 0xD8, 0xFF])
         await model.submit()
@@ -156,8 +184,8 @@ struct UAPPAccountModelTests {
         model.navigate(to: .signup)
         model.name = "Visitante"
         model.email = "person@example.test"
-        model.password = "test-password"
-        model.passwordConfirmation = "test-password"
+        model.password = "Test-password"
+        model.passwordConfirmation = "Test-password"
         await model.submit()
         await model.resendCode()
         #expect(model.noticeKey == "account.resent")
@@ -173,12 +201,12 @@ struct UAPPAccountModelTests {
     func unsupportedAndFailedOperations() async {
         let provider = StubAuthentication()
         let model = UAPPAccountModel(provider: provider, minimumPasswordLength: 6) { _ in }
-        #expect(model.minimumPasswordLength == 6)
+        #expect(model.minimumPasswordLength == 8)
         model.navigate(to: .signup)
         model.name = "Visitante"
         model.email = "person@example.test"
-        model.password = "test-password"
-        model.passwordConfirmation = "test-password"
+        model.password = "Test-password"
+        model.passwordConfirmation = "Test-password"
         await model.submit()
         #expect(model.errorKey == "account.unsupported")
         await provider.setError(.cancelled)

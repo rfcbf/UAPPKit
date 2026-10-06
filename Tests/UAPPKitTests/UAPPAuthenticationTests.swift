@@ -101,17 +101,44 @@ func profilePhotoValidation() async {
     }
 }
 
+@Test("Cadastro recusa senha fraca sem requisição", arguments: ["Abcdef!", "abcdefgh!", "Abcdefgh", "Abcdefg "])
+func weakRegistrationPassword(_ password: String) async throws {
+    let auth = UAPPAuthentication(configuration: authConfiguration(), transport: StubTransport { _ in
+        Issue.record("Senha fraca não deve iniciar rede")
+        return response("{}")
+    })
+    await #expect(throws: UAPPAuthenticationError.weakPassword) {
+        try await auth.signUp(email: "person@example.test", password: password)
+    }
+    #expect(try await auth.currentSession() == nil)
+}
+
+@Test("Troca recusa senha fraca sem enviar PUT nem perder sessão")
+func weakUpdatedPassword() async throws {
+    let recorder = RequestRecorder()
+    let auth = UAPPAuthentication(configuration: authConfiguration(), transport: StubTransport { request in
+        recorder.record(request)
+        return response(sessionJSON)
+    })
+    let session = try await auth.signIn(email: "person@example.test", password: "legacy")
+    await #expect(throws: UAPPAuthenticationError.weakPassword) {
+        try await auth.updatePassword("abcdefgh!")
+    }
+    #expect(recorder.requests.count == 1)
+    #expect(try await auth.currentSession() == session)
+}
+
 @Test("Cadastro trata confirmação obrigatória, sessão imediata e nome opcional", arguments: [true, false])
 func registrationResponse(_ confirmed: Bool) async throws {
     let auth = UAPPAuthentication(configuration: authConfiguration(), transport: StubTransport { request in
         #expect(request.url?.lastPathComponent == "signup")
         let data = try #require(request.httpBody)
         let body = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
-        #expect(body["password"] as? String == "test-password")
+        #expect(body["password"] as? String == "Test-password")
         #expect(body["data"] == nil)
         return response(confirmed ? sessionJSON : #"{"id":"pending-user","email":"person@example.test"}"#)
     })
-    let result = try await auth.signUp(email: "person@example.test", password: "test-password")
+    let result = try await auth.signUp(email: "person@example.test", password: "Test-password")
     if confirmed {
         let current = try await auth.currentSession()
         #expect(try result == .signedIn(#require(current)))
@@ -138,10 +165,10 @@ func passwordRecoveryRequests() async throws {
         }
         return response("{}")
     })
-    await #expect(throws: UAPPAuthenticationError.signInRequired) { try await auth.updatePassword("test-password") }
+    await #expect(throws: UAPPAuthenticationError.signInRequired) { try await auth.updatePassword("Test-password") }
     try await auth.requestPasswordReset(email: "person@example.test")
     try await auth.verifyPasswordResetCode(email: "person@example.test", code: "123456")
-    let result = try await auth.updatePassword("test-password")
+    let result = try await auth.updatePassword("Test-password")
     #expect(result.identity.userId == "verified")
     #expect(recorder.requests.map { $0.url?.lastPathComponent } == ["recover", "verify", "user"])
 }
@@ -151,7 +178,7 @@ func accountRequestFailures(_ path: String) async throws {
     let auth = UAPPAuthentication(configuration: authConfiguration(), transport: StubTransport { _ in response(400, "{}") })
     await #expect(throws: UAPPKitError.self) {
         switch path {
-        case "signup": _ = try await auth.signUp(email: "person@example.test", password: "test-password", displayName: "Person")
+        case "signup": _ = try await auth.signUp(email: "person@example.test", password: "Test-password", displayName: "Person")
         case "recover": try await auth.requestPasswordReset(email: "person@example.test")
         default: try await auth.verifyPasswordResetCode(email: "person@example.test", code: "123456")
         }

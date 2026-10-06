@@ -31,7 +31,7 @@ final class UAPPAccountModel: ObservableObject {
         onSessionChange: @escaping @MainActor (UAPPAuthenticationSession?) -> Void
     ) {
         self.provider = provider
-        self.minimumPasswordLength = max(6, minimumPasswordLength)
+        self.minimumPasswordLength = max(UAPPPasswordPolicy.minimumLength, minimumPasswordLength)
         self.onSessionChange = onSessionChange
     }
 
@@ -74,7 +74,8 @@ final class UAPPAccountModel: ObservableObject {
     }
 
     private var validNewPassword: Bool {
-        password.count >= minimumPasswordLength && password == passwordConfirmation
+        UAPPPasswordPolicy.isValid(password, minimumLength: minimumPasswordLength)
+            && password == passwordConfirmation
     }
 
     func navigate(to step: Step) {

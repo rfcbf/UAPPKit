@@ -4924,79 +4924,79 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Verwende mindestens %d Zeichen und gib das gleiche Passwort zweimal ein."
+            "value" : "Verwende mindestens %d Zeichen, einen Großbuchstaben und ein Sonderzeichen und gib das gleiche Passwort zweimal ein."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Use at least %d characters and enter the same password twice."
+            "value" : "Use at least %d characters, one uppercase letter and one special character, and enter the same password twice."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Usa al menos %d caracteres e introduce la misma contraseña dos veces."
+            "value" : "Usa al menos %d caracteres, una letra mayúscula y un carácter especial, e introduce la misma contraseña dos veces."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Utilisez au moins %d caractères et saisissez deux fois le même mot de passe."
+            "value" : "Utilisez au moins %d caractères, une lettre majuscule et un caractère spécial, puis saisissez deux fois le même mot de passe."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "कम से कम %d अक्षर इस्तेमाल करें और एक ही पासवर्ड दो बार दर्ज करें।"
+            "value" : "कम से कम %d वर्ण, एक बड़ा अक्षर और एक विशेष वर्ण इस्तेमाल करें और एक ही पासवर्ड दो बार दर्ज करें।"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Usa almeno %d caratteri e inserisci due volte la stessa password."
+            "value" : "Usa almeno %d caratteri, una lettera maiuscola e un carattere speciale, e inserisci due volte la stessa password."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%d文字以上で、同じパスワードを2回入力してください。"
+            "value" : "%d文字以上で、大文字と特殊文字をそれぞれ1文字以上含め、同じパスワードを2回入力してください。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "최소 %d자를 사용하고 같은 비밀번호를 두 번 입력하세요."
+            "value" : "최소 %d자, 대문자 1개와 특수 문자 1개를 포함하고 같은 비밀번호를 두 번 입력하세요."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Użyj co najmniej %d znaków i wpisz to samo hasło dwukrotnie."
+            "value" : "Użyj co najmniej %d znaków, jednej wielkiej litery i jednego znaku specjalnego oraz wpisz to samo hasło dwukrotnie."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Use pelo menos %d caracteres e repita a mesma senha."
+            "value" : "Use pelo menos %d caracteres, uma letra maiúscula e um caractere especial, e repita a mesma senha."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dùng ít nhất %d ký tự và nhập cùng một mật khẩu hai lần."
+            "value" : "Dùng ít nhất %d ký tự, một chữ cái viết hoa và một ký tự đặc biệt, rồi nhập cùng một mật khẩu hai lần."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "请使用至少%d个字符，并输入两次相同的密码。"
+            "value" : "请使用至少%d个字符，包含至少一个大写字母和一个特殊字符，并输入两次相同的密码。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "請使用至少%d個字元，並輸入兩次相同的密碼。"
+            "value" : "請使用至少%d個字元，包含至少一個大寫字母和一個特殊字元，並輸入兩次相同的密碼。"
           }
         }
       }

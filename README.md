@@ -51,20 +51,19 @@ No Xcode, escolha **File → Add Package Dependencies…** e informe:
 https://github.com/rfcbf/UAPPKit
 ```
 
-Até a primeira release versionada, selecione a branch `main` e adicione o
-produto `UAPPKit` ao target do aplicativo. Em outro `Package.swift`:
+Selecione a versão `1.0.0` ou posterior e adicione o produto `UAPPKit` ao
+target do aplicativo. Em outro `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/rfcbf/UAPPKit", branch: "main")
+    .package(url: "https://github.com/rfcbf/UAPPKit", from: "1.0.0")
 ],
 targets: [
     .target(name: "MeuApp", dependencies: ["UAPPKit"])
 ]
 ```
 
-Quando a release `1.0.0` for publicada, será possível trocar por
-`.package(url: "https://github.com/rfcbf/UAPPKit", from: "1.0.0")`.
+A tag da versão é publicada automaticamente após o merge e a CI da `main` concluir.
 
 ## Setup
 
