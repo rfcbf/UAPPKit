@@ -19,7 +19,8 @@ final class UAPPUserModel: ObservableObject {
     private let client: UAPPClient?
     private var isReconciling = false
     var profileClient: UAPPClient? {
-        client
+        guard let client, !client.isAccountActivityOnly else { return nil }
+        return client
     }
 
     private let authentication: (any UAPPAuthenticationProvider)?

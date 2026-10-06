@@ -8,6 +8,7 @@ public actor UAPPClient {
     private let transport: UAPPTransport
     private let installationId: String
     private let accessTokenProvider: UAPPAccessTokenProvider?
+    nonisolated let isAccountActivityOnly: Bool
     nonisolated let authentication: (any UAPPAuthenticationProvider)?
     private var identity: UAPPIdentity?
     private var project: UAPPProject?
@@ -48,7 +49,20 @@ public actor UAPPClient {
         self.accessTokenProvider = accessTokenProvider
         self.authentication = authentication
         installationId = Self.loadInstallationId(projectId: configuration.projectId)
+        isAccountActivityOnly = false
         localeIdentifier = configuration.localeIdentifier
+    }
+
+    /// Creates a client for global signed-in account activity, without an app slug.
+    /// This client is intended for `userActivity(session:limit:cursor:)` only.
+    public init(accountActivityHost host: URL, transport: UAPPTransport = URLSessionTransport()) {
+        configuration = UAPPConfiguration(projectId: "", host: host)
+        self.transport = transport
+        accessTokenProvider = nil
+        authentication = nil
+        installationId = ""
+        isAccountActivityOnly = true
+        localeIdentifier = nil
     }
 
     /// Atualiza o idioma preferido para as próximas requisições.

@@ -522,36 +522,11 @@ struct UAPPSubmitFeedbackScreen: View {
             titleKey: "feedback.new_title",
             accentColor: resolvedAccent
         )
-        .toolbar {
-            #if canImport(UIKit)
-            ToolbarItemGroup(placement: .keyboard) {
-                Button {
-                    focusedField = .title
-                } label: {
-                    Label(uappLocalized("feedback.field.title"), systemImage: "chevron.up")
-                        .labelStyle(.iconOnly)
-                        .foregroundStyle(resolvedAccent)
-                        .frame(minWidth: 44, minHeight: 44)
-                }
-                .disabled(focusedField != .description)
-                Button {
-                    focusedField = .description
-                } label: {
-                    Label(uappLocalized("feedback.field.description"), systemImage: "chevron.down")
-                        .labelStyle(.iconOnly)
-                        .foregroundStyle(resolvedAccent)
-                        .frame(minWidth: 44, minHeight: 44)
-                }
-                .disabled(focusedField != .title)
-                Spacer()
-                Button(uappLocalized("navigation.close")) {
-                    focusedField = nil
-                }
-                .foregroundStyle(resolvedAccent)
-                .frame(minHeight: 44)
-            }
-            #endif
-        }
+        .uappKeyboardFieldNavigation(
+            focusedField: $focusedField,
+            fields: [.title, .description],
+            accentColor: resolvedAccent
+        )
         .safeAreaInset(edge: .bottom) {
             sendBar
         }

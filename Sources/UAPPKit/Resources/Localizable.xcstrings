@@ -4669,6 +4669,172 @@
         }
       }
     },
+    "account.password.hide" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passwort verbergen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide password"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar contraseña"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer le mot de passe"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पासवर्ड छिपाएँ"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nascondi password"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "パスワードを隠す"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "암호 가리기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ukryj hasło"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar senha"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ẩn mật khẩu"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隐藏密码"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隱藏密碼"
+          }
+        }
+      }
+    },
+    "account.password.show" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passwort anzeigen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show password"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar contraseña"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher le mot de passe"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पासवर्ड दिखाएँ"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostra password"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "パスワードを表示"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "암호 보기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokaż hasło"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar senha"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiện mật khẩu"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示密码"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示密碼"
+          }
+        }
+      }
+    },
     "account.password_confirmation" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -13429,6 +13595,42 @@
             "value" : "關閉"
           }
         }
+      }
+    },
+    "navigation.next_field" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Nächstes Feld" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Next field" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Campo siguiente" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Champ suivant" } },
+        "hi" : { "stringUnit" : { "state" : "translated", "value" : "अगला फ़ील्ड" } },
+        "it" : { "stringUnit" : { "state" : "translated", "value" : "Campo successivo" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "次のフィールド" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "다음 필드" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Następne pole" } },
+        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "Próximo campo" } },
+        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Trường tiếp theo" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "下一个字段" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "下一個欄位" } }
+      }
+    },
+    "navigation.previous_field" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Vorheriges Feld" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Previous field" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Campo anterior" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Champ précédent" } },
+        "hi" : { "stringUnit" : { "state" : "translated", "value" : "पिछला फ़ील्ड" } },
+        "it" : { "stringUnit" : { "state" : "translated", "value" : "Campo precedente" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "前のフィールド" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "이전 필드" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Poprzednie pole" } },
+        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "Campo anterior" } },
+        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Trường trước" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "上一个字段" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "上一個欄位" } }
       }
     },
     "OK" : {

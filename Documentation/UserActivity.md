@@ -29,6 +29,22 @@ UAPPUserScreen(
 )
 ```
 
+Para apps de administração que mostram a atividade global da conta sem
+representar um aplicativo UAPP específico, crie um cliente restrito a esse
+histórico com o host do ambiente desejado:
+
+```swift
+let activityClient = UAPPClient(accountActivityHost: serverURL)
+UAPPUserScreen(
+    session: session,
+    authentication: authentication,
+    client: activityClient
+)
+```
+
+Esse cliente não exige nem envia um slug de aplicativo e deve ser usado somente
+para a atividade da conta.
+
 `UAPPKit.showUser` fornece o cliente configurado automaticamente. A inicialização
 sem cliente continua compatível, mas não consulta atividade. A sheet abre em
 altura média e pode ser expandida. O botão vermelho de saída permanece na barra.

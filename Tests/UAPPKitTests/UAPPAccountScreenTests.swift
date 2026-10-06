@@ -78,6 +78,12 @@ struct UAPPAccountScreenTests {
         await render(UAPPAccountScreen(
             authentication: AccountProviderStub(), client: client, appName: "Aplicativo"
         ), settling: true)
+        await render(UAPPAccountScreen(
+            authentication: AccountProviderStub(),
+            client: client,
+            appName: "Aplicativo",
+            showsCloseButton: false
+        ), settling: true)
         let connected = StubAuthentication()
         await connected.setSession(UAPPAuthenticationSession(identity: .init(userId: "verified"), accessToken: "token"))
         await render(UAPPAccountScreen(authentication: connected), settling: true)

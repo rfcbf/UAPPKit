@@ -28,7 +28,9 @@ struct UAPPFeedbackDetailScreen: View {
     @State private var message: String?
     @State private var commentsError: String?
     @StateObject private var participation: UAPPParticipationModel
-    @FocusState private var focusesComment: Bool
+    @FocusState private var focusedField: Field?
+
+    private enum Field: Hashable { case comment }
 
     init(
         client: UAPPClient,
@@ -113,11 +115,16 @@ struct UAPPFeedbackDetailScreen: View {
             .uappOnChange(of: replyingTo?.id) { id in
                 guard id != nil else { return }
                 proxy.scrollTo("comment-composer", anchor: .center)
-                focusesComment = true
+                focusedField = .comment
             }
             .refreshable { await refresh(showError: true) }
         }
         .background(palette.background).tint(resolvedAccent)
+        .uappKeyboardFieldNavigation(
+            focusedField: $focusedField,
+            fields: [.comment],
+            accentColor: resolvedAccent
+        )
         .modifier(UAPPParticipationModifier(model: participation, accentColor: resolvedAccent))
         .uappNavigationBar(
             titleKey: "feedback.detail_title",
@@ -239,7 +246,7 @@ struct UAPPFeedbackDetailScreen: View {
             }
             VStack(alignment: .leading, spacing: 8) {
                 TextField(uappLocalized("comments.field"), text: $commentBody, axis: .vertical)
-                    .lineLimit(3 ... 8).focused($focusesComment).disabled(isSending)
+                    .lineLimit(3 ... 8).focused($focusedField, equals: .comment).disabled(isSending)
                 HStack(alignment: .bottom) {
                     UAPPFeedbackImagePicker(data: $commentImage, isProcessing: $isProcessingImage).disabled(isSending)
                     Spacer()
@@ -276,7 +283,7 @@ struct UAPPFeedbackDetailScreen: View {
             .padding(.top, 16)
             .padding(.bottom, 4)
             .background(UAPPFieldBackground(
-                isFocused: focusesComment,
+                isFocused: focusedField == .comment,
                 accent: resolvedAccent,
                 palette: palette,
                 cornerRadius: 20
@@ -346,7 +353,7 @@ struct UAPPFeedbackDetailScreen: View {
         commentImage = []
         replyingTo = nil
         message = nil
-        focusesComment = false
+        focusedField = nil
     }
 
     private func commentRow(_ comment: UAPPComment) -> some View {
@@ -512,7 +519,7 @@ struct UAPPFeedbackDetailScreen: View {
             commentBody = ""
             commentImage = []
             replyingTo = nil
-            focusesComment = false
+            focusedField = nil
             message = "detail.comment_submitted"
             await refresh(showError: true)
         } catch { message = "detail.comment_error" }

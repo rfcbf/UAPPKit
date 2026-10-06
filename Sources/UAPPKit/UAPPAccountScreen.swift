@@ -13,9 +13,11 @@ public struct UAPPAccountScreen: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.locale) private var locale
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @AppStorage(UAPPLocalizationPreferences.presentationStorageKey)
     private var selectedLanguage = UAPPLocalizationPreferences.hostIdentifier
     @FocusState private var focusedField: Field?
+    @State private var visiblePasswordFields: Set<Field> = []
     @State private var remoteIconURL: URL?
     @State private var loadedIcon: Image?
     @State private var isReady = false
@@ -25,17 +27,31 @@ public struct UAPPAccountScreen: View {
     private let appName: String
     private let appIconURL: URL?
     private let theme: UAPPTheme
+    private let showsCloseButton: Bool
     private let termsURL: URL?
     private let privacyURL: URL?
 
     private enum Field: Hashable { case name, email, password, confirmation, code }
 
+    private func keyboardFields(for step: UAPPAccountModel.Step) -> [Field] {
+        guard !model.isCompletingSignup else { return [] }
+        switch step {
+        case .login: return [.email, .password]
+        case .signup: return [.name, .email, .password, .confirmation]
+        case .recover: return [.email]
+        case .confirmSignup, .verifyRecovery: return [.code]
+        case .newPassword: return [.password, .confirmation]
+        }
+    }
+
+    /// - Parameter showsCloseButton: Whether the account flow offers an action to dismiss the screen.
     public init(
         authentication: any UAPPAuthenticationProvider,
         client: UAPPClient? = nil,
         appName: String = UAPPAppMetadata().name,
         appIconURL: URL? = nil,
         theme: UAPPTheme = .system,
+        showsCloseButton: Bool = true,
         minimumPasswordLength: Int = 8,
         termsURL: URL? = nil,
         privacyURL: URL? = nil,
@@ -49,6 +65,7 @@ public struct UAPPAccountScreen: View {
         self.appName = appName
         self.appIconURL = appIconURL
         self.theme = theme
+        self.showsCloseButton = showsCloseButton
         self.termsURL = termsURL
         self.privacyURL = privacyURL
     }
@@ -69,6 +86,7 @@ public struct UAPPAccountScreen: View {
         self.appName = appName
         appIconURL = nil
         self.theme = theme
+        showsCloseButton = true
         self.termsURL = termsURL
         self.privacyURL = privacyURL
     }
@@ -165,6 +183,7 @@ public struct UAPPAccountScreen: View {
             }
         }
         .uappOnChange(of: model.step) { step in
+            visiblePasswordFields.removeAll()
             guard !path.isEmpty, path.last != step else { return }
             path.append(step)
         }
@@ -182,21 +201,25 @@ public struct UAPPAccountScreen: View {
 private extension UAPPAccountScreen {
     func page(isWelcome: Bool, step: UAPPAccountModel.Step = .login) -> some View {
         GeometryReader { geometry in
-            ScrollView {
-                VStack(spacing: 28) {
-                    identityHeader(isWelcome: isWelcome, step: step)
-                    if isWelcome {
-                        statusContent
+            Group {
+                if usesTwoColumnLayout(size: geometry.size, isWelcome: isWelcome, step: step) {
+                    #if os(iOS)
+                    if #available(iOS 27.1, *) {
+                        ArrangementView {
+                            identityPanel(for: step)
+                        } secondary: {
+                            authenticationPanel(for: step)
+                        }
+                        .arrangementViewStyle(.split.axes(.horizontal))
                     } else {
-                        authenticationContent(for: step)
-                        statusContent
+                        splitFallback(for: step)
                     }
+                    #else
+                    singleColumnContent(height: geometry.size.height, isWelcome: isWelcome, step: step)
+                    #endif
+                } else {
+                    singleColumnContent(height: geometry.size.height, isWelcome: isWelcome, step: step)
                 }
-                .padding(.horizontal, 24)
-                .padding(.vertical, 28)
-                .frame(maxWidth: 440)
-                .frame(maxWidth: .infinity)
-                .frame(minHeight: isWelcome ? geometry.size.height : 0, alignment: .center)
             }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
@@ -212,15 +235,90 @@ private extension UAPPAccountScreen {
         }
         .background(palette.background.ignoresSafeArea())
         .foregroundStyle(palette.primaryText)
+        .uappKeyboardFieldNavigation(
+            focusedField: $focusedField,
+            fields: isWelcome ? [] : keyboardFields(for: step),
+            accentColor: accentColor
+        )
         .uappNavigationBar(
             verbatimTitle: "",
             accentColor: accentColor,
-            showsCloseButton: isWelcome || (step != .login && step != .signup && step != .recover),
+            showsCloseButton: showsCloseButton && (isWelcome || (step != .login && step != .signup && step != .recover)),
             onClose: {
                 guard !model.isBusy else { return }
                 dismiss()
             }
         )
+    }
+
+    private func usesTwoColumnLayout(
+        size: CGSize,
+        isWelcome: Bool,
+        step: UAPPAccountModel.Step
+    ) -> Bool {
+        #if os(iOS)
+        horizontalSizeClass == .regular && size.width > size.height &&
+            !isWelcome && (step == .login || step == .signup)
+        #else
+        false
+        #endif
+    }
+
+    private func singleColumnContent(
+        height: CGFloat,
+        isWelcome: Bool,
+        step: UAPPAccountModel.Step
+    ) -> some View {
+        ScrollView {
+            VStack(spacing: 28) {
+                identityHeader(isWelcome: isWelcome, step: step)
+                if isWelcome {
+                    statusContent
+                } else {
+                    authenticationContent(for: step)
+                    statusContent
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 28)
+            .frame(maxWidth: 440)
+            .frame(maxWidth: .infinity)
+            .frame(minHeight: isWelcome ? height : 0, alignment: .center)
+        }
+    }
+
+    private func identityPanel(for step: UAPPAccountModel.Step) -> some View {
+        identityHeader(isWelcome: false, step: step)
+            .padding(.horizontal, 32)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(palette.background)
+    }
+
+    private func authenticationPanel(for step: UAPPAccountModel.Step) -> some View {
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 28) {
+                    authenticationContent(for: step)
+                    statusContent
+                }
+                .padding(.horizontal, 24)
+                .padding(.vertical, 28)
+                .frame(maxWidth: 480)
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: geometry.size.height, alignment: .center)
+            }
+            .scrollDismissesKeyboard(.interactively)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(palette.background)
+    }
+
+    private func splitFallback(for step: UAPPAccountModel.Step) -> some View {
+        HStack(spacing: 0) {
+            identityPanel(for: step)
+            authenticationPanel(for: step)
+        }
+        .background(palette.background)
     }
 
     var welcomeContent: some View {
@@ -306,7 +404,7 @@ private extension UAPPAccountScreen {
         switch step {
         case .login, .signup: nil
         case .confirmSignup: "envelope.badge"
-        case .recover: "key"
+        case .recover: nil
         case .verifyRecovery: "number"
         case .newPassword: "lock.rotation"
         }
@@ -430,11 +528,25 @@ private extension UAPPAccountScreen {
 
     private func passwordField(isConfirmation: Bool) -> some View {
         let key = isConfirmation ? "account.password_confirmation" : "account.password"
-        return fieldShell(key, field: isConfirmation ? .confirmation : .password, symbol: isConfirmation ? "lock.shield" : "lock") {
-            SecureField(localized(key), text: isConfirmation ? $model.passwordConfirmation : $model.password)
-                .focused($focusedField, equals: isConfirmation ? .confirmation : .password)
+        let field: Field = isConfirmation ? .confirmation : .password
+        let value = isConfirmation ? $model.passwordConfirmation : $model.password
+        let isVisible = visiblePasswordFields.contains(field)
+
+        return fieldShell(key, field: field, symbol: isConfirmation ? "lock.shield" : "lock") {
+            HStack(spacing: 8) {
+                Group {
+                    if isVisible {
+                        TextField(localized(key), text: value)
+                            .focused($focusedField, equals: field)
+                    } else {
+                        SecureField(localized(key), text: value)
+                            .focused($focusedField, equals: field)
+                    }
+                }
+                .autocorrectionDisabled()
                 #if os(iOS)
                 .textContentType(model.step == .login ? .password : .newPassword)
+                .textInputAutocapitalization(.never)
                 #endif
                 .submitLabel(model.step == .login || isConfirmation ? .go : .next)
                 .onSubmit {
@@ -444,6 +556,25 @@ private extension UAPPAccountScreen {
                         focusedField = .confirmation
                     }
                 }
+
+                Button {
+                    if isVisible {
+                        visiblePasswordFields.remove(field)
+                    } else {
+                        visiblePasswordFields.insert(field)
+                    }
+                } label: {
+                    Image(systemName: isVisible ? "eye.slash" : "eye")
+                        .foregroundStyle(palette.secondaryText)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(model.isBusy)
+                .accessibilityLabel(Text(verbatim: localized(
+                    isVisible ? "account.password.hide" : "account.password.show"
+                )))
+            }
         }
     }
 
@@ -487,7 +618,6 @@ private extension UAPPAccountScreen {
                     .textFieldStyle(.plain)
             }
             .padding(.horizontal, 14)
-            .padding(.vertical, 14)
             .frame(minHeight: 50)
             .background(UAPPFieldBackground(isFocused: isFocused, accent: accentColor, palette: palette))
             .contentShape(Rectangle())

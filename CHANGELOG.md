@@ -6,6 +6,24 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+- Novo modificador reutilizável `uappKeyboardFieldNavigation`, com controles
+  localizados para ir ao campo anterior/próximo e fechar o teclado. Aplicado aos
+  fluxos de conta, criação de feedback e comentários.
+
+- A etapa “Esqueceu a senha?” preserva o ícone do aplicativo no cabeçalho, em vez
+  de substituí-lo pelo símbolo de chave usado nas demais etapas da conta.
+
+- Em largura regular e orientação horizontal, login e cadastro mostram a marca
+  do aplicativo no painel primário e os campos/serviços de autenticação no
+  painel secundário. `ArrangementView` adapta a divisão a regiões reservadas no
+  iOS 27.1 ou posterior; os demais tamanhos e etapas mantêm uma coluna.
+
+- Campos de senha e confirmação da tela de conta permitem alternar entre texto
+  oculto e visível, com ações acessíveis e localizadas.
+
+- Novo inicializador `UAPPClient(accountActivityHost:)` para consultar o histórico
+  global de uma conta autenticada sem configurar ou enviar um slug de aplicativo.
+
 - O transporte padrão limita cada requisição a 15 segundos, cancela a espera
   e retorna erro de comunicação com mensagem de tempo limite. Novo parâmetro
   opcional `URLSessionTransport(session:timeoutInterval:)`, compatível com as

@@ -2,6 +2,14 @@ import Foundation
 import Testing
 @testable import UAPPKit
 
+@Test("cliente de atividade global não exige identificador de aplicativo")
+func clientForAccountActivityHasNoProjectScope() throws {
+    let host = try #require(URL(string: "https://uapp.example.test"))
+    let client = UAPPClient(accountActivityHost: host)
+
+    #expect(client.isAccountActivityOnly)
+}
+
 @Test("feedback com anexos envia os bytes da foto do perfil sem arquivo local")
 func clientFeedbackIncludesProfilePhotoBytes() async throws {
     let recorder = RequestRecorder()
