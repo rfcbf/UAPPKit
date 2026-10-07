@@ -6,6 +6,10 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+- `UAPPAccountScreen` ganhou o parâmetro opcional `onReady`, chamado uma vez
+  quando o formulário de login aparece. Permite ao aplicativo manter a própria
+  tela de abertura até o login estar pronto. Não é chamado quando já existe
+  sessão, caso em que a tela se encerra sozinha.
 - Nova tela pública `UAPPFeedbackComposerScreen(client:draft:theme:onComplete:)`
   e o tipo `UAPPFeedbackDraft`, para o aplicativo abrir o envio de feedback já
   preenchido com título, descrição e tipo, sem passar pela lista de Feedback.

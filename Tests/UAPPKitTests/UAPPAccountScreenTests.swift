@@ -89,6 +89,33 @@ struct UAPPAccountScreenTests {
         await render(UAPPAccountScreen(authentication: connected), settling: true)
     }
 
+    @Test("Tela pública avisa quando o formulário de login está pronto, e só sem sessão")
+    func publicInitializerReportsReadiness() async {
+        let readiness = ReadinessRecorder()
+        await render(
+            UAPPAccountScreen(
+                authentication: AccountProviderStub(),
+                appName: "Aplicativo",
+                onReady: { readiness.count += 1 }
+            ),
+            settling: true
+        ) {
+            for _ in 0 ..< 200 where readiness.count == 0 {
+                try? await Task.sleep(nanoseconds: 10_000_000)
+            }
+        }
+        #expect(readiness.count == 1)
+
+        let connected = StubAuthentication()
+        await connected.setSession(UAPPAuthenticationSession(identity: .init(userId: "verified"), accessToken: "token"))
+        let connectedReadiness = ReadinessRecorder()
+        await render(
+            UAPPAccountScreen(authentication: connected, onReady: { connectedReadiness.count += 1 }),
+            settling: true
+        )
+        #expect(connectedReadiness.count == 0)
+    }
+
     @Test("Ícones de login cobrem todos os provedores")
     func loginServiceIconsRender() async {
         for method in UAPPLoginMethod.allCases {
@@ -145,4 +172,9 @@ private struct SocialOnlyProvider: UAPPAuthenticationProvider {
     }
 
     func signOut() async throws {}
+}
+
+@MainActor
+private final class ReadinessRecorder {
+    var count = 0
 }

@@ -66,6 +66,10 @@ Para SwiftUI, apresente a view pública:
 }
 ```
 
+Para manter uma tela de abertura própria até o formulário aparecer, passe
+`onReady`: ele é chamado uma vez quando o login está pronto para uso e não é
+chamado quando já existe sessão.
+
 O `client` é opcional e permite descobrir nome e ícone do projeto, como no
 Sobre. Também é possível passar `appName`, `appIconURL`, `theme`,
 `minimumPasswordLength`, `termsURL` e `privacyURL`. A view já fornece seu
