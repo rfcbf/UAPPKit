@@ -536,6 +536,24 @@ try await client.submitComment(
 let activity = try await client.userActivity(session: session, limit: 20)
 ```
 
+Para abrir o envio nativo já preenchido, sem passar pela lista de Feedback,
+apresente `UAPPFeedbackComposerScreen` com um `UAPPFeedbackDraft`:
+
+```swift
+.sheet(isPresented: $isReporting) {
+    UAPPFeedbackComposerScreen(
+        client: client,
+        draft: UAPPFeedbackDraft(
+            title: "Falha ao sincronizar",
+            details: "A sincronização parou na segunda etapa.",
+            category: .bug
+        )
+    ) {
+        isReporting = false
+    }
+}
+```
+
 - Páginas de feedback, comentários e changelog incluem `nextCursor`.
 - `submitFeedback` e `submitComment` aceitam `imagesData:` com até duas
   imagens compactadas, de no máximo 512 KiB cada.

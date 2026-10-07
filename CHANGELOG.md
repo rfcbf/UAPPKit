@@ -6,6 +6,10 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+- Nova tela pública `UAPPFeedbackComposerScreen(client:draft:theme:onComplete:)`
+  e o tipo `UAPPFeedbackDraft`, para o aplicativo abrir o envio de feedback já
+  preenchido com título, descrição e tipo, sem passar pela lista de Feedback.
+  A pessoa pode revisar e alterar o conteúdo antes de enviar.
 - Novo modificador público `uappToast(message:kind:title:actionTitle:action:)`
   para avisos de erro, informação e sucesso, com ações de recuperação,
   fechamento acessível, Dynamic Type e respeito à redução de movimento.
