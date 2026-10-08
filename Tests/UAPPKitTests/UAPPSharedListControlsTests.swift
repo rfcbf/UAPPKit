@@ -66,5 +66,7 @@ struct UAPPSharedListControlsTests {
         #expect(UAPPRequestStatusTitle.localized(key: "planned", fallback: "Planejados") ==
             uappLocalized("status.planned", languageIdentifier: "en"))
         #expect(UAPPRequestStatusTitle.localized(key: "custom", fallback: "Etapa própria") == "Etapa própria")
+        #expect(UAPPRequestStatusTitle.localized(key: "planned", fallback: "Planejados", languageIdentifier: "pt-BR") ==
+            uappLocalized("status.planned", languageIdentifier: "pt-BR"))
     }
 }

@@ -35,8 +35,14 @@ public struct UAPPLanguageMenuButton: View {
 /// Nome de uma etapa de requisição no idioma de apresentação.
 public enum UAPPRequestStatusTitle {
     /// Etapas padrão do UAPP são traduzidas pela chave; as personalizadas usam o nome recebido.
-    public static func localized(key: String, fallback: String) -> String {
-        uappFeedbackStatusTitle(UAPPRoadmapColumn.Status(id: key, key: key, name: fallback, position: 0))
+    ///
+    /// Passe em `languageIdentifier` o idioma do ambiente da tela (`\\.locale`) para que o
+    /// texto acompanhe a troca feita no menu de idiomas; sem ele, vale o idioma salvo.
+    public static func localized(key: String, fallback: String, languageIdentifier: String? = nil) -> String {
+        uappFeedbackStatusTitle(
+            UAPPRoadmapColumn.Status(id: key, key: key, name: fallback, position: 0),
+            languageIdentifier: languageIdentifier
+        )
     }
 }
 
