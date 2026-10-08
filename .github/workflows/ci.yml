@@ -28,12 +28,17 @@ concurrency:
 
 jobs:
   validate:
-    runs-on: macos-26
+    # A variável CI_RUNNER do repositório aponta para o runner self-hosted, que
+    # não consome a franquia: ["self-hosted","macOS","uapp-mac"]. Sem ela, a CI
+    # volta ao runner do GitHub.
+    runs-on: ${{ fromJSON(vars.CI_RUNNER || '"macos-26"') }}
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
+      # O runner self-hosted já tem as ferramentas instaladas.
       - name: Install tooling
+        if: runner.environment == 'github-hosted'
         run: brew install swiftformat swiftlint xcodegen
 
       - name: Check formatting
