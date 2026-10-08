@@ -1,14 +1,35 @@
 name: CI
 
+# O runner macOS consome dez minutos da franquia a cada minuto executado. Por
+# isso a CI ignora mudanças só de documentação e cancela a execução anterior
+# do mesmo Pull Request. O CHANGELOG.md continua disparando a CI porque a tag
+# de release depende da CI verde na main.
 on:
   push:
     branches: [main]
+    paths:
+      - '**'
+      - '!Documentation/**'
+      - '!**/*.md'
+      - '!LICENSE'
+      - 'CHANGELOG.md'
   pull_request:
+    paths:
+      - '**'
+      - '!Documentation/**'
+      - '!**/*.md'
+      - '!LICENSE'
+      - 'CHANGELOG.md'
   workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   validate:
     runs-on: macos-26
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -25,10 +46,10 @@ jobs:
         run: swift package dump-package
 
       # O build system "swiftbuild" compila o Localizable.xcstrings; o nativo só
-      # copia o arquivo e os testes de localização falham.
+      # copia o arquivo e os testes de localização falham. O `swift test` já
+      # compila o pacote em debug, então só o build de release roda à parte.
       - name: Build and test package
         run: |
-          swift build --build-system swiftbuild
           swift build --build-system swiftbuild -c release
           swift test --build-system swiftbuild --enable-code-coverage
 
