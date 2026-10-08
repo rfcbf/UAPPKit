@@ -79,3 +79,38 @@ struct UAPPTranslationScopeModifier: ViewModifier {
     }
 }
 #endif
+
+#if canImport(SwiftUI)
+/// Seletor de até duas imagens para anexar a um texto. Cada imagem é
+/// redimensionada e convertida para JPEG de até 512 KB, sem metadados de
+/// localização, antes de entrar em `data`.
+public struct UAPPImageAttachmentPicker: View {
+    /// Quantidade máxima de imagens aceitas pelo seletor.
+    public static let limit = 2
+
+    @Binding private var data: [Data]
+    @Binding private var isProcessing: Bool
+
+    public init(data: Binding<[Data]>, isProcessing: Binding<Bool>) {
+        _data = data
+        _isProcessing = isProcessing
+    }
+
+    public var body: some View {
+        UAPPFeedbackImagePicker(data: $data, isProcessing: $isProcessing)
+    }
+}
+
+/// Miniaturas de imagens remotas que abrem em tela cheia ao toque.
+public struct UAPPImageAttachmentGallery: View {
+    private let urls: [URL]
+
+    public init(urls: [URL]) {
+        self.urls = urls
+    }
+
+    public var body: some View {
+        UAPPFeedbackImageGallery(urls: urls)
+    }
+}
+#endif

@@ -12,6 +12,9 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
   `uappTranslationScope()` (mantém as traduções da tela e aplica o idioma) e
   `uappSearchField(text:isPresented:prompt:accentColor:)` (busca aberta por
   botão, na barra de ferramentas a partir do iOS 26).
+- `UAPPImageAttachmentPicker` (até duas imagens, preparadas em JPEG de até
+  512 KB) e `UAPPImageAttachmentGallery` (miniaturas que abrem em tela cheia)
+  para anexos em telas do aplicativo.
 - `UAPPRequestStatusTitle.localized(key:fallback:)` devolve o nome de uma
   etapa padrão no idioma de apresentação.
 

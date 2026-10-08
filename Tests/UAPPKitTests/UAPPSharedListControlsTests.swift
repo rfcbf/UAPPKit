@@ -38,6 +38,23 @@ struct UAPPSharedListControlsTests {
         }
     }
 
+    @Test("Seletor e galeria de anexos constroem vazios e com imagens")
+    func attachmentPickerAndGalleryRender() async {
+        var data: [Data] = []
+        var isProcessing = false
+        await render(
+            VStack {
+                UAPPImageAttachmentPicker(
+                    data: Binding(get: { data }, set: { data = $0 }),
+                    isProcessing: Binding(get: { isProcessing }, set: { isProcessing = $0 })
+                )
+                UAPPImageAttachmentGallery(urls: [])
+                UAPPImageAttachmentGallery(urls: [URL(string: "https://example.com/a.jpg")!])
+            }
+        )
+        #expect(UAPPImageAttachmentPicker.limit == 2)
+    }
+
     @Test("Etapas padrão são traduzidas pela chave e as personalizadas mantêm o nome")
     func statusTitleUsesKeyThenFallback() {
         let previous = UserDefaults.standard.string(forKey: UAPPLocalizationPreferences.presentationStorageKey)
