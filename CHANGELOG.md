@@ -6,6 +6,8 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+## 1.1.0 - 2026-10-07
+
 - `UAPPAccountScreen` ganhou o parâmetro opcional `onReady`, chamado uma vez
   quando o formulário de login aparece. Permite ao aplicativo manter a própria
   tela de abertura até o login estar pronto. Não é chamado quando já existe
