@@ -7,6 +7,12 @@ struct UAPPChangelogSearchModifier: ViewModifier {
     @Binding var isPresented: Bool
     let accentColor: Color
     var promptKey: String = "changelog.search"
+    /// Texto pronto do aplicativo; quando presente, substitui a chave do pacote.
+    var promptText: String?
+
+    private var prompt: String {
+        promptText ?? uappLocalized(promptKey)
+    }
 
     func body(content: Content) -> some View {
         if enabled {
@@ -16,7 +22,7 @@ struct UAPPChangelogSearchModifier: ViewModifier {
                     content
                         .searchable(
                             text: $query, isPresented: $isPresented, placement: .toolbar,
-                            prompt: Text(verbatim: uappLocalized(promptKey))
+                            prompt: Text(verbatim: prompt)
                         )
                         .searchToolbarBehavior(.automatic)
                         .toolbar { DefaultToolbarItem(kind: .search, placement: .bottomBar) }
@@ -40,7 +46,7 @@ struct UAPPChangelogSearchModifier: ViewModifier {
             if isPresented {
                 HStack {
                     Image(systemName: "magnifyingglass").foregroundStyle(accentColor)
-                    TextField(uappLocalized(promptKey), text: $query)
+                    TextField(prompt, text: $query)
                         .textFieldStyle(.plain)
                 }
                 .padding()

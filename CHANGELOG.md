@@ -6,6 +6,15 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+- Controles das telas do pacote disponíveis para o aplicativo montar as
+  próprias listas: `UAPPTranslatedText` (texto traduzido para o idioma de
+  apresentação), `UAPPLanguageMenuButton` (menu de idiomas),
+  `uappTranslationScope()` (mantém as traduções da tela e aplica o idioma) e
+  `uappSearchField(text:isPresented:prompt:accentColor:)` (busca aberta por
+  botão, na barra de ferramentas a partir do iOS 26).
+- `UAPPRequestStatusTitle.localized(key:fallback:)` devolve o nome de uma
+  etapa padrão no idioma de apresentação.
+
 ## 1.1.0 - 2026-10-07
 
 - `UAPPAccountScreen` ganhou o parâmetro opcional `onReady`, chamado uma vez
