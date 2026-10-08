@@ -796,6 +796,21 @@ struct UAPPSubmitFeedbackScreen: View {
     }
 }
 
+extension UAPPSubmitFeedbackScreen {
+    /// Abre o compositor com título, descrição e tipo já preenchidos.
+    init(
+        client: UAPPClient,
+        accentColor: Color? = nil,
+        draft: UAPPFeedbackDraft,
+        onComplete: @escaping () -> Void
+    ) {
+        self.init(client: client, accentColor: accentColor, onComplete: onComplete)
+        _title = State(initialValue: draft.title)
+        _details = State(initialValue: draft.details)
+        _category = State(initialValue: draft.category)
+    }
+}
+
 extension UAPPFeedbackCategory {
     /// Chave localizada exibida no seletor de tipo do compositor.
     var composerTitleKey: String {

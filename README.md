@@ -51,12 +51,12 @@ No Xcode, escolha **File → Add Package Dependencies…** e informe:
 https://github.com/rfcbf/UAPPKit
 ```
 
-Selecione a versão `1.0.0` ou posterior e adicione o produto `UAPPKit` ao
+Selecione a versão `1.1.0` ou posterior e adicione o produto `UAPPKit` ao
 target do aplicativo. Em outro `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/rfcbf/UAPPKit", from: "1.0.0")
+    .package(url: "https://github.com/rfcbf/UAPPKit", from: "1.1.0")
 ],
 targets: [
     .target(name: "MeuApp", dependencies: ["UAPPKit"])
@@ -534,6 +534,24 @@ try await client.submitComment(
 )
 
 let activity = try await client.userActivity(session: session, limit: 20)
+```
+
+Para abrir o envio nativo já preenchido, sem passar pela lista de Feedback,
+apresente `UAPPFeedbackComposerScreen` com um `UAPPFeedbackDraft`:
+
+```swift
+.sheet(isPresented: $isReporting) {
+    UAPPFeedbackComposerScreen(
+        client: client,
+        draft: UAPPFeedbackDraft(
+            title: "Falha ao sincronizar",
+            details: "A sincronização parou na segunda etapa.",
+            category: .bug
+        )
+    ) {
+        isReporting = false
+    }
+}
 ```
 
 - Páginas de feedback, comentários e changelog incluem `nextCursor`.

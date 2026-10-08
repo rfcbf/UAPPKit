@@ -30,6 +30,7 @@ public struct UAPPAccountScreen: View {
     private let showsCloseButton: Bool
     private let termsURL: URL?
     private let privacyURL: URL?
+    private let onReady: @MainActor () -> Void
 
     private enum Field: Hashable { case name, email, password, confirmation, code }
 
@@ -44,7 +45,10 @@ public struct UAPPAccountScreen: View {
         }
     }
 
-    /// - Parameter showsCloseButton: Whether the account flow offers an action to dismiss the screen.
+    /// - Parameters:
+    ///   - showsCloseButton: Whether the account flow offers an action to dismiss the screen.
+    ///   - onReady: Called once, when the sign-in form is on screen. It is not called when a session
+    ///     already exists, because the screen dismisses itself instead of showing the form.
     public init(
         authentication: any UAPPAuthenticationProvider,
         client: UAPPClient? = nil,
@@ -55,7 +59,8 @@ public struct UAPPAccountScreen: View {
         minimumPasswordLength: Int = 8,
         termsURL: URL? = nil,
         privacyURL: URL? = nil,
-        onSessionChange: @escaping @MainActor (UAPPAuthenticationSession?) -> Void = { _ in }
+        onSessionChange: @escaping @MainActor (UAPPAuthenticationSession?) -> Void = { _ in },
+        onReady: @escaping @MainActor () -> Void = {}
     ) {
         _model = StateObject(wrappedValue: UAPPAccountModel(
             provider: authentication, minimumPasswordLength: minimumPasswordLength,
@@ -68,6 +73,7 @@ public struct UAPPAccountScreen: View {
         self.showsCloseButton = showsCloseButton
         self.termsURL = termsURL
         self.privacyURL = privacyURL
+        self.onReady = onReady
     }
 
     /// Estado inicial injetável para renderizar cada etapa nos testes.
@@ -89,6 +95,7 @@ public struct UAPPAccountScreen: View {
         showsCloseButton = true
         self.termsURL = termsURL
         self.privacyURL = privacyURL
+        onReady = {}
     }
 
     private var palette: UAPPResolvedPalette {
@@ -187,6 +194,7 @@ public struct UAPPAccountScreen: View {
             await loadAppIcon()
             guard !Task.isCancelled else { return }
             isReady = true
+            onReady()
         }
         .uappOnChange(of: model.session != nil) { connected in
             if connected {

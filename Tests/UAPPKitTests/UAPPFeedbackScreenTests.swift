@@ -101,6 +101,18 @@ func submitFeedbackScreenRendersForm() async {
     await render(UAPPSubmitFeedbackScreen(client: client, onComplete: {}))
 }
 
+@Test("UAPPFeedbackComposerScreen abre o compositor com o rascunho informado")
+@MainActor
+func feedbackComposerScreenRendersPrefilledDraft() async {
+    let client = makeClient { _ in response(#"{"id":"feedback"}"#) }
+    let draft = UAPPFeedbackDraft(title: "Falha ao importar", details: "Parou no terceiro mês.", category: .bug)
+
+    #expect(UAPPFeedbackDraft() == UAPPFeedbackDraft(title: "", details: "", category: .feature))
+    #expect(draft.category == .bug)
+    await render(UAPPFeedbackComposerScreen(client: client, draft: draft, onComplete: {}))
+    await render(UAPPSubmitFeedbackScreen(client: client, draft: draft, onComplete: {}))
+}
+
 @Test("compositor de feedback tem símbolo e título distintos para cada tipo")
 func submitFeedbackCategoriesHaveDistinctPresentation() {
     let categories = UAPPFeedbackCategory.allCases
