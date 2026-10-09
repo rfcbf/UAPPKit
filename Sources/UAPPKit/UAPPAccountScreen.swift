@@ -733,15 +733,26 @@ private extension UAPPAccountScreen {
     @ViewBuilder
     private var legalLinks: some View {
         if termsURL != nil || privacyURL != nil {
-            VStack(spacing: 8) {
-                if let termsURL {
-                    Link(localized("about.terms"), destination: termsURL).frame(minHeight: 32)
-                }
-                if let privacyURL {
-                    Link(localized("about.privacy"), destination: privacyURL).frame(minHeight: 32)
-                }
+            // Lado a lado quando cabem; com texto ampliado ou tela estreita, um abaixo do outro.
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 28) { legalLinkItems }
+                VStack(spacing: 8) { legalLinkItems }
             }
             .font(.footnote.weight(.medium))
+        }
+    }
+
+    @ViewBuilder
+    private var legalLinkItems: some View {
+        if let termsURL {
+            Link(localized("about.terms"), destination: termsURL)
+                .lineLimit(1)
+                .frame(minHeight: 32)
+        }
+        if let privacyURL {
+            Link(localized("about.privacy"), destination: privacyURL)
+                .lineLimit(1)
+                .frame(minHeight: 32)
         }
     }
 
