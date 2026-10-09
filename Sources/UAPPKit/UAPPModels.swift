@@ -323,12 +323,47 @@ struct UAPPReviewsResponse: Decodable {
     let project: UAPPProject?
     let reviews: [UAPPReview]
     let nextCursor: String?
+    let summary: UAPPReviewSummary?
 }
 
 /// Página de avaliações; `nextCursor == nil` indica o fim da lista.
 public struct UAPPReviewsPage: Sendable, Equatable {
     public let reviews: [UAPPReview]
     public let nextCursor: String?
+    /// Resumo de todas as avaliações publicadas, quando o servidor o informa.
+    public let summary: UAPPReviewSummary?
+
+    init(reviews: [UAPPReview], nextCursor: String?, summary: UAPPReviewSummary? = nil) {
+        self.reviews = reviews
+        self.nextCursor = nextCursor
+        self.summary = summary
+    }
+}
+
+/// Média, total e distribuição por nota das avaliações de um aplicativo.
+public struct UAPPReviewSummary: Sendable, Equatable, Decodable {
+    public let count: Int
+    public let average: Double
+    /// Quantidade de avaliações por nota, com as chaves de `"1"` a `"5"`.
+    public let distribution: [String: Int]
+
+    init(count: Int, average: Double, distribution: [String: Int]) {
+        self.count = count
+        self.average = average
+        self.distribution = distribution
+    }
+
+    /// Resumo calculado a partir de uma lista completa de avaliações.
+    init(reviews: [UAPPReview]) {
+        count = reviews.count
+        average = reviews.isEmpty ? 0 : Double(reviews.reduce(0) { $0 + $1.rating }) / Double(reviews.count)
+        distribution = Dictionary(grouping: reviews, by: { String(min(max($0.rating, 1), 5)) }).mapValues(\.count)
+    }
+
+    /// Fração de 0 a 1 das avaliações com a nota informada.
+    public func share(of rating: Int) -> Double {
+        count > 0 ? Double(distribution[String(rating)] ?? 0) / Double(count) : 0
+    }
 }
 
 struct UAPPAboutResponse: Decodable {

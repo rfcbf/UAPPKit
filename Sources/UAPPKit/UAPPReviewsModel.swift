@@ -10,6 +10,8 @@ final class UAPPReviewsModel: ObservableObject {
     @Published private(set) var isLoadingMore = false
     @Published private(set) var hasMoreError = false
     @Published private(set) var nextCursor: String?
+    /// Resumo informado pelo servidor na primeira página.
+    @Published private(set) var serverSummary: UAPPReviewSummary?
     private let client: UAPPClient
     let pageSize: Int
     private var didLoad: Bool
@@ -36,6 +38,7 @@ final class UAPPReviewsModel: ObservableObject {
             let page = try await client.reviewsPage(limit: pageSize)
             reviews = unique(page.reviews)
             nextCursor = page.nextCursor
+            serverSummary = page.summary
             hasError = false
             hasMoreError = false
         } catch {
@@ -56,6 +59,16 @@ final class UAPPReviewsModel: ObservableObject {
         } catch {
             hasMoreError = true
         }
+    }
+
+    /// Resumo das notas: o do servidor ou, com todas as avaliações já carregadas, o calculado aqui.
+    /// Com páginas ainda por carregar e sem resumo do servidor, não há total confiável para mostrar.
+    var summary: UAPPReviewSummary? {
+        if let serverSummary, serverSummary.count > 0 {
+            return serverSummary
+        }
+        guard nextCursor == nil, !reviews.isEmpty else { return nil }
+        return UAPPReviewSummary(reviews: reviews)
     }
 
     private func unique(_ items: [UAPPReview]) -> [UAPPReview] {

@@ -46,6 +46,12 @@ public struct UAPPReviewsScreen: View {
                 UAPPReviewEmptyState(palette: palette)
             } else {
                 List {
+                    if let summary = model.summary {
+                        UAPPReviewSummaryCard(summary: summary, palette: palette)
+                            .listRowBackground(Color.clear)
+                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 12, trailing: 16))
+                            .listRowSeparator(.hidden)
+                    }
                     ForEach(model.reviews) { review in
                         VStack(alignment: .leading, spacing: 0) {
                             UAPPReviewCard(review: review, targetIdentifier: selectedLanguage, palette: palette, translationCache: model.translationCache)

@@ -300,7 +300,7 @@ struct UAPPAboutDeveloperContent: View {
                             if let url = about.socialLinks[name] {
                                 Link(destination: url) {
                                     HStack(spacing: 12) {
-                                        socialMark(for: name)
+                                        UAPPSocialNetworkIcon(name)
                                             .frame(width: 22, height: 22)
                                             .accessibilityHidden(true)
                                         Text(socialName(for: name))
@@ -432,37 +432,6 @@ struct UAPPAboutDeveloperContent: View {
         #elseif canImport(AppKit)
         NSWorkspace.shared.open(url)
         #endif
-    }
-
-    @ViewBuilder
-    private func socialMark(for name: String) -> some View {
-        switch name.lowercased() {
-        case "youtube": Image("SocialYouTube", bundle: .module)
-            .renderingMode(.original)
-            .resizable()
-            .scaledToFit()
-        case "instagram": Image("SocialInstagram", bundle: .module)
-            .renderingMode(.original)
-            .resizable()
-            .scaledToFit()
-        case "tiktok": Image("SocialTikTok", bundle: .module)
-            .renderingMode(.original)
-            .resizable()
-            .scaledToFit()
-        case "linkedin": Image("SocialLinkedIn", bundle: .module)
-            .renderingMode(.original)
-            .resizable()
-            .scaledToFit()
-        case "facebook": Image("SocialFacebook", bundle: .module)
-            .renderingMode(.original)
-            .resizable()
-            .scaledToFit()
-        case "x": Image("SocialX", bundle: .module)
-            .renderingMode(.original)
-            .resizable()
-            .scaledToFit()
-        default: Image(systemName: "link")
-        }
     }
 
     private func socialName(for name: String) -> String {

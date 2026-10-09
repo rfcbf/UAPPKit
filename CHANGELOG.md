@@ -18,6 +18,15 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 - `UAPPRequestStatusTitle.localized(key:fallback:)` devolve o nome de uma
   etapa padrão no idioma de apresentação.
 
+- A tela de Reviews mostra no topo um cartão com a média, as estrelas, o total
+  e a distribuição por nota. `UAPPReviewsPage.summary` traz o resumo quando o
+  servidor o informa; sem ele, o cartão aparece quando todas as avaliações já
+  foram carregadas.
+- `UAPPSocialNetworkIcon` expõe as marcas das redes sociais do perfil do
+  desenvolvedor para uso em telas do aplicativo.
+- A biografia do desenvolvedor passa a exibir formatação Markdown: negrito,
+  itálico, títulos e listas.
+
 ## 1.1.0 - 2026-10-07
 
 - `UAPPAccountScreen` ganhou o parâmetro opcional `onReady`, chamado uma vez
