@@ -6,6 +6,8 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+## 1.3.0 - 2026-10-09
+
 - Na tela Sobre, a linha Suporte abre uma folha inferior com os motivos do
   contato no lugar do menu.
 
