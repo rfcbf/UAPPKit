@@ -113,3 +113,26 @@ func developerBioRendersMarkdown() async {
         targetIdentifier: "pt-BR"
     ))
 }
+
+@Test("Resumo das avaliações escreve o total no singular e no plural")
+func reviewSummaryCountText() {
+    UserDefaults.standard.set("pt-BR", forKey: UAPPLocalizationPreferences.presentationStorageKey)
+    defer { UserDefaults.standard.removeObject(forKey: UAPPLocalizationPreferences.presentationStorageKey) }
+
+    #expect(UAPPReviewSummaryCard.countText(1) == "1 avaliação")
+    #expect(UAPPReviewSummaryCard.countText(20) == "20 avaliações")
+    #expect(UAPPReviewSummaryCard.countText(0) == "0 avaliações")
+}
+
+@Test("Bloco de avaliações arredonda só o primeiro e o último item")
+func reviewRowsRoundOnlyTheEnds() {
+    let radius = UAPPSurface.largeCornerRadius
+    let first = UAPPReviewsScreen.rowShape(isFirst: true, isLast: false)
+    #expect(first.cornerRadii.topLeading == radius && first.cornerRadii.bottomLeading == 0)
+    let last = UAPPReviewsScreen.rowShape(isFirst: false, isLast: true)
+    #expect(last.cornerRadii.topTrailing == 0 && last.cornerRadii.bottomTrailing == radius)
+    let middle = UAPPReviewsScreen.rowShape(isFirst: false, isLast: false)
+    #expect(middle.cornerRadii == RectangleCornerRadii())
+    let only = UAPPReviewsScreen.rowShape(isFirst: true, isLast: true)
+    #expect(only.cornerRadii.topLeading == radius && only.cornerRadii.bottomTrailing == radius)
+}
