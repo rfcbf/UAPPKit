@@ -159,6 +159,10 @@ try UAPPKit.showAbout(configuration: UAPPAboutConfiguration(
 
 - `showsChangelog: true` adiciona a ação que abre o Changelog do projeto,
   usando `changelogConfiguration`.
+- `shortDescription` é a descrição exibida abaixo do nome e aceita Markdown.
+  Quando o projeto tem uma descrição do aplicativo configurada em Sobre no
+  UAPP, ela tem precedência e pode ser alterada sem publicar uma nova versão.
+  A descrição é traduzida para o idioma de apresentação.
 - `showsAppStoreReview: true` adiciona a ação para avaliar o app na App Store.
 - `showsReviews: true` adiciona a ação que abre a lista de avaliações do
   aplicativo em uma sheet sobre a tela Sobre, com páginas de `reviewsPageSize`.

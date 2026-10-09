@@ -21,6 +21,8 @@ public struct UAPPAboutScreen: View {
     @State private var isReviewsPresented = false
     /// E-mail de suporte configurado no UAPP para o projeto.
     @State private var serverSupportEmail: String?
+    /// Descrição do aplicativo configurada no UAPP para o projeto.
+    @State private var serverDescription: UAPPAboutDescription?
     @State private var isOpeningAppStoreReview = false
     @State private var appStoreReviewError: String?
     @State private var supportError: String?
@@ -110,7 +112,8 @@ public struct UAPPAboutScreen: View {
                     configuration: configuration,
                     presentationLanguageIdentifier: selectedLanguage,
                     palette: palette,
-                    remoteIconURL: remoteIconURL
+                    remoteIconURL: remoteIconURL,
+                    serverDescription: serverDescription
                 )
                 UAPPAboutResources(
                     configuration: configuration,
@@ -157,6 +160,10 @@ public struct UAPPAboutScreen: View {
         do {
             let about = try await client.about()
             serverSupportEmail = about.supportEmail
+            serverDescription = UAPPAboutDescription(
+                text: about.appDescription,
+                languageIdentifier: about.bioDefaultLanguage
+            )
             let project = await client.currentProject()
             let iconURL = project?.iconURL ?? matchingAboutAppIconURL(
                 in: about,

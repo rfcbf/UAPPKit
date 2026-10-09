@@ -8,6 +8,12 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## 1.3.0 - 2026-10-09
 
+- A tela Sobre mostra a descrição do aplicativo configurada no UAPP
+  (`UAPPAbout.appDescription`), com formatação Markdown e tradução para o
+  idioma de apresentação. Ela tem precedência sobre `shortDescription`, que
+  continua valendo quando o projeto não tem descrição configurada e passa a
+  aceitar Markdown também.
+
 - Na tela Sobre, a linha Suporte abre uma folha inferior com os motivos do
   contato no lugar do menu.
 
