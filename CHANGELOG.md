@@ -6,6 +6,10 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+- Tela de conta: no iPad em retrato, abrir o teclado não divide mais a tela em
+  duas nem fecha o teclado; o formulário de entrar e de criar conta fica
+  centralizado nas telas largas.
+
 ## 1.3.1 - 2026-10-09
 
 - Tela de Reviews: o cartão de resumo ficou mais legível, com as estrelas na cor
