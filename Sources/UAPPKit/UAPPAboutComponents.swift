@@ -126,6 +126,7 @@ struct UAPPAboutResources: View {
     var onOpenReviews: (() -> Void)?
     /// Com e-mail de suporte, a linha Suporte oferece os motivos do contato e abre a mensagem.
     var onContactSupport: ((UAPPSupportTopic) -> Void)?
+    @State var isChoosingSupportTopic = false
 
     var body: some View {
         let links: [(String, String, URL)] = [
@@ -178,19 +179,19 @@ struct UAPPAboutResources: View {
             }
             ForEach(links, id: \.0) { titleKey, icon, url in
                 if titleKey == "about.support", let onContactSupport {
-                    Menu {
-                        ForEach(UAPPSupportTopic.allCases, id: \.self) { topic in
-                            Button {
-                                onContactSupport(topic)
-                            } label: {
-                                Label(uappLocalized(topic.titleKey), systemImage: topic.systemImage)
-                            }
-                        }
+                    Button {
+                        isChoosingSupportTopic = true
                     } label: {
                         linkRow(title: uappLocalized(titleKey), systemImage: icon)
                     }
                     .buttonStyle(.plain)
                     .foregroundStyle(palette.primaryText)
+                    .sheet(isPresented: $isChoosingSupportTopic) {
+                        UAPPSupportTopicSheet(palette: palette) { topic in
+                            isChoosingSupportTopic = false
+                            onContactSupport(topic)
+                        }
+                    }
                 } else {
                     Link(destination: url) {
                         linkRow(title: uappLocalized(titleKey), systemImage: icon)

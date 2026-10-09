@@ -165,8 +165,8 @@ try UAPPKit.showAbout(configuration: UAPPAboutConfiguration(
 - A linha Suporte abre `supportURL`. Quando o projeto tem um e-mail de suporte
   configurado em Sobre no UAPP, ele tem precedência e a linha abre uma mensagem
   para esse endereço, sem precisar publicar uma nova versão do aplicativo.
-  A pessoa escolhe o motivo (dúvida, problema ou sugestão) e a mensagem abre
-  com o assunto `[Nome do app] [Motivo] - ` e, no corpo, a versão e o build do
+  A pessoa escolhe o motivo (dúvida, problema ou sugestão) em uma folha
+  inferior e a mensagem abre com o assunto `[Nome do app] [Motivo] - ` e, no corpo, a versão e o build do
   aplicativo, o sistema, o modelo do aparelho e o idioma. Se o aparelho não
   tiver um app de e-mail configurado, um aviso mostra o endereço.
 - A descrição é traduzida sob demanda para o idioma escolhido na tela quando a

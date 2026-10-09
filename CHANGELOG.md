@@ -6,6 +6,9 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+- Na tela Sobre, a linha Suporte abre uma folha inferior com os motivos do
+  contato no lugar do menu.
+
 ## 1.2.0 - 2026-10-09
 
 - Controles das telas do pacote disponíveis para o aplicativo montar as

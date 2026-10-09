@@ -150,4 +150,5 @@ func aboutRendersSupportTopicMenu() async {
         supportURL: URL(string: "mailto:suporte@example.com"),
         onContactSupport: { _ in }
     ))
+    await render(UAPPSupportTopicSheet(palette: UAPPTheme.system.resolved(for: .dark)) { _ in })
 }
