@@ -178,3 +178,19 @@ private struct SocialOnlyProvider: UAPPAuthenticationProvider {
 private final class ReadinessRecorder {
     var count = 0
 }
+
+@Test("Abrir o teclado não muda a orientação medida pela tela de conta")
+func accountScreenOrientationIgnoresTheKeyboard() {
+    let portrait = CGSize(width: 834, height: 1100)
+    let margins = EdgeInsets(top: 24, leading: 0, bottom: 20, trailing: 0)
+    #expect(!UAPPAccountScreen.isLandscape(size: portrait, safeArea: margins))
+
+    // Com o teclado, a área visível encolhe e a margem inferior cresce na mesma medida.
+    let withKeyboard = CGSize(width: 834, height: 700)
+    let keyboardMargins = EdgeInsets(top: 24, leading: 0, bottom: 420, trailing: 0)
+    #expect(withKeyboard.width > withKeyboard.height)
+    #expect(!UAPPAccountScreen.isLandscape(size: withKeyboard, safeArea: keyboardMargins))
+
+    let landscape = CGSize(width: 1100, height: 790)
+    #expect(UAPPAccountScreen.isLandscape(size: landscape, safeArea: margins))
+}

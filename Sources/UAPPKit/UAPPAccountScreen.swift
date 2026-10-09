@@ -217,11 +217,26 @@ public struct UAPPAccountScreen: View {
     }
 }
 
+extension UAPPAccountScreen {
+    /// Tela mais larga que alta, medida com as margens do sistema. O teclado entra como margem
+    /// inferior: somando as margens, abrir o teclado não muda a resposta. Sem isso, em retrato a
+    /// área visível encolhia, a tela passava a "paisagem", dividia-se em duas e o campo perdia o foco.
+    nonisolated static func isLandscape(size: CGSize, safeArea: EdgeInsets) -> Bool {
+        let width = size.width + safeArea.leading + safeArea.trailing
+        let height = size.height + safeArea.top + safeArea.bottom
+        return width > height
+    }
+}
+
 private extension UAPPAccountScreen {
     func page(isWelcome: Bool, step: UAPPAccountModel.Step = .login) -> some View {
         GeometryReader { geometry in
             Group {
-                if usesTwoColumnLayout(size: geometry.size, isWelcome: isWelcome, step: step) {
+                if usesTwoColumnLayout(
+                    isLandscape: Self.isLandscape(size: geometry.size, safeArea: geometry.safeAreaInsets),
+                    isWelcome: isWelcome,
+                    step: step
+                ) {
                     #if os(iOS) && compiler(>=6.4)
                     if #available(iOS 27.1, *) {
                         ArrangementView {
@@ -271,12 +286,12 @@ private extension UAPPAccountScreen {
     }
 
     private func usesTwoColumnLayout(
-        size: CGSize,
+        isLandscape: Bool,
         isWelcome: Bool,
         step: UAPPAccountModel.Step
     ) -> Bool {
         #if os(iOS)
-        horizontalSizeClass == .regular && size.width > size.height &&
+        horizontalSizeClass == .regular && isLandscape &&
             !isWelcome && (step == .login || step == .signup)
         #else
         false
@@ -299,7 +314,9 @@ private extension UAPPAccountScreen {
             .padding(.vertical, 28)
             .frame(maxWidth: 440)
             .frame(maxWidth: .infinity)
-            .frame(minHeight: isWelcome ? height : 0, alignment: .center)
+            // Em tela larga (iPad e iPhone Duo aberto em retrato) o formulário fica centralizado;
+            // no iPhone ele começa no topo, perto do título.
+            .frame(minHeight: isWelcome || horizontalSizeClass == .regular ? height : 0, alignment: .center)
         }
     }
 

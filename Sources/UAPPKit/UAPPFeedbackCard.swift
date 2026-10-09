@@ -120,6 +120,7 @@ struct UAPPFeedbackCard: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .uappVoteBurst(isSelected: item.viewerVoted, tint: accentColor)
         .disabled(isReacting)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: uappLocalizedFormat("feedback.votes_count", item.voteCount)))

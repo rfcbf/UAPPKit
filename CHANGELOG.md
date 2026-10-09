@@ -6,6 +6,17 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+## 1.4.0 - 2026-10-09
+
+- Votar em um pedido ou em um comentário solta joinhas subindo do botão;
+  retirar o voto solta joinhas para baixo, descendo. No iOS o efeito passa por
+  cima da célula e do cartão, sem ser cortado. Respeita Reduzir Movimento e
+  também está disponível para botões próprios com
+  `.uappVoteBurst(isSelected:tint:)`.
+- Tela de conta: no iPad em retrato, abrir o teclado não divide mais a tela em
+  duas nem fecha o teclado; o formulário de entrar e de criar conta fica
+  centralizado nas telas largas.
+
 ## 1.3.1 - 2026-10-09
 
 - Tela de Reviews: o cartão de resumo ficou mais legível, com as estrelas na cor
