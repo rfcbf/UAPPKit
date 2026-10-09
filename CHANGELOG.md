@@ -20,8 +20,8 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 - A tela de Reviews mostra no topo um cartão com a média, as estrelas, o total
   e a distribuição por nota. `UAPPReviewsPage.summary` traz o resumo quando o
-  servidor o informa; sem ele, o cartão aparece quando todas as avaliações já
-  foram carregadas.
+  servidor o informa; sem ele, o pacote lê as notas em uma página de até 50
+  avaliações e mostra o cartão quando ela traz todas.
 - `UAPPSocialNetworkIcon` expõe as marcas das redes sociais do perfil do
   desenvolvedor para uso em telas do aplicativo.
 - A biografia do desenvolvedor passa a exibir formatação Markdown: negrito,

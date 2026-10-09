@@ -106,7 +106,10 @@ public struct UAPPReviewsScreen: View {
             titleKey: "screen.reviews",
             accentColor: palette.accent ?? .accentColor
         )
-        .task { await model.loadIfNeeded() }
+        .task {
+            await model.loadIfNeeded()
+            await model.loadSummaryIfNeeded()
+        }
     }
 }
 

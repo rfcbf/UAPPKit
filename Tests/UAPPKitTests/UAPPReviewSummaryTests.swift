@@ -19,24 +19,49 @@ func reviewSummaryPrefersServerValues() async {
     #expect(model.summary?.share(of: 1) == 0)
 }
 
-@Test("Resumo das avaliações é calculado só quando todas as páginas foram carregadas")
+@Test("Resumo das avaliações lê todas as notas quando a lista tem mais de uma página")
 @MainActor
-func reviewSummaryIsComputedWhenListIsComplete() async {
-    let client = makeClient(recorder: RequestRecorder()) { request in
-        if queryValue("cursor", in: request) == "next" {
-            return response(#"{"reviews":[{"id":"2","rating":2},{"id":"3","rating":9}],"nextCursor":null}"#)
+func reviewSummaryReadsAllRatingsForPagedLists() async {
+    let recorder = RequestRecorder()
+    let client = makeClient(recorder: recorder) { request in
+        if queryValue("limit", in: request) == "50" {
+            return response(
+                #"{"reviews":[{"id":"1","rating":5},{"id":"2","rating":2},{"id":"3","rating":9}],"nextCursor":null}"#
+            )
         }
         return response(#"{"reviews":[{"id":"1","rating":5}],"nextCursor":"next"}"#)
     }
-    let model = UAPPReviewsModel(client: client)
+    let model = UAPPReviewsModel(client: client, pageSize: 10)
     await model.loadIfNeeded()
     #expect(model.summary == nil)
+    await model.loadSummaryIfNeeded()
+    await model.loadSummaryIfNeeded()
 
-    await model.loadMore()
-    let summary = model.summary
-    #expect(summary?.count == 3)
-    #expect(summary?.distribution == ["5": 2, "2": 1])
-    #expect(summary?.average == 16.0 / 3)
+    #expect(recorder.requests.count == 2)
+    #expect(model.reviews.count == 1 && model.nextCursor == "next")
+    #expect(model.summary?.count == 3)
+    #expect(model.summary?.distribution == ["5": 2, "2": 1])
+    #expect(model.summary?.average == 16.0 / 3)
+}
+
+@Test("Resumo das avaliações fica oculto quando nem a página grande traz tudo")
+@MainActor
+func reviewSummaryIsHiddenWhenListIsTooLong() async {
+    let recorder = RequestRecorder()
+    let client = makeClient(recorder: recorder) { _ in
+        response(#"{"reviews":[{"id":"1","rating":5}],"nextCursor":"next"}"#)
+    }
+    let model = UAPPReviewsModel(client: client, pageSize: 10)
+    await model.loadIfNeeded()
+    await model.loadSummaryIfNeeded()
+    #expect(model.summary == nil)
+
+    // Com a página já no tamanho máximo, não há leitura extra.
+    let largest = UAPPReviewsModel(client: client, pageSize: 50)
+    await largest.loadIfNeeded()
+    await largest.loadSummaryIfNeeded()
+    #expect(recorder.requests.count == 3)
+    #expect(largest.summary == nil)
 }
 
 @Test("Resumo vazio não tem média nem participação")
