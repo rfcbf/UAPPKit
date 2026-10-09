@@ -6,6 +6,8 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+## 1.2.0 - 2026-10-09
+
 - Controles das telas do pacote disponíveis para o aplicativo montar as
   próprias listas: `UAPPTranslatedText` (texto traduzido para o idioma de
   apresentação), `UAPPLanguageMenuButton` (menu de idiomas),
