@@ -87,3 +87,4 @@ struct UAPPProfilePhotoPickerTests {
         #expect(removed == 0)
     }
 }
+#endif
