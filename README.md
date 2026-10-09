@@ -783,6 +783,26 @@ Para montar uma lista própria com o mesmo comportamento das telas do pacote:
 - `UAPPRequestStatusTitle.localized(key:fallback:languageIdentifier:)` devolve
   o nome de uma etapa padrão no idioma informado.
 
+### Efeito de voto
+
+`.uappVoteBurst(isSelected:tint:)` solta joinhas subindo de um botão de voto
+quando a pessoa vota e joinhas para baixo, descendo, quando ela retira o voto.
+No iOS o efeito é desenhado por cima da janela, então não é cortado pela célula
+nem pelo cartão em que o botão está. As telas de Feedback do kit já usam o
+efeito; aplique em botões próprios:
+
+```swift
+Button { toggleVote() } label: {
+    Label(voteCount.formatted(), systemImage: "arrow.up.circle")
+}
+.uappVoteBurst(isSelected: viewerVoted, tint: .orange)
+```
+
+O efeito só aparece depois de um toque no botão: o estado que chega ao carregar
+a tela não anima. Sem `tint`, usa a cor de destaque do ambiente. Com Reduzir
+Movimento ligado, nada é animado. Exige iOS 17 ou macOS 14; em sistemas
+anteriores o botão fica como está.
+
 ## Segurança e privacidade
 
 - `projectId` e `host` identificam o projeto e não são segredos.

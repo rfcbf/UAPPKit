@@ -220,7 +220,9 @@ struct UAPPFeedbackDetailScreen: View {
             Button { Task { await participation.perform { await toggleVote() } } } label: {
                 reactionLabel(count: item.voteCount, selected: item.viewerVoted)
             }
-            .buttonStyle(.plain).disabled(pendingReaction != nil || participation.isBusy)
+            .buttonStyle(.plain)
+            .uappVoteBurst(isSelected: item.viewerVoted, tint: resolvedAccent)
+            .disabled(pendingReaction != nil || participation.isBusy)
             .accessibilityLabel(Text(verbatim: uappLocalizedFormat("feedback.votes_count", item.voteCount)))
             .accessibilityAddTraits(item.viewerVoted ? [.isSelected] : [])
         }
@@ -385,7 +387,9 @@ struct UAPPFeedbackDetailScreen: View {
                             Button { Task { await participation.perform { await toggleCommentVote(comment) } } } label: {
                                 reactionLabel(count: comment.voteCount, selected: comment.viewerVoted)
                             }
-                            .buttonStyle(.plain).disabled(reactingComments.contains(comment.id) || participation.isBusy)
+                            .buttonStyle(.plain)
+                            .uappVoteBurst(isSelected: comment.viewerVoted, tint: resolvedAccent)
+                            .disabled(reactingComments.contains(comment.id) || participation.isBusy)
                             .accessibilityLabel(Text(verbatim: uappLocalizedFormat("feedback.votes_count", comment.voteCount)))
                             .accessibilityAddTraits(comment.viewerVoted ? [.isSelected] : [])
                         }
