@@ -124,6 +124,8 @@ struct UAPPAboutResources: View {
     /// Suporte efetivo: o e-mail do servidor ou, na falta dele, o link da configuração.
     var supportURL: URL?
     var onOpenReviews: (() -> Void)?
+    /// Com e-mail de suporte, a linha Suporte oferece os motivos do contato e abre a mensagem.
+    var onContactSupport: ((UAPPSupportTopic) -> Void)?
 
     var body: some View {
         let links: [(String, String, URL)] = [
@@ -175,11 +177,27 @@ struct UAPPAboutResources: View {
                 .disabled(isOpeningAppStoreReview)
             }
             ForEach(links, id: \.0) { titleKey, icon, url in
-                Link(destination: url) {
-                    linkRow(title: uappLocalized(titleKey), systemImage: icon)
+                if titleKey == "about.support", let onContactSupport {
+                    Menu {
+                        ForEach(UAPPSupportTopic.allCases, id: \.self) { topic in
+                            Button {
+                                onContactSupport(topic)
+                            } label: {
+                                Label(uappLocalized(topic.titleKey), systemImage: topic.systemImage)
+                            }
+                        }
+                    } label: {
+                        linkRow(title: uappLocalized(titleKey), systemImage: icon)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(palette.primaryText)
+                } else {
+                    Link(destination: url) {
+                        linkRow(title: uappLocalized(titleKey), systemImage: icon)
+                    }
+                    .foregroundStyle(palette.primaryText)
+                    .accessibilityHint(Text(verbatim: uappLocalized("about.open_link")))
                 }
-                .foregroundStyle(palette.primaryText)
-                .accessibilityHint(Text(verbatim: uappLocalized("about.open_link")))
             }
             if let license = configuration.license,
                !license.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty

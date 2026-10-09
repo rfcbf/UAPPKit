@@ -60,6 +60,12 @@ public struct UAPPAppMetadata: Sendable, Equatable {
     public let version: String?
     public let build: String?
 
+    init(name: String, version: String?, build: String?) {
+        self.name = name
+        self.version = version
+        self.build = build
+    }
+
     public init(bundle: Bundle = .main) {
         name = (bundle.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String)
             ?? (bundle.object(forInfoDictionaryKey: "CFBundleName") as? String)

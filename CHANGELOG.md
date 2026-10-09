@@ -41,6 +41,10 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 - A linha Suporte da tela Sobre usa o e-mail de suporte configurado no UAPP
   para o projeto (`UAPPAbout.supportEmail`) e abre uma mensagem para ele; sem
   e-mail configurado, continua valendo `supportURL`.
+- Com e-mail de suporte, a linha Suporte oferece o motivo do contato (dúvida,
+  problema ou sugestão) e abre a mensagem com o assunto `[App] [Motivo] - ` e,
+  no corpo, a versão e o build do aplicativo, o sistema, o modelo do aparelho e
+  o idioma. Sem app de e-mail no aparelho, um aviso mostra o endereço.
 
 ## 1.1.0 - 2026-10-07
 

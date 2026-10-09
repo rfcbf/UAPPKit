@@ -23,6 +23,7 @@ public struct UAPPAboutScreen: View {
     @State private var serverSupportEmail: String?
     @State private var isOpeningAppStoreReview = false
     @State private var appStoreReviewError: String?
+    @State private var supportError: String?
 
     public init(configuration: UAPPAboutConfiguration = .init()) {
         self.configuration = configuration
@@ -94,6 +95,7 @@ public struct UAPPAboutScreen: View {
             }
         }
         .uappToast(message: $appStoreReviewError, title: uappLocalized("about.rate_app"))
+        .uappToast(message: $supportError, title: uappLocalized("about.support"))
         .uappNavigationBar(
             titleKey: "screen.about",
             accentColor: palette.accent ?? .accentColor
@@ -123,6 +125,9 @@ public struct UAPPAboutScreen: View {
                     supportURL: Self.supportURL(configuration: configuration, serverEmail: serverSupportEmail),
                     onOpenReviews: client.map { _ in
                         { isReviewsPresented = true }
+                    },
+                    onContactSupport: UAPPSupportMail.address(serverSupportEmail).map { email in
+                        { topic in contactSupport(topic, email: email) }
                     }
                 )
             }
@@ -195,6 +200,32 @@ public struct UAPPAboutScreen: View {
             appStoreReviewURL = result.url
             appStoreReviewError = result.error
         }
+    }
+
+    /// Abre o app de e-mail com a mensagem pronta; sem app de e-mail, mostra o endereço.
+    private func contactSupport(_ topic: UAPPSupportTopic, email: String) {
+        let url = UAPPSupportMail.url(
+            email: email,
+            metadata: appMetadata,
+            topic: topic,
+            device: .current(),
+            languageIdentifier: selectedLanguage
+        )
+        Task { @MainActor in
+            supportError = await Self.openSupportMail(url, email: email)
+        }
+    }
+
+    /// Devolve a mensagem de erro quando o sistema não consegue abrir a mensagem.
+    static func openSupportMail(
+        _ url: URL?,
+        email: String,
+        opener: UAPPURLOpener = uappSystemOpenURL
+    ) async -> String? {
+        if let url, await uappOpenExternalURLAndReportSuccess(url, opener: opener) {
+            return nil
+        }
+        return uappLocalizedFormat("support.mail.unavailable", email)
     }
 
     /// Suporte da tela: o e-mail configurado no UAPP abre uma mensagem; sem ele, vale o link da
