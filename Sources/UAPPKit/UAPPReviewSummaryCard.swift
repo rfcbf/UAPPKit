@@ -6,59 +6,106 @@ struct UAPPReviewSummaryCard: View {
     let summary: UAPPReviewSummary
     let palette: UAPPResolvedPalette
 
+    /// A mesma cor das estrelas de cada avaliação da lista.
+    private var accent: Color {
+        palette.accent ?? .yellow
+    }
+
     private var averageText: String {
         summary.average.formatted(.number.precision(.fractionLength(1)))
     }
 
-    var body: some View {
-        HStack(alignment: .center, spacing: 20) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(verbatim: averageText)
-                    .font(.system(size: 52, weight: .bold, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundStyle(palette.primaryText)
-                HStack(spacing: 2) {
-                    ForEach(1 ... 5, id: \.self) { star in
-                        Image(systemName: Self.starSymbol(star, average: summary.average))
-                    }
-                }
-                .font(.subheadline)
-                .foregroundStyle(.yellow)
-                Text(verbatim: summary.count.formatted(.number))
-                    .font(.caption.weight(.medium))
-                    .monospacedDigit()
-                    .foregroundStyle(palette.secondaryText)
-            }
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(Text(verbatim: "\(averageText) ★ · \(summary.count.formatted(.number))"))
+    private var countText: String {
+        Self.countText(summary.count)
+    }
 
-            VStack(spacing: 5) {
-                ForEach([5, 4, 3, 2, 1], id: \.self) { rating in
-                    HStack(spacing: 8) {
-                        Text(verbatim: "\(rating)")
-                            .font(.caption2.weight(.semibold))
-                            .monospacedDigit()
-                            .foregroundStyle(palette.secondaryText)
-                            .frame(width: 10)
-                        GeometryReader { proxy in
-                            ZStack(alignment: .leading) {
-                                Capsule().fill(palette.secondaryText.opacity(0.18))
-                                Capsule()
-                                    .fill(Color.yellow)
-                                    .frame(width: proxy.size.width * summary.share(of: rating))
-                            }
-                        }
-                        .frame(height: 7)
-                    }
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel(Text(verbatim: "\(rating) ★"))
-                    .accessibilityValue(Text(verbatim: "\(summary.distribution[String(rating)] ?? 0)"))
+    var body: some View {
+        HStack(alignment: .center, spacing: 18) {
+            average
+                .frame(minWidth: 104)
+
+            Rectangle()
+                .fill(palette.secondaryText.opacity(0.16))
+                .frame(width: 1)
+                .padding(.vertical, 4)
+                .accessibilityHidden(true)
+
+            distribution
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .uappCardSurface(palette, cornerRadius: UAPPSurface.largeCornerRadius)
+    }
+
+    private var average: some View {
+        VStack(spacing: 6) {
+            Text(verbatim: averageText)
+                .font(.system(size: 50, weight: .bold, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(palette.primaryText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+            HStack(spacing: 3) {
+                ForEach(1 ... 5, id: \.self) { star in
+                    Image(systemName: Self.starSymbol(star, average: summary.average))
                 }
+            }
+            .font(.footnote)
+            .foregroundStyle(accent)
+            Text(verbatim: countText)
+                .font(.caption.weight(.medium))
+                .foregroundStyle(palette.secondaryText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: "\(averageText) ★ · \(countText)"))
+    }
+
+    private var distribution: some View {
+        VStack(spacing: 7) {
+            ForEach([5, 4, 3, 2, 1], id: \.self) { rating in
+                let count = summary.distribution[String(rating)] ?? 0
+                HStack(spacing: 8) {
+                    HStack(spacing: 2) {
+                        Text(verbatim: "\(rating)")
+                            .monospacedDigit()
+                        Image(systemName: "star.fill")
+                            .imageScale(.small)
+                    }
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(palette.secondaryText)
+                    .frame(width: 26, alignment: .leading)
+
+                    GeometryReader { proxy in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(palette.secondaryText.opacity(0.16))
+                            Capsule()
+                                .fill(accent)
+                                .frame(width: max(count > 0 ? 6 : 0, proxy.size.width * summary.share(of: rating)))
+                        }
+                    }
+                    .frame(height: 8)
+
+                    Text(verbatim: count.formatted(.number))
+                        .font(.caption2.weight(.semibold))
+                        .monospacedDigit()
+                        .foregroundStyle(palette.secondaryText)
+                        .frame(minWidth: 18, alignment: .trailing)
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(Text(verbatim: "\(rating) ★"))
+                .accessibilityValue(Text(verbatim: "\(count)"))
             }
         }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .uappCardSurface(palette, cornerRadius: 24)
+    }
+
+    /// "1 avaliação" ou "20 avaliações", no idioma de apresentação.
+    static func countText(_ count: Int) -> String {
+        count == 1
+            ? uappLocalized("reviews.count.one")
+            : uappLocalizedFormat("reviews.count.other", count.formatted(.number))
     }
 
     /// Estrela cheia, meia ou vazia para a posição, conforme a média.

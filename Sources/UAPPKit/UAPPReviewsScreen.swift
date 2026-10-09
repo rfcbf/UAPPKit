@@ -27,6 +27,18 @@ public struct UAPPReviewsScreen: View {
         _model = StateObject(wrappedValue: model)
     }
 
+    /// Cantos do bloco de avaliações: só o primeiro e o último item são arredondados.
+    static func rowShape(isFirst: Bool, isLast: Bool) -> UnevenRoundedRectangle {
+        let radius = UAPPSurface.largeCornerRadius
+        return UnevenRoundedRectangle(
+            topLeadingRadius: isFirst ? radius : 0,
+            bottomLeadingRadius: isLast ? radius : 0,
+            bottomTrailingRadius: isLast ? radius : 0,
+            topTrailingRadius: isFirst ? radius : 0,
+            style: .continuous
+        )
+    }
+
     private var palette: UAPPResolvedPalette {
         theme.resolved(for: colorScheme)
     }
@@ -49,7 +61,7 @@ public struct UAPPReviewsScreen: View {
                     if let summary = model.summary {
                         UAPPReviewSummaryCard(summary: summary, palette: palette)
                             .listRowBackground(Color.clear)
-                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 12, trailing: 16))
+                            .listRowInsets(EdgeInsets(top: 8, leading: 4, bottom: 14, trailing: 4))
                             .listRowSeparator(.hidden)
                     }
                     ForEach(model.reviews) { review in
@@ -63,8 +75,18 @@ public struct UAPPReviewsScreen: View {
                             }
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .listRowBackground(palette.cardBackground)
-                        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+                        .padding(.horizontal, 16)
+                        .background(
+                            palette.cardBackground,
+                            in: Self.rowShape(
+                                isFirst: review.id == model.reviews.first?.id,
+                                isLast: review.id == model.reviews.last?.id
+                            )
+                        )
+                        .listRowBackground(Color.clear)
+                        // As avaliações formam um bloco só, com os cantos do primeiro e do último
+                        // arredondados e a mesma largura do resumo.
+                        .listRowInsets(EdgeInsets(top: 0, leading: 4, bottom: 0, trailing: 4))
                         .listRowSeparator(.hidden)
                     }
                     if model.isLoadingMore {
@@ -78,7 +100,7 @@ public struct UAPPReviewsScreen: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .listRowBackground(palette.cardBackground)
+                        .listRowBackground(Color.clear)
                         .listRowSeparator(.hidden)
                     } else if model.nextCursor != nil {
                         if model.hasMoreError {

@@ -6,6 +6,13 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+## 1.3.1 - 2026-10-09
+
+- Tela de Reviews: o cartão de resumo ficou mais legível, com as estrelas na cor
+  de destaque, o total escrito por extenso ("20 avaliações") e a quantidade ao
+  lado de cada nota. A lista de avaliações virou um bloco de cantos
+  arredondados, com a mesma largura do resumo.
+
 ## 1.3.0 - 2026-10-09
 
 - A tela Sobre mostra a descrição do aplicativo configurada no UAPP
