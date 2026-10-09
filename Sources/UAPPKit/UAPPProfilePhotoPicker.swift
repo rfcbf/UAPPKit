@@ -25,11 +25,25 @@ public struct UAPPProfilePhotoPicker: View {
     private let avatarOnly: AvatarOnly?
 
     /// Apresentação reduzida ao avatar editável, usada no cabeçalho do perfil conectado.
-    /// Exibe `remoteURL` enquanto não há foto local, não oferece remoção e repassa erros.
+    /// Exibe `remoteURL` enquanto não há foto local. Com `onError`, os erros são repassados em vez de
+    /// aparecerem em aviso; com `onRemove`, o menu oferece remover a foto atual.
     struct AvatarOnly {
         var remoteURL: URL?
         var size: CGFloat
-        var onError: @MainActor (String?) -> Void
+        var onError: (@MainActor (String?) -> Void)?
+        var onRemove: (@MainActor () -> Void)?
+
+        init(
+            remoteURL: URL?,
+            size: CGFloat,
+            onError: (@MainActor (String?) -> Void)? = nil,
+            onRemove: (@MainActor () -> Void)? = nil
+        ) {
+            self.remoteURL = remoteURL
+            self.size = size
+            self.onError = onError
+            self.onRemove = onRemove
+        }
     }
 
     public init(photo: Binding<Data?>, theme: UAPPTheme = .system, languageIdentifier: String? = nil) {
@@ -37,6 +51,25 @@ public struct UAPPProfilePhotoPicker: View {
         self.theme = theme
         self.languageIdentifier = languageIdentifier
         avatarOnly = nil
+    }
+
+    /// Avatar editável sem o texto de apoio, para o aplicativo encaixar no próprio formulário.
+    /// Mostra `remoteURL` enquanto não há foto escolhida. Com `onRemove`, o menu oferece remover a
+    /// foto atual: a foto escolhida é descartada e a ação é chamada para o aplicativo limpar a remota.
+    public init(
+        photo: Binding<Data?>,
+        remoteURL: URL?,
+        size: CGFloat = 104,
+        theme: UAPPTheme = .system,
+        languageIdentifier: String? = nil,
+        onRemove: (@MainActor () -> Void)? = nil
+    ) {
+        self.init(
+            photo: photo,
+            theme: theme,
+            languageIdentifier: languageIdentifier,
+            avatarOnly: AvatarOnly(remoteURL: remoteURL, size: size, onRemove: onRemove)
+        )
     }
 
     init(photo: Binding<Data?>, theme: UAPPTheme, languageIdentifier: String?, avatarOnly: AvatarOnly) {
@@ -96,10 +129,10 @@ public struct UAPPProfilePhotoPicker: View {
                 }
             }
         }
-        .uappOnChange(of: errorKey) { key in avatarOnly?.onError(key) }
+        .uappOnChange(of: errorKey) { key in avatarOnly?.onError?(key) }
         .photosPicker(isPresented: $showsLibrary, selection: $selection, matching: .images)
         .uappToast(message: Binding(
-            get: { avatarOnly == nil ? errorKey.map { localized($0) } : nil },
+            get: { avatarOnly?.onError == nil ? errorKey.map { localized($0) } : nil },
             set: {
                 if $0 == nil {
                     errorKey = nil
@@ -192,8 +225,11 @@ public struct UAPPProfilePhotoPicker: View {
                 Label(localized("photo.camera"), systemImage: "camera")
             }
             .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
-            if photo != nil, avatarOnly == nil {
-                Button(role: .destructive) { photo = nil } label: {
+            if canRemove {
+                Button(role: .destructive) {
+                    photo = nil
+                    avatarOnly?.onRemove?()
+                } label: {
                     Label(localized("photo.remove"), systemImage: "trash")
                 }
             }
@@ -215,6 +251,12 @@ public struct UAPPProfilePhotoPicker: View {
         .accessibilityLabel(Text(verbatim: localized("photo.change")))
         .accessibilityValue(isProcessing ? Text(verbatim: localized("photo.processing")) : Text(verbatim: ""))
         .disabled(isProcessing)
+    }
+
+    /// No formulário completo, remove a foto escolhida; no avatar, só quando o aplicativo trata a remoção.
+    private var canRemove: Bool {
+        guard let avatarOnly else { return photo != nil }
+        return avatarOnly.onRemove != nil && (photo != nil || avatarOnly.remoteURL != nil)
     }
 
     @ViewBuilder

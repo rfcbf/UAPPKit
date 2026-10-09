@@ -747,7 +747,7 @@ public extension UAPPClient {
     func reviewsPage(limit: Int = 20, cursor: String? = nil) async throws -> UAPPReviewsPage {
         let response: UAPPReviewsResponse = try await get(resource: "reviews", limit: limit, cursor: cursor)
         project = response.project ?? project
-        return UAPPReviewsPage(reviews: response.reviews, nextCursor: response.nextCursor)
+        return UAPPReviewsPage(reviews: response.reviews, nextCursor: response.nextCursor, summary: response.summary)
     }
 
     /// Informações públicas opcionais do desenvolvedor e seus outros apps.

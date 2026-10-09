@@ -22,15 +22,15 @@ struct UAPPAboutBio: View {
                 )
                 .id(translationKey)
             } else {
-                Text(text)
+                Text(uappChangelogMarkdown(text))
                     .fixedSize(horizontal: false, vertical: true)
             }
             #else
-            Text(text)
+            Text(uappChangelogMarkdown(text))
                 .fixedSize(horizontal: false, vertical: true)
             #endif
         } else {
-            Text(translationForTarget ?? text)
+            Text(uappChangelogMarkdown(translationForTarget ?? text))
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -129,7 +129,7 @@ struct UAPPAppleTranslatedBio: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(translatedText ?? text)
+            Text(uappChangelogMarkdown(translatedText ?? text))
                 .fixedSize(horizontal: false, vertical: true)
 
             if translatedText != nil {

@@ -121,11 +121,16 @@ struct UAPPAboutResources: View {
     let isOpeningAppStoreReview: Bool
     let onOpenAppStoreReview: (() -> Void)?
     let onOpenChangelog: (() -> Void)?
+    /// Suporte efetivo: o e-mail do servidor ou, na falta dele, o link da configuração.
+    var supportURL: URL?
+    var onOpenReviews: (() -> Void)?
+    /// Com e-mail de suporte, a linha Suporte oferece os motivos do contato e abre a mensagem.
+    var onContactSupport: ((UAPPSupportTopic) -> Void)?
 
     var body: some View {
         let links: [(String, String, URL)] = [
             ("about.website", "globe", configuration.websiteURL),
-            ("about.support", "questionmark.circle", configuration.supportURL),
+            ("about.support", "questionmark.circle", supportURL ?? configuration.supportURL),
             ("about.privacy", "hand.raised", configuration.privacyPolicyURL),
             ("about.terms", "doc.text", configuration.termsOfUseURL)
         ].compactMap { titleKey, icon, url in
@@ -149,6 +154,16 @@ struct UAPPAboutResources: View {
                 .buttonStyle(.plain)
                 .foregroundStyle(palette.primaryText)
             }
+            if configuration.showsReviews, let onOpenReviews {
+                Button(action: onOpenReviews) {
+                    linkRow(
+                        title: uappLocalized("screen.reviews"),
+                        systemImage: "star.bubble"
+                    )
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(palette.primaryText)
+            }
             if configuration.showsAppStoreReview, let onOpenAppStoreReview {
                 Button(action: onOpenAppStoreReview) {
                     linkRow(
@@ -162,11 +177,27 @@ struct UAPPAboutResources: View {
                 .disabled(isOpeningAppStoreReview)
             }
             ForEach(links, id: \.0) { titleKey, icon, url in
-                Link(destination: url) {
-                    linkRow(title: uappLocalized(titleKey), systemImage: icon)
+                if titleKey == "about.support", let onContactSupport {
+                    Menu {
+                        ForEach(UAPPSupportTopic.allCases, id: \.self) { topic in
+                            Button {
+                                onContactSupport(topic)
+                            } label: {
+                                Label(uappLocalized(topic.titleKey), systemImage: topic.systemImage)
+                            }
+                        }
+                    } label: {
+                        linkRow(title: uappLocalized(titleKey), systemImage: icon)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(palette.primaryText)
+                } else {
+                    Link(destination: url) {
+                        linkRow(title: uappLocalized(titleKey), systemImage: icon)
+                    }
+                    .foregroundStyle(palette.primaryText)
+                    .accessibilityHint(Text(verbatim: uappLocalized("about.open_link")))
                 }
-                .foregroundStyle(palette.primaryText)
-                .accessibilityHint(Text(verbatim: uappLocalized("about.open_link")))
             }
             if let license = configuration.license,
                !license.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -300,7 +331,7 @@ struct UAPPAboutDeveloperContent: View {
                             if let url = about.socialLinks[name] {
                                 Link(destination: url) {
                                     HStack(spacing: 12) {
-                                        socialMark(for: name)
+                                        UAPPSocialNetworkIcon(name)
                                             .frame(width: 22, height: 22)
                                             .accessibilityHidden(true)
                                         Text(socialName(for: name))
@@ -432,37 +463,6 @@ struct UAPPAboutDeveloperContent: View {
         #elseif canImport(AppKit)
         NSWorkspace.shared.open(url)
         #endif
-    }
-
-    @ViewBuilder
-    private func socialMark(for name: String) -> some View {
-        switch name.lowercased() {
-        case "youtube": Image("SocialYouTube", bundle: .module)
-            .renderingMode(.original)
-            .resizable()
-            .scaledToFit()
-        case "instagram": Image("SocialInstagram", bundle: .module)
-            .renderingMode(.original)
-            .resizable()
-            .scaledToFit()
-        case "tiktok": Image("SocialTikTok", bundle: .module)
-            .renderingMode(.original)
-            .resizable()
-            .scaledToFit()
-        case "linkedin": Image("SocialLinkedIn", bundle: .module)
-            .renderingMode(.original)
-            .resizable()
-            .scaledToFit()
-        case "facebook": Image("SocialFacebook", bundle: .module)
-            .renderingMode(.original)
-            .resizable()
-            .scaledToFit()
-        case "x": Image("SocialX", bundle: .module)
-            .renderingMode(.original)
-            .resizable()
-            .scaledToFit()
-        default: Image(systemName: "link")
-        }
     }
 
     private func socialName(for name: String) -> String {

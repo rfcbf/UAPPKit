@@ -6,6 +6,48 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+## 1.2.0 - 2026-10-09
+
+- Controles das telas do pacote disponíveis para o aplicativo montar as
+  próprias listas: `UAPPTranslatedText` (texto traduzido para o idioma de
+  apresentação), `UAPPLanguageMenuButton` (menu de idiomas),
+  `uappTranslationScope()` (mantém as traduções da tela e aplica o idioma) e
+  `uappSearchField(text:isPresented:prompt:accentColor:)` (busca aberta por
+  botão, na barra de ferramentas a partir do iOS 26).
+- `UAPPImageAttachmentPicker` (até duas imagens, preparadas em JPEG de até
+  512 KB) e `UAPPImageAttachmentGallery` (miniaturas que abrem em tela cheia)
+  para anexos em telas do aplicativo.
+- `UAPPRequestStatusTitle.localized(key:fallback:)` devolve o nome de uma
+  etapa padrão no idioma de apresentação.
+
+- A tela de Reviews mostra no topo um cartão com a média, as estrelas, o total
+  e a distribuição por nota. `UAPPReviewsPage.summary` traz o resumo quando o
+  servidor o informa; sem ele, o pacote lê as notas em uma página de até 50
+  avaliações e mostra o cartão quando ela traz todas.
+- `UAPPSocialNetworkIcon` expõe as marcas das redes sociais do perfil do
+  desenvolvedor para uso em telas do aplicativo.
+- A biografia do desenvolvedor passa a exibir formatação Markdown: negrito,
+  itálico, títulos e listas.
+
+- `UAPPProfilePhotoPicker(photo:remoteURL:size:theme:languageIdentifier:onRemove:)`
+  apresenta só o avatar editável, com a foto remota enquanto não há uma
+  escolhida e a opção de remover no menu.
+
+- Os cards de Feedback e de Roadmap mostram a prioridade definida pela equipe
+  (baixa, média, grande, muito grande, importante ou urgente). `UAPPFeedbackPriority`
+  e `UAPPFeedbackPriorityBadge` ficam disponíveis para telas do aplicativo.
+
+- `UAPPAboutConfiguration` ganhou `showsReviews` e `reviewsPageSize`: a tela
+  Sobre mostra a ação que abre a lista de avaliações do aplicativo em uma
+  sheet, como o Changelog.
+- A linha Suporte da tela Sobre usa o e-mail de suporte configurado no UAPP
+  para o projeto (`UAPPAbout.supportEmail`) e abre uma mensagem para ele; sem
+  e-mail configurado, continua valendo `supportURL`.
+- Com e-mail de suporte, a linha Suporte oferece o motivo do contato (dúvida,
+  problema ou sugestão) e abre a mensagem com o assunto `[App] [Motivo] - ` e,
+  no corpo, a versão e o build do aplicativo, o sistema, o modelo do aparelho e
+  o idioma. Sem app de e-mail no aparelho, um aviso mostra o endereço.
+
 ## 1.1.0 - 2026-10-07
 
 - `UAPPAccountScreen` ganhou o parâmetro opcional `onReady`, chamado uma vez

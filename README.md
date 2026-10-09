@@ -51,12 +51,12 @@ No Xcode, escolha **File → Add Package Dependencies…** e informe:
 https://github.com/rfcbf/UAPPKit
 ```
 
-Selecione a versão `1.1.0` ou posterior e adicione o produto `UAPPKit` ao
+Selecione a versão `1.2.0` ou posterior e adicione o produto `UAPPKit` ao
 target do aplicativo. Em outro `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/rfcbf/UAPPKit", from: "1.1.0")
+    .package(url: "https://github.com/rfcbf/UAPPKit", from: "1.2.0")
 ],
 targets: [
     .target(name: "MeuApp", dependencies: ["UAPPKit"])
@@ -151,17 +151,29 @@ try UAPPKit.showAbout(configuration: UAPPAboutConfiguration(
     license: "MIT",
     showsChangelog: true,
     showsAppStoreReview: true,
-    changelogConfiguration: .init(automaticallyScrolls: true, interval: 5, pageSize: 10)
+    changelogConfiguration: .init(automaticallyScrolls: true, interval: 5, pageSize: 10),
+    showsReviews: true,
+    reviewsPageSize: 10
 ))
 ```
 
 - `showsChangelog: true` adiciona a ação que abre o Changelog do projeto,
   usando `changelogConfiguration`.
 - `showsAppStoreReview: true` adiciona a ação para avaliar o app na App Store.
+- `showsReviews: true` adiciona a ação que abre a lista de avaliações do
+  aplicativo em uma sheet sobre a tela Sobre, com páginas de `reviewsPageSize`.
+- A linha Suporte abre `supportURL`. Quando o projeto tem um e-mail de suporte
+  configurado em Sobre no UAPP, ele tem precedência e a linha abre uma mensagem
+  para esse endereço, sem precisar publicar uma nova versão do aplicativo.
+  A pessoa escolhe o motivo (dúvida, problema ou sugestão) e a mensagem abre
+  com o assunto `[Nome do app] [Motivo] - ` e, no corpo, a versão e o build do
+  aplicativo, o sistema, o modelo do aparelho e o idioma. Se o aparelho não
+  tiver um app de e-mail configurado, um aviso mostra o endereço.
 - A descrição é traduzida sob demanda para o idioma escolhido na tela quando a
   Translation framework está disponível; caso contrário, o original é mantido.
 
-Para abrir a avaliação na App Store a partir da sua própria interface:
+Para abrir a avaliação na App Store a partir da sua própria interface, por
+exemplo em uma linha "Avaliar o app" dos ajustes:
 
 ```swift
 Task {
@@ -177,7 +189,8 @@ Task {
 </p>
 
 Mostra o perfil público do desenvolvedor, outros aplicativos e redes sociais
-configurados no UAPP. É uma tela separada do Sobre do aplicativo.
+configurados no UAPP. É uma tela separada do Sobre do aplicativo. A biografia
+aceita formatação Markdown: negrito, itálico, títulos e listas.
 
 ```swift
 try UAPPKit.showDeveloperAbout()
@@ -233,7 +246,12 @@ reprodução é manual. Veja [configuração e compatibilidade](Documentation/Ch
 
 Apresenta as avaliações da App Store sincronizadas e tornadas públicas no
 UAPP, com paginação conforme a rolagem e respostas do desenvolvedor
-expansíveis.
+expansíveis. No topo, um cartão resume a média, as estrelas, o total e a
+distribuição por nota.
+
+O resumo vem do servidor (`UAPPReviewsPage.summary`). Quando ele não é
+informado, o pacote lê as notas em uma página de até 50 avaliações e mostra o
+cartão se ela trouxer todas; acima disso, o cartão fica oculto.
 
 ```swift
 try UAPPKit.showReviews(pageSize: 20)
@@ -260,6 +278,17 @@ detalhe mostra autor e data, descrição completa, status, votantes e a conversa
 com respostas e reações. Feedbacks e comentários aceitam imagens, e a conversa
 é atualizada enquanto a tela está ativa.
 
+Quando a equipe define uma prioridade para o item no UAPP, o card mostra um
+selo com o nível: baixa, média, grande, muito grande, importante ou urgente.
+Itens sem prioridade não mostram o selo. Para usar o mesmo selo em uma tela
+própria:
+
+```swift
+if let priority = UAPPFeedbackPriority(value: item.priority) {
+    UAPPFeedbackPriorityBadge(priority: priority)
+}
+```
+
 ```swift
 try UAPPKit.showFeedback()
 
@@ -281,8 +310,8 @@ aplicativo, veja [Autenticação](#autenticação) e
   <img src="Documentation/Images/roadmap-dark.png" width="260" alt="Tela de Roadmap no modo escuro">
 </p>
 
-Organiza os itens públicos por status, com os mesmos detalhes, votos e
-comentários do Feedback.
+Organiza os itens públicos por status, com os mesmos detalhes, votos,
+comentários e selo de prioridade do Feedback.
 
 ```swift
 try UAPPKit.showRoadmap()
@@ -706,6 +735,49 @@ Info.plist:
 Sem essa descrição, o seletor informa que a câmera está indisponível. A
 biblioteca usa `PhotosPicker` e não exige `NSPhotoLibraryUsageDescription`.
 Veja [uso e configuração](Documentation/ProfilePhotos.md).
+
+Para encaixar só o avatar editável em um formulário próprio, sem o texto de
+apoio, informe a foto já gravada e, se quiser, a ação de remover:
+
+```swift
+UAPPProfilePhotoPicker(
+    photo: $photo,
+    remoteURL: currentPhotoURL,
+    size: 104,
+    onRemove: { currentPhotoURL = nil }
+)
+```
+
+O avatar mostra `remoteURL` enquanto não há foto escolhida. Com `onRemove`, o
+menu oferece remover: a foto escolhida é descartada e a ação é chamada para o
+aplicativo limpar a foto gravada.
+
+### Redes sociais
+
+`UAPPSocialNetworkIcon("instagram")` mostra a marca de uma das redes aceitas no
+perfil do desenvolvedor: `youtube`, `x`, `instagram`, `tiktok`, `linkedin` e
+`facebook`. Outros nomes mostram um símbolo de link.
+
+```swift
+UAPPSocialNetworkIcon("youtube")
+    .frame(width: 24, height: 24)
+```
+
+### Listas próprias
+
+Para montar uma lista própria com o mesmo comportamento das telas do pacote:
+
+- `UAPPTranslatedText("texto")` mostra o texto traduzido para o idioma de
+  apresentação escolhido; sem tradução disponível, mostra o original.
+- `UAPPLanguageMenuButton()` é o botão de globo que troca esse idioma.
+- `.uappTranslationScope()` mantém as traduções da tela e aplica o idioma.
+- `.uappSearchField(text:isPresented:prompt:accentColor:)` abre a busca por
+  botão, na barra de ferramentas a partir do iOS 26.
+- `UAPPImageAttachmentPicker(data:isProcessing:)` escolhe até duas imagens,
+  preparadas em JPEG de até 512 KB, e `UAPPImageAttachmentGallery(urls:)`
+  mostra miniaturas que abrem em tela cheia.
+- `UAPPRequestStatusTitle.localized(key:fallback:languageIdentifier:)` devolve
+  o nome de uma etapa padrão no idioma informado.
 
 ## Segurança e privacidade
 

@@ -43,11 +43,13 @@ struct UAPPFeedbackCard: View {
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: 12) {
                         statusBadge.allowsHitTesting(false)
+                        priorityBadge.allowsHitTesting(false)
                         commentsButton
                         Spacer(minLength: 0)
                     }
                     VStack(alignment: .leading, spacing: 8) {
                         statusBadge.allowsHitTesting(false)
+                        priorityBadge.allowsHitTesting(false)
                         commentsButton
                     }
                 }
@@ -55,6 +57,7 @@ struct UAPPFeedbackCard: View {
                 // O status já é a seção do Roadmap: o card compacto mostra tipo, conteúdo e autor.
                 HStack(alignment: .center, spacing: 10) {
                     categoryLabel.allowsHitTesting(false)
+                    priorityBadge.allowsHitTesting(false)
                     Spacer(minLength: 8)
                     voteButton
                 }
@@ -144,6 +147,14 @@ struct UAPPFeedbackCard: View {
     /// Badge do tipo da demanda; itens publicados sem tipo exibem um aviso neutro.
     private var categoryLabel: some View {
         UAPPFeedbackCategoryBadge(category: item.category, languageIdentifier: selectedLanguage)
+    }
+
+    /// Selo da prioridade definida pela equipe; requisições sem prioridade não mostram nada.
+    @ViewBuilder
+    private var priorityBadge: some View {
+        if let priority = UAPPFeedbackPriority(value: item.priority) {
+            UAPPFeedbackPriorityBadge(priority: priority, languageIdentifier: selectedLanguage)
+        }
     }
 
     private var statusBadge: some View {
