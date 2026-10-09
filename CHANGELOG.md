@@ -27,6 +27,10 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 - A biografia do desenvolvedor passa a exibir formatação Markdown: negrito,
   itálico, títulos e listas.
 
+- `UAPPProfilePhotoPicker(photo:remoteURL:size:theme:languageIdentifier:onRemove:)`
+  apresenta só o avatar editável, com a foto remota enquanto não há uma
+  escolhida e a opção de remover no menu.
+
 ## 1.1.0 - 2026-10-07
 
 - `UAPPAccountScreen` ganhou o parâmetro opcional `onReady`, chamado uma vez

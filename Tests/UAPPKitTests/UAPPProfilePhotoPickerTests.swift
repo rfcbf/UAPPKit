@@ -74,5 +74,16 @@ struct UAPPProfilePhotoPickerTests {
         #expect(received.first??.size == image?.size)
         #expect(received.last == nil)
     }
+
+    @Test("Avatar público mostra a foto remota e oferece remover quando o aplicativo trata a remoção")
+    func publicAvatarRendersWithAndWithoutRemoval() async {
+        var removed = 0
+        await render(UAPPProfilePhotoPicker(
+            photo: .constant(nil),
+            remoteURL: URL(string: "https://example.test/avatar.jpg"),
+            onRemove: { removed += 1 }
+        ))
+        await render(UAPPProfilePhotoPicker(photo: .constant(sampleJPEG()), remoteURL: nil, size: 72))
+        #expect(removed == 0)
+    }
 }
-#endif
