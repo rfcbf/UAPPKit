@@ -36,8 +36,8 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
   e `UAPPFeedbackPriorityBadge` ficam disponíveis para telas do aplicativo.
 
 - `UAPPAboutConfiguration` ganhou `showsReviews` e `reviewsPageSize`: a tela
-  Sobre mostra a ação que abre a lista de avaliações do aplicativo dentro da
-  própria navegação.
+  Sobre mostra a ação que abre a lista de avaliações do aplicativo em uma
+  sheet, como o Changelog.
 - A linha Suporte da tela Sobre usa o e-mail de suporte configurado no UAPP
   para o projeto (`UAPPAbout.supportEmail`) e abre uma mensagem para ele; sem
   e-mail configurado, continua valendo `supportURL`.

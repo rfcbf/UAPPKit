@@ -161,7 +161,7 @@ try UAPPKit.showAbout(configuration: UAPPAboutConfiguration(
   usando `changelogConfiguration`.
 - `showsAppStoreReview: true` adiciona a ação para avaliar o app na App Store.
 - `showsReviews: true` adiciona a ação que abre a lista de avaliações do
-  aplicativo dentro da própria tela Sobre, com páginas de `reviewsPageSize`.
+  aplicativo em uma sheet sobre a tela Sobre, com páginas de `reviewsPageSize`.
 - A linha Suporte abre `supportURL`. Quando o projeto tem um e-mail de suporte
   configurado em Sobre no UAPP, ele tem precedência e a linha abre uma mensagem
   para esse endereço, sem precisar publicar uma nova versão do aplicativo.

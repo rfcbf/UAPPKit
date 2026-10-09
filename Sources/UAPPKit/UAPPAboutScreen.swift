@@ -82,11 +82,15 @@ public struct UAPPAboutScreen: View {
                 .presentationDragIndicator(.hidden)
             }
         }
-        // As avaliações entram na própria navegação do Sobre, sem abrir outra sheet por cima.
-        .navigationDestination(isPresented: $isReviewsPresented) {
+        .sheet(isPresented: $isReviewsPresented) {
             if let client {
-                UAPPReviewsScreen(client: client, pageSize: configuration.reviewsPageSize)
-                    .environment(\.uappTheme, theme)
+                NavigationStack {
+                    UAPPReviewsScreen(client: client, pageSize: configuration.reviewsPageSize)
+                }
+                .environment(\.uappTheme, theme)
+                .environment(\.locale, Locale(identifier: selectedLanguage))
+                .presentationDetents([.large])
+                .presentationDragIndicator(.hidden)
             }
         }
         .uappToast(message: $appStoreReviewError, title: uappLocalized("about.rate_app"))
