@@ -6,6 +6,8 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+## 1.4.1 - 2026-10-09
+
 - Tela de conta: Termos de uso e Política de privacidade ficam lado a lado, com
   espaço entre eles; quando não cabem (texto ampliado ou tela estreita),
   continuam um abaixo do outro.
