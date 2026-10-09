@@ -31,6 +31,10 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
   apresenta só o avatar editável, com a foto remota enquanto não há uma
   escolhida e a opção de remover no menu.
 
+- Os cards de Feedback e de Roadmap mostram a prioridade definida pela equipe
+  (baixa, média, grande, muito grande, importante ou urgente). `UAPPFeedbackPriority`
+  e `UAPPFeedbackPriorityBadge` ficam disponíveis para telas do aplicativo.
+
 ## 1.1.0 - 2026-10-07
 
 - `UAPPAccountScreen` ganhou o parâmetro opcional `onReady`, chamado uma vez
