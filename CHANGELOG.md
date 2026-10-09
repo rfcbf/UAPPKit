@@ -35,6 +35,13 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
   (baixa, média, grande, muito grande, importante ou urgente). `UAPPFeedbackPriority`
   e `UAPPFeedbackPriorityBadge` ficam disponíveis para telas do aplicativo.
 
+- `UAPPAboutConfiguration` ganhou `showsReviews` e `reviewsPageSize`: a tela
+  Sobre mostra a ação que abre a lista de avaliações do aplicativo dentro da
+  própria navegação.
+- A linha Suporte da tela Sobre usa o e-mail de suporte configurado no UAPP
+  para o projeto (`UAPPAbout.supportEmail`) e abre uma mensagem para ele; sem
+  e-mail configurado, continua valendo `supportURL`.
+
 ## 1.1.0 - 2026-10-07
 
 - `UAPPAccountScreen` ganhou o parâmetro opcional `onReady`, chamado uma vez

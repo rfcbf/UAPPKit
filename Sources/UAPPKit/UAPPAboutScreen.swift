@@ -18,6 +18,9 @@ public struct UAPPAboutScreen: View {
     @State private var isLoadingAboutContent: Bool
     @State private var isRemoteIconReady: Bool
     @State private var isChangelogPresented = false
+    @State private var isReviewsPresented = false
+    /// E-mail de suporte configurado no UAPP para o projeto.
+    @State private var serverSupportEmail: String?
     @State private var isOpeningAppStoreReview = false
     @State private var appStoreReviewError: String?
 
@@ -79,6 +82,13 @@ public struct UAPPAboutScreen: View {
                 .presentationDragIndicator(.hidden)
             }
         }
+        // As avaliações entram na própria navegação do Sobre, sem abrir outra sheet por cima.
+        .navigationDestination(isPresented: $isReviewsPresented) {
+            if let client {
+                UAPPReviewsScreen(client: client, pageSize: configuration.reviewsPageSize)
+                    .environment(\.uappTheme, theme)
+            }
+        }
         .uappToast(message: $appStoreReviewError, title: uappLocalized("about.rate_app"))
         .uappNavigationBar(
             titleKey: "screen.about",
@@ -105,6 +115,10 @@ public struct UAPPAboutScreen: View {
                     },
                     onOpenChangelog: client.map { _ in
                         { isChangelogPresented = true }
+                    },
+                    supportURL: Self.supportURL(configuration: configuration, serverEmail: serverSupportEmail),
+                    onOpenReviews: client.map { _ in
+                        { isReviewsPresented = true }
                     }
                 )
             }
@@ -133,6 +147,7 @@ public struct UAPPAboutScreen: View {
 
         do {
             let about = try await client.about()
+            serverSupportEmail = about.supportEmail
             let project = await client.currentProject()
             let iconURL = project?.iconURL ?? matchingAboutAppIconURL(
                 in: about,
@@ -176,6 +191,18 @@ public struct UAPPAboutScreen: View {
             appStoreReviewURL = result.url
             appStoreReviewError = result.error
         }
+    }
+
+    /// Suporte da tela: o e-mail configurado no UAPP abre uma mensagem; sem ele, vale o link da
+    /// configuração. Um e-mail vazio ou fora do formato é ignorado.
+    static func supportURL(configuration: UAPPAboutConfiguration, serverEmail: String?) -> URL? {
+        let email = (serverEmail ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !email.isEmpty, email.contains("@"), !email.contains(" "),
+              let url = URL(string: "mailto:\(email)")
+        else {
+            return configuration.supportURL
+        }
+        return url
     }
 
     /// Abre a avaliação usando o destino já carregado ou consultando o projeto.

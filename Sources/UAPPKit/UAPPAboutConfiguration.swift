@@ -11,12 +11,17 @@ public struct UAPPAboutConfiguration: Sendable, Equatable {
     public let shortDescription: String?
     public let descriptionLanguageIdentifier: String?
     public let websiteURL: URL?
+    /// Link de suporte. Um e-mail de suporte configurado no UAPP para o projeto tem precedência.
     public let supportURL: URL?
     public let privacyPolicyURL: URL?
     public let termsOfUseURL: URL?
     public let license: String?
     public let showsChangelog: Bool
     public let showsAppStoreReview: Bool
+    /// Mostra a ação que abre a lista de avaliações do aplicativo dentro da tela Sobre.
+    public let showsReviews: Bool
+    /// Tamanho das páginas da lista de avaliações aberta pela tela Sobre.
+    public let reviewsPageSize: Int
     /// Opções do carrossel ao abrir o changelog pela tela Sobre.
     public let changelogConfiguration: UAPPChangelogConfiguration
 
@@ -30,7 +35,9 @@ public struct UAPPAboutConfiguration: Sendable, Equatable {
         license: String? = nil,
         showsChangelog: Bool = false,
         showsAppStoreReview: Bool = false,
-        changelogConfiguration: UAPPChangelogConfiguration = .init()
+        changelogConfiguration: UAPPChangelogConfiguration = .init(),
+        showsReviews: Bool = false,
+        reviewsPageSize: Int = 10
     ) {
         self.shortDescription = shortDescription
         self.descriptionLanguageIdentifier = descriptionLanguageIdentifier
@@ -42,6 +49,8 @@ public struct UAPPAboutConfiguration: Sendable, Equatable {
         self.showsChangelog = showsChangelog
         self.showsAppStoreReview = showsAppStoreReview
         self.changelogConfiguration = changelogConfiguration
+        self.showsReviews = showsReviews
+        self.reviewsPageSize = reviewsPageSize
     }
 }
 

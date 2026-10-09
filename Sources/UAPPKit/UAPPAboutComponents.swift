@@ -121,11 +121,14 @@ struct UAPPAboutResources: View {
     let isOpeningAppStoreReview: Bool
     let onOpenAppStoreReview: (() -> Void)?
     let onOpenChangelog: (() -> Void)?
+    /// Suporte efetivo: o e-mail do servidor ou, na falta dele, o link da configuração.
+    var supportURL: URL?
+    var onOpenReviews: (() -> Void)?
 
     var body: some View {
         let links: [(String, String, URL)] = [
             ("about.website", "globe", configuration.websiteURL),
-            ("about.support", "questionmark.circle", configuration.supportURL),
+            ("about.support", "questionmark.circle", supportURL ?? configuration.supportURL),
             ("about.privacy", "hand.raised", configuration.privacyPolicyURL),
             ("about.terms", "doc.text", configuration.termsOfUseURL)
         ].compactMap { titleKey, icon, url in
@@ -144,6 +147,16 @@ struct UAPPAboutResources: View {
                     linkRow(
                         title: uappLocalized("about.changelog"),
                         systemImage: "clock.arrow.circlepath"
+                    )
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(palette.primaryText)
+            }
+            if configuration.showsReviews, let onOpenReviews {
+                Button(action: onOpenReviews) {
+                    linkRow(
+                        title: uappLocalized("screen.reviews"),
+                        systemImage: "star.bubble"
                     )
                 }
                 .buttonStyle(.plain)

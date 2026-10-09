@@ -278,6 +278,8 @@ public struct UAPPAbout: Sendable, Equatable, Decodable {
     public let bioTranslations: [String: String]
     public let apps: [UAPPAboutApp]
     public let socialLinks: [String: URL]
+    /// E-mail de suporte configurado para o aplicativo no UAPP.
+    public let supportEmail: String?
 
     enum CodingKeys: String, CodingKey {
         case developerName = "developer_name"
@@ -287,6 +289,7 @@ public struct UAPPAbout: Sendable, Equatable, Decodable {
         case bioTranslations = "developer_bio_translations"
         case apps = "about_apps"
         case socialLinks = "social_links"
+        case supportEmail = "support_email"
     }
 
     init(
@@ -296,7 +299,8 @@ public struct UAPPAbout: Sendable, Equatable, Decodable {
         bioDefaultLanguage: String = "pt-BR",
         bioTranslations: [String: String] = [:],
         apps: [UAPPAboutApp],
-        socialLinks: [String: URL]
+        socialLinks: [String: URL],
+        supportEmail: String? = nil
     ) {
         self.developerName = developerName
         self.imageURL = imageURL
@@ -305,6 +309,7 @@ public struct UAPPAbout: Sendable, Equatable, Decodable {
         self.bioTranslations = bioTranslations
         self.apps = apps
         self.socialLinks = socialLinks
+        self.supportEmail = supportEmail
     }
 
     public init(from decoder: Decoder) throws {
@@ -316,6 +321,7 @@ public struct UAPPAbout: Sendable, Equatable, Decodable {
         bioTranslations = try values.decodeIfPresent([String: String].self, forKey: .bioTranslations) ?? [:]
         apps = try values.decodeIfPresent([UAPPAboutApp].self, forKey: .apps) ?? []
         socialLinks = try values.decodeIfPresent([String: URL].self, forKey: .socialLinks) ?? [:]
+        supportEmail = try values.decodeIfPresent(String.self, forKey: .supportEmail)
     }
 }
 
