@@ -16,6 +16,16 @@ struct UAPPAboutAppIdentity: View {
     let presentationLanguageIdentifier: String
     let palette: UAPPResolvedPalette
     let remoteIconURL: URL?
+    /// Descrição configurada no UAPP para o projeto; tem precedência sobre a da configuração.
+    var serverDescription: UAPPAboutDescription?
+
+    /// Descrição exibida: a do servidor ou, na falta dela, a passada pelo aplicativo.
+    var description: UAPPAboutDescription? {
+        serverDescription ?? UAPPAboutDescription(
+            text: configuration.shortDescription,
+            languageIdentifier: configuration.descriptionLanguageIdentifier
+        )
+    }
 
     var body: some View {
         VStack(spacing: 14) {
@@ -30,12 +40,10 @@ struct UAPPAboutAppIdentity: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
 
-            if let shortDescription = configuration.shortDescription,
-               !shortDescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            {
+            if let description {
                 UAPPTranslatedDescription(
-                    sourceText: shortDescription,
-                    sourceLanguageIdentifier: configuration.descriptionLanguageIdentifier,
+                    sourceText: description.text,
+                    sourceLanguageIdentifier: description.languageIdentifier,
                     targetLanguageIdentifier: presentationLanguageIdentifier
                 )
                 .font(.body)
@@ -62,6 +70,20 @@ struct UAPPAboutAppIdentity: View {
             .background(VersionPillBackground(accent: palette.accent ?? .accentColor))
         }
         .frame(maxWidth: .infinity)
+    }
+}
+
+/// Texto de apresentação do aplicativo e o idioma em que foi escrito.
+struct UAPPAboutDescription: Equatable {
+    let text: String
+    let languageIdentifier: String?
+
+    /// `nil` quando o texto está vazio, para a tela não reservar espaço.
+    init?(text: String?, languageIdentifier: String?) {
+        let trimmed = (text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        self.text = trimmed
+        self.languageIdentifier = languageIdentifier
     }
 }
 
@@ -111,7 +133,7 @@ private struct UAPPTranslatedDescription: View {
     }
 
     private var text: some View {
-        Text(verbatim: translatedText ?? sourceText)
+        Text(uappChangelogMarkdown(translatedText ?? sourceText))
     }
 }
 
@@ -126,6 +148,7 @@ struct UAPPAboutResources: View {
     var onOpenReviews: (() -> Void)?
     /// Com e-mail de suporte, a linha Suporte oferece os motivos do contato e abre a mensagem.
     var onContactSupport: ((UAPPSupportTopic) -> Void)?
+    @State var isChoosingSupportTopic = false
 
     var body: some View {
         let links: [(String, String, URL)] = [
@@ -178,19 +201,19 @@ struct UAPPAboutResources: View {
             }
             ForEach(links, id: \.0) { titleKey, icon, url in
                 if titleKey == "about.support", let onContactSupport {
-                    Menu {
-                        ForEach(UAPPSupportTopic.allCases, id: \.self) { topic in
-                            Button {
-                                onContactSupport(topic)
-                            } label: {
-                                Label(uappLocalized(topic.titleKey), systemImage: topic.systemImage)
-                            }
-                        }
+                    Button {
+                        isChoosingSupportTopic = true
                     } label: {
                         linkRow(title: uappLocalized(titleKey), systemImage: icon)
                     }
                     .buttonStyle(.plain)
                     .foregroundStyle(palette.primaryText)
+                    .sheet(isPresented: $isChoosingSupportTopic) {
+                        UAPPSupportTopicSheet(palette: palette) { topic in
+                            isChoosingSupportTopic = false
+                            onContactSupport(topic)
+                        }
+                    }
                 } else {
                     Link(destination: url) {
                         linkRow(title: uappLocalized(titleKey), systemImage: icon)

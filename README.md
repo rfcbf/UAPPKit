@@ -51,12 +51,12 @@ No Xcode, escolha **File → Add Package Dependencies…** e informe:
 https://github.com/rfcbf/UAPPKit
 ```
 
-Selecione a versão `1.2.0` ou posterior e adicione o produto `UAPPKit` ao
+Selecione a versão `1.3.0` ou posterior e adicione o produto `UAPPKit` ao
 target do aplicativo. Em outro `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/rfcbf/UAPPKit", from: "1.2.0")
+    .package(url: "https://github.com/rfcbf/UAPPKit", from: "1.3.0")
 ],
 targets: [
     .target(name: "MeuApp", dependencies: ["UAPPKit"])
@@ -159,14 +159,18 @@ try UAPPKit.showAbout(configuration: UAPPAboutConfiguration(
 
 - `showsChangelog: true` adiciona a ação que abre o Changelog do projeto,
   usando `changelogConfiguration`.
+- `shortDescription` é a descrição exibida abaixo do nome e aceita Markdown.
+  Quando o projeto tem uma descrição do aplicativo configurada em Sobre no
+  UAPP, ela tem precedência e pode ser alterada sem publicar uma nova versão.
+  A descrição é traduzida para o idioma de apresentação.
 - `showsAppStoreReview: true` adiciona a ação para avaliar o app na App Store.
 - `showsReviews: true` adiciona a ação que abre a lista de avaliações do
   aplicativo em uma sheet sobre a tela Sobre, com páginas de `reviewsPageSize`.
 - A linha Suporte abre `supportURL`. Quando o projeto tem um e-mail de suporte
   configurado em Sobre no UAPP, ele tem precedência e a linha abre uma mensagem
   para esse endereço, sem precisar publicar uma nova versão do aplicativo.
-  A pessoa escolhe o motivo (dúvida, problema ou sugestão) e a mensagem abre
-  com o assunto `[Nome do app] [Motivo] - ` e, no corpo, a versão e o build do
+  A pessoa escolhe o motivo (dúvida, problema ou sugestão) em uma folha
+  inferior e a mensagem abre com o assunto `[Nome do app] [Motivo] - ` e, no corpo, a versão e o build do
   aplicativo, o sistema, o modelo do aparelho e o idioma. Se o aparelho não
   tiver um app de e-mail configurado, um aviso mostra o endereço.
 - A descrição é traduzida sob demanda para o idioma escolhido na tela quando a
