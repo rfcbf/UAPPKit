@@ -121,6 +121,7 @@ private struct ToastView: View {
                     .font(.callout)
                     .foregroundStyle(.primary)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.85)
                 Text(verbatim: toast.message)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
@@ -269,6 +270,7 @@ private struct ToastSwipeToDismiss: ViewModifier {
                 Button(role: .destructive, action: onDismiss) {
                     Image(systemName: "checkmark")
                 }
+                .accessibilityLabel(Text(verbatim: uappLocalized("navigation.close")))
             }
         } else {
             dragging(content)

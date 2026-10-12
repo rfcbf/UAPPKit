@@ -87,7 +87,7 @@ struct UAPPReviewCard: View {
                             .padding(.vertical, 10)
                             .accessibilityHidden(true)
                     }
-                    .transition(.opacity.combined(with: .move(edge: .top)))
+                    .uappMotionTransition(.opacity.combined(with: .move(edge: .top)))
                 }
             }
         }

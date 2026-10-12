@@ -44,6 +44,10 @@ public struct UAPPReviewsScreen: View {
     }
 
     public var body: some View {
+        screenBody.uappTextSizeLimit()
+    }
+
+    private var screenBody: some View {
         Group {
             if model.isLoading {
                 ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)

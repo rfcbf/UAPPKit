@@ -95,6 +95,7 @@ struct UAPPFeedbackCard: View {
                     .font(isCompact ? .footnote.weight(.medium) : .subheadline.weight(.medium))
                     .foregroundStyle(palette.secondaryText)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.85)
             }
             .frame(minHeight: isCompact ? 32 : 44)
             .contentShape(Rectangle())
@@ -216,6 +217,7 @@ struct UAPPFeedbackCategoryBadge: View {
         .font(.caption.weight(.semibold))
         .foregroundStyle(color)
         .lineLimit(1)
+        .minimumScaleFactor(0.85)
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
         .background(color.opacity(0.14), in: Capsule())

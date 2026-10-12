@@ -83,6 +83,7 @@ public struct UAPPFeedbackPriorityBadge: View {
         .font(.caption.weight(.semibold))
         .foregroundStyle(priority.color)
         .lineLimit(1)
+        .minimumScaleFactor(0.85)
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
         .background(priority.color.opacity(0.14), in: Capsule())
