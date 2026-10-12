@@ -6,11 +6,22 @@ import SwiftUI
 #endif
 
 enum UAPPReviewTranslation {
+    /// Termos de produto usados do mesmo jeito em qualquer idioma; um texto só com eles fica como está.
+    static let untranslatedTerms: Set<String> = [
+        "app", "bug", "bugs", "changelog", "feedback", "login", "logout", "ok", "roadmap"
+    ]
+
+    /// Abaixo desta confiança o idioma detectado é um palpite. Acontece em textos curtos, como
+    /// "Bug" ou "Dark mode", e traduzir a partir de um palpite falha ou distorce o texto.
+    static let minimumLanguageConfidence = 0.6
+
     static func shouldTranslate(_ text: String, targetIdentifier: String) -> Bool {
-        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
-        let recognizer = NLLanguageRecognizer()
-        recognizer.processString(text)
-        return recognizer.dominantLanguage?.rawValue != Locale(identifier: targetIdentifier).language.languageCode?.identifier
+        sourceIdentifier(for: text, targetIdentifier: targetIdentifier) != nil
+    }
+
+    static func containsOnlyUntranslatedTerms(_ text: String) -> Bool {
+        let words = text.lowercased().split { !$0.isLetter }
+        return !words.isEmpty && words.allSatisfy { untranslatedTerms.contains(String($0)) }
     }
 
     /// Traduz o texto inteiro ou, em Markdown, somente os fragmentos de texto em lote.
@@ -26,13 +37,20 @@ enum UAPPReviewTranslation {
         return try await single(text)
     }
 
+    /// Idioma de origem quando vale traduzir; `nil` para texto vazio, só com termos que não se
+    /// traduzem, já no idioma de destino ou de idioma incerto.
     static func sourceIdentifier(for text: String, targetIdentifier: String) -> String? {
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              !containsOnlyUntranslatedTerms(text)
+        else { return nil }
         let recognizer = NLLanguageRecognizer()
         recognizer.processString(text)
-        guard let language = recognizer.dominantLanguage?.rawValue,
-              language != Locale(identifier: targetIdentifier).language.languageCode?.identifier
+        guard let language = recognizer.dominantLanguage,
+              let confidence = recognizer.languageHypotheses(withMaximum: 1)[language],
+              confidence >= minimumLanguageConfidence,
+              language.rawValue != Locale(identifier: targetIdentifier).language.languageCode?.identifier
         else { return nil }
-        return language
+        return language.rawValue
     }
 }
 
