@@ -8,7 +8,7 @@ import SwiftUI
 enum UAPPReviewTranslation {
     /// Termos de produto usados do mesmo jeito em qualquer idioma; um texto só com eles fica como está.
     static let untranslatedTerms: Set<String> = [
-        "app", "bug", "bugs", "changelog", "feedback", "login", "logout", "ok", "roadmap",
+        "app", "bug", "bugs", "changelog", "feedback", "login", "logout", "ok", "roadmap"
     ]
 
     /// Abaixo desta confiança o idioma detectado é um palpite. Acontece em textos curtos, como
