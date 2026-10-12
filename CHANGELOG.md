@@ -6,6 +6,13 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+## 1.4.2 - 2026-10-12
+
+- Tradução automática: textos curtos de idioma incerto, como "Bug" ou "Dark
+  mode", e textos só com termos de produto (Bug, Roadmap, Changelog, Feedback,
+  Login) ficam como foram escritos. Antes a tradução falhava e aparecia o aviso
+  "Tradução indisponível. Exibindo o original."
+
 ## 1.4.1 - 2026-10-09
 
 - Tela de conta: Termos de uso e Política de privacidade ficam lado a lado, com

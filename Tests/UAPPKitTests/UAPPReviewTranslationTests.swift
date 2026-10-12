@@ -17,6 +17,21 @@ func reviewTranslationDetectsLanguages() {
     #expect(!UAPPReviewTranslation.shouldTranslate(" \n", targetIdentifier: "en"))
 }
 
+@Test("Reviews não traduz texto curto de idioma incerto nem termos de produto")
+func reviewTranslationSkipsUncertainAndProductTerms() {
+    for text in ["Bug", "Ok", "Login", "Dark mode", "Bug no login"] {
+        #expect(!UAPPReviewTranslation.shouldTranslate(text, targetIdentifier: "pt-BR"))
+        #expect(UAPPReviewTranslation.sourceIdentifier(for: text, targetIdentifier: "pt-BR") == nil)
+    }
+    #expect(UAPPReviewTranslation.containsOnlyUntranslatedTerms("Bug"))
+    #expect(UAPPReviewTranslation.containsOnlyUntranslatedTerms("Roadmap / Changelog"))
+    #expect(!UAPPReviewTranslation.containsOnlyUntranslatedTerms("Bug ao salvar"))
+    #expect(!UAPPReviewTranslation.containsOnlyUntranslatedTerms("123"))
+    // Frase curta, mas de idioma claro, continua sendo traduzida.
+    #expect(UAPPReviewTranslation.shouldTranslate("Erro ao salvar", targetIdentifier: "en"))
+    #expect(UAPPReviewTranslation.shouldTranslate("Please add export to PDF", targetIdentifier: "pt-BR"))
+}
+
 #if canImport(Translation)
 @Test("Review mantém o original quando a tradução do sistema está desligada")
 @MainActor
