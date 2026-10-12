@@ -11,6 +11,31 @@ struct UAPPToastTests {
         #expect(UAPPToastKind.error.symbol == "exclamationmark.triangle.fill")
     }
 
+    @Test("A contagem regressiva esvazia o anel e mostra os segundos que faltam")
+    func countdown() {
+        #expect(ToastCountdown.seconds(.seconds(6)) == 6)
+        #expect(ToastCountdown.seconds(.milliseconds(1500)) == 1.5)
+        #expect(ToastCountdown.fraction(total: 6, elapsed: 0) == 1)
+        #expect(ToastCountdown.fraction(total: 6, elapsed: 3) == 0.5)
+        #expect(ToastCountdown.fraction(total: 6, elapsed: 9) == 0)
+        #expect(ToastCountdown.fraction(total: 0, elapsed: 1) == 0)
+        #expect(ToastCountdown.secondsLeft(total: 6, elapsed: 0) == 6)
+        #expect(ToastCountdown.secondsLeft(total: 6, elapsed: 0.2) == 6)
+        #expect(ToastCountdown.secondsLeft(total: 6, elapsed: 5.5) == 1)
+        #expect(ToastCountdown.secondsLeft(total: 6, elapsed: 7) == 0)
+    }
+
+    @Test("Cada tipo de aviso tem título em todos os idiomas")
+    func kindTitles() {
+        for kind in UAPPToastKind.allCases {
+            for language in UAPPLanguage.supported {
+                let title = uappLocalized(kind.titleKey, languageIdentifier: language.identifier)
+                #expect(!title.isEmpty && title != kind.titleKey)
+            }
+        }
+        #expect(uappLocalized(UAPPToastKind.success.titleKey, languageIdentifier: "pt-BR") == "Concluído")
+    }
+
     @Test("Sucesso tem duração e identidade independente")
     func successNotifications() {
         #expect(UAPPToastKind.success.autoDismissInterval == .seconds(6))
