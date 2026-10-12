@@ -3,9 +3,9 @@ import SwiftUI
 
 /// Accessibility rules shared by every UAPPKit screen.
 enum UAPPAccessibility {
-    /// Largest text size the screens follow. Above it cards and grids break, so text grows up to
-    /// the largest standard system size and stops there.
-    static let maximumTextSize = DynamicTypeSize.xxxLarge
+    /// Largest text size the screens follow: two steps above the system default. Above it cards
+    /// and grids lose their composition, so text stops growing there.
+    static let maximumTextSize = DynamicTypeSize.xLarge
 }
 
 extension View {
