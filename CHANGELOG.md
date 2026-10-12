@@ -6,6 +6,11 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+## 1.5.2 - 2026-10-12
+
+- Acessibilidade: o tamanho máximo de texto das telas do pacote baixa de
+  `xxxLarge` para `xLarge`, o mesmo teto do UAPP Pulse.
+
 ## 1.5.1 - 2026-10-12
 
 - Acessibilidade: as telas do pacote acompanham o tamanho de texto do sistema
