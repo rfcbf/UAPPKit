@@ -6,6 +6,18 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+## 1.5.0 - 2026-10-12
+
+- Avisos (`uappToast`): novo visual em cápsula de vidro, com ícone, título e
+  mensagem, gradiente suave na cor do tipo. A transparência é a do vidro do sistema e
+  segue o que a pessoa escolheu em Ajustes. O aviso flutua
+  sobre a tela em vez de empurrar o conteúdo, entra por baixo e sai para o
+  lado. Fecha ao tocar ou ao deslizar (ação de deslizar do sistema no iOS 27;
+  arrasto nas versões anteriores); o botão de fechar saiu. Sem `title`, o aviso
+  usa o título do tipo: "Erro", "Concluído" ou "Aviso", nos 13 idiomas.
+  O aviso que fecha sozinho mostra à direita um anel que se esvazia, com os
+  segundos que faltam.
+
 ## 1.4.2 - 2026-10-12
 
 - Tradução automática: textos curtos de idioma incerto, como "Bug" ou "Dark
