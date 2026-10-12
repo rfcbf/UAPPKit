@@ -49,6 +49,10 @@ public struct UAPPFeedbackComposerScreen: View {
     }
 
     public var body: some View {
+        screenBody.uappTextSizeLimit()
+    }
+
+    private var screenBody: some View {
         NavigationStack {
             UAPPSubmitFeedbackScreen(client: client, draft: draft) { onComplete() }
         }

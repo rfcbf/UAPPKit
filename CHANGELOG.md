@@ -6,6 +6,16 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+## 1.5.1 - 2026-10-12
+
+- Acessibilidade: as telas do pacote acompanham o tamanho de texto do sistema
+  até o maior tamanho comum e param aí, para os cartões não quebrarem.
+  Transições com deslize ou escala viram esmaecer com Reduzir Movimento.
+  Textos de uma linha encolhem antes de cortar. O botão de fechar do aviso ao
+  deslizar tem rótulo para o VoiceOver e a seta decorativa da lista de
+  novidades deixou de ser lida.
+- O cache de imagens gravado pelos testes saiu do repositório.
+
 ## 1.5.0 - 2026-10-12
 
 - Avisos (`uappToast`): novo visual em cápsula de vidro, com ícone, título e

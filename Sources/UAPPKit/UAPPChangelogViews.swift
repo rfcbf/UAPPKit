@@ -22,6 +22,7 @@ struct UAPPChangelogCard: View {
                     UAPPChangelogHeading(entry: entry)
                     Spacer()
                     Image(systemName: "chevron.right").font(.caption.weight(.semibold))
+                        .accessibilityHidden(true)
                 }
                 .contentShape(Rectangle())
             }

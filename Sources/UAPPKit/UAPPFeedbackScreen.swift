@@ -63,6 +63,10 @@ public struct UAPPFeedbackScreen: View {
     }
 
     public var body: some View {
+        screenBody.uappTextSizeLimit()
+    }
+
+    @ViewBuilder private var screenBody: some View {
         if mode == .roadmap {
             // Compatibilidade: `mode: .roadmap` apresenta a view própria do Roadmap.
             UAPPRoadmapScreen(client: client)
@@ -550,7 +554,7 @@ struct UAPPSubmitFeedbackScreen: View {
                     in: RoundedRectangle(cornerRadius: 16, style: .continuous)
                 )
                 .id(category)
-                .transition(.scale(scale: 0.85).combined(with: .opacity))
+                .uappMotionTransition(.scale(scale: 0.85).combined(with: .opacity))
                 .accessibilityHidden(true)
 
             Text(verbatim: uappLocalized("feedback.compose.intro"))
@@ -595,7 +599,7 @@ struct UAPPSubmitFeedbackScreen: View {
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.body)
-                        .transition(.scale.combined(with: .opacity))
+                        .uappMotionTransition(.scale.combined(with: .opacity))
                         .accessibilityHidden(true)
                 }
             }

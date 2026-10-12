@@ -266,6 +266,7 @@ struct UAPPLanguageOptions: View {
                         HStack(spacing: 10) {
                             Text(verbatim: language.displayName(in: Locale(identifier: selectedIdentifier)))
                                 .lineLimit(1)
+                                .minimumScaleFactor(0.85)
                             Spacer(minLength: 12)
                             if language.identifier == selectedIdentifier {
                                 Image(systemName: "checkmark")

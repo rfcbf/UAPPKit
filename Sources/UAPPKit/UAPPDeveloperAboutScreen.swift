@@ -36,6 +36,10 @@ public struct UAPPDeveloperAboutScreen: View {
     }
 
     public var body: some View {
+        screenBody.uappTextSizeLimit()
+    }
+
+    private var screenBody: some View {
         Group {
             if isLoading {
                 ProgressView()

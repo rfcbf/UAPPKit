@@ -34,6 +34,10 @@ public struct UAPPRoadmapScreen: View {
     }
 
     public var body: some View {
+        screenBody.uappTextSizeLimit()
+    }
+
+    @ViewBuilder private var screenBody: some View {
         content
             .modifier(UAPPFeedbackItemNavigation(
                 client: client, accentColor: accentColor, statuses: statuses,

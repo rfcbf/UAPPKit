@@ -61,6 +61,10 @@ public struct UAPPAboutScreen: View {
     }
 
     public var body: some View {
+        screenBody.uappTextSizeLimit()
+    }
+
+    private var screenBody: some View {
         Group {
             if isLoadingAboutContent || !isRemoteIconReady {
                 loadingView

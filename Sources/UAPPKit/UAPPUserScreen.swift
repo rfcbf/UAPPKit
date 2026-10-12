@@ -81,6 +81,10 @@ public struct UAPPUserScreen: View {
     }
 
     public var body: some View {
+        screenBody.uappTextSizeLimit()
+    }
+
+    @ViewBuilder private var screenBody: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 28) {

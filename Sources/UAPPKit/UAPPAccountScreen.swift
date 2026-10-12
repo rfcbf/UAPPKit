@@ -135,6 +135,10 @@ public struct UAPPAccountScreen: View {
     }
 
     public var body: some View {
+        screenBody.uappTextSizeLimit()
+    }
+
+    private var screenBody: some View {
         NavigationStack(path: $path) {
             Group {
                 if isReady {
@@ -402,7 +406,7 @@ private extension UAPPAccountScreen {
                     font: .title.weight(.semibold)
                 )
                 .id(step)
-                .transition(.scale(scale: 0.85).combined(with: .opacity))
+                .uappMotionTransition(.scale(scale: 0.85).combined(with: .opacity))
             } else {
                 Group {
                     if let loadedIcon {
@@ -747,11 +751,13 @@ private extension UAPPAccountScreen {
         if let termsURL {
             Link(localized("about.terms"), destination: termsURL)
                 .lineLimit(1)
+                .minimumScaleFactor(0.85)
                 .frame(minHeight: 32)
         }
         if let privacyURL {
             Link(localized("about.privacy"), destination: privacyURL)
                 .lineLimit(1)
+                .minimumScaleFactor(0.85)
                 .frame(minHeight: 32)
         }
     }
