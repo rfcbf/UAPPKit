@@ -6,6 +6,13 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+## 1.6.0 - 2026-10-14
+
+- `EnvironmentValues.uappSystemTranslationEnabled` passa a ser público: o app
+  pode desligar a tradução automática do sistema em avaliações, requisições e
+  na biografia da tela Sobre, como nos testes, em que o framework Translation
+  tenta mostrar um erro sem cena e derruba o processo.
+
 ## 1.5.2 - 2026-10-12
 
 - Acessibilidade: o tamanho máximo de texto das telas do pacote baixa de
