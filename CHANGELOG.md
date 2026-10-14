@@ -6,6 +6,19 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+## 1.7.0 - 2026-10-14
+
+- `UAPPUserScreen(session:authentication:client:theme:onSessionChange:onEditProfile:)`:
+  novo parâmetro opcional `onEditProfile`. Quando informado, o cabeçalho da
+  conta conectada mostra um botão com lápis, na cor de destaque, com o rótulo
+  "Editar perfil" nos 13 idiomas; o aplicativo apresenta o próprio editor. Sem
+  a ação, a tela fica como antes. Quando o aplicativo passa uma sessão
+  atualizada da mesma conta, a tela passa a exibi-la, com o novo nome.
+- Perfil: a estatística "Feedbacks" passa a se chamar "Requisições", o
+  histórico vira "Histórico de requisições" e a lista vazia fala em
+  requisições, o termo usado pelo UAPP. As chaves não mudaram; os 13 idiomas
+  foram atualizados (por exemplo, "Requests" e "Request history" em inglês).
+
 ## 1.6.0 - 2026-10-14
 
 - `EnvironmentValues.uappSystemTranslationEnabled` passa a ser público: o app

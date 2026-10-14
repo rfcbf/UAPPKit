@@ -148,6 +148,33 @@ struct UAPPUserModelTests {
         #expect(model.profilePhoto == nil)
     }
 
+    @Test("Sessão editada pelo aplicativo substitui a atual só para a mesma conta")
+    func adoptSessionFromHost() {
+        let session = UAPPAuthenticationSession(
+            identity: .init(userId: "verified", displayName: "Pessoa"),
+            accessToken: "fake-token"
+        )
+        var delivered = 0
+        let model = UAPPUserModel(session: session, authentication: AccountProviderStub()) { _ in delivered += 1 }
+        let renamed = UAPPAuthenticationSession(
+            identity: .init(userId: "verified", displayName: "Pessoa Renomeada"),
+            accessToken: "fake-token"
+        )
+        model.adoptSession(renamed)
+        #expect(model.session?.identity.displayName == "Pessoa Renomeada")
+        let otherAccount = UAPPAuthenticationSession(
+            identity: .init(userId: "other", displayName: "Outra"),
+            accessToken: "other-token"
+        )
+        model.adoptSession(otherAccount)
+        #expect(model.session == renamed)
+        #expect(delivered == 0)
+
+        let publicModel = UAPPUserModel()
+        publicModel.adoptSession(renamed)
+        #expect(publicModel.session == nil)
+    }
+
     @Test("Falha ao trocar a foto preserva a anterior e permite nova tentativa")
     func updateProfilePhotoFailure() async {
         let provider = AccountProviderStub(failsPhotoOnce: true)

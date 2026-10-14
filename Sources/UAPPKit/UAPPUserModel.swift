@@ -221,6 +221,15 @@ final class UAPPUserModel: ObservableObject {
         }
     }
 
+    /// Adota a sessão que o aplicativo passou depois de editar o perfil fora da tela.
+    /// Só vale para a mesma conta e fora de envio de foto ou saída, para não desfazer essas operações.
+    func adoptSession(_ updated: UAPPAuthenticationSession) {
+        guard !isBusy, !isUploadingPhoto, let current = session,
+              current.identity.userId == updated.identity.userId,
+              current != updated else { return }
+        session = updated
+    }
+
     func signOut() async {
         guard !isBusy, !isUploadingPhoto, session != nil, let authentication else { return }
         isBusy = true

@@ -51,12 +51,12 @@ No Xcode, escolha **File → Add Package Dependencies…** e informe:
 https://github.com/rfcbf/UAPPKit
 ```
 
-Selecione a versão `1.6.0` ou posterior e adicione o produto `UAPPKit` ao
+Selecione a versão `1.7.0` ou posterior e adicione o produto `UAPPKit` ao
 target do aplicativo. Em outro `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/rfcbf/UAPPKit", from: "1.6.0")
+    .package(url: "https://github.com/rfcbf/UAPPKit", from: "1.7.0")
 ],
 targets: [
     .target(name: "MeuApp", dependencies: ["UAPPKit"])
@@ -373,7 +373,8 @@ Em SwiftUI:
 
 `UAPPUserScreen` mostra foto, nome e e-mail da conta conectada, a ação de
 sair e o histórico de participação em todos os aplicativos vinculados ao mesmo
-usuário.
+usuário. Com `onEditProfile`, o cabeçalho oferece o botão de editar perfil, que
+abre o editor do próprio aplicativo.
 
 ```swift
 try UAPPKit.showUser(

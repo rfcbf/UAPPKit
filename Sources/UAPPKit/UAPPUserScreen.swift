@@ -9,6 +9,9 @@ public struct UAPPUserScreen: View {
     private let theme: UAPPTheme
     private let isPublicProfile: Bool
     private let isLocalProfile: Bool
+    /// Sessão recebida do aplicativo; quando muda para a mesma conta, a tela passa a exibi-la.
+    private let hostSession: UAPPAuthenticationSession?
+    private let onEditProfile: (@MainActor () -> Void)?
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.locale) private var locale
@@ -21,12 +24,18 @@ public struct UAPPUserScreen: View {
     @State private var profileDetent: PresentationDetent = .medium
     #endif
 
+    /// - Parameters:
+    ///   - onSessionChange: Recebe a sessão atualizada pela tela (nova foto) ou `nil` ao sair da conta.
+    ///   - onEditProfile: Quando informado, o cabeçalho mostra um botão de editar perfil que chama esta
+    ///     ação; o aplicativo apresenta o próprio editor. Depois de salvar, basta passar a sessão
+    ///     atualizada em `session` para a tela exibir o novo nome. Sem ação, o botão não aparece.
     public init(
         session: UAPPAuthenticationSession,
         authentication: any UAPPAuthenticationProvider,
         client: UAPPClient? = nil,
         theme: UAPPTheme = .system,
-        onSessionChange: @escaping @MainActor (UAPPAuthenticationSession?) -> Void = { _ in }
+        onSessionChange: @escaping @MainActor (UAPPAuthenticationSession?) -> Void = { _ in },
+        onEditProfile: (@MainActor () -> Void)? = nil
     ) {
         _model = StateObject(wrappedValue: UAPPUserModel(
             session: session, authentication: authentication, client: client, onSessionChange: onSessionChange
@@ -35,6 +44,8 @@ public struct UAPPUserScreen: View {
         self.theme = theme
         isPublicProfile = false
         isLocalProfile = false
+        hostSession = session
+        self.onEditProfile = onEditProfile
     }
 
     /// Perfil público sem e-mail ou ações da conta; com cliente e feedback, consulta nome e estatísticas públicos.
@@ -53,6 +64,8 @@ public struct UAPPUserScreen: View {
         self.theme = theme
         isPublicProfile = true
         isLocalProfile = false
+        hostSession = nil
+        onEditProfile = nil
     }
 
     /// Perfil local e sua participação pública nesta instalação, sem iniciar login.
@@ -62,6 +75,13 @@ public struct UAPPUserScreen: View {
         self.theme = theme
         isPublicProfile = true
         isLocalProfile = true
+        hostSession = nil
+        onEditProfile = nil
+    }
+
+    /// O botão de editar perfil só existe na conta conectada e quando o aplicativo informa a ação.
+    var showsEditProfile: Bool {
+        !isPublicProfile && onEditProfile != nil
     }
 
     private var palette: UAPPResolvedPalette {
@@ -106,6 +126,9 @@ public struct UAPPUserScreen: View {
                             }
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
+                        if showsEditProfile {
+                            editProfileButton
+                        }
                     }
                     if isPublicProfile {
                         publicActivityContent
@@ -180,6 +203,11 @@ public struct UAPPUserScreen: View {
         .modifier(UAPPFeedbackLiveModifier(client: model.profileClient) {
             await model.reconcileActivity()
         })
+        .uappOnChange(of: hostSession) { session in
+            if let session {
+                model.adoptSession(session)
+            }
+        }
         .uappOnChange(of: model.session == nil) { signedOut in
             if signedOut, !isPublicProfile {
                 dismiss()
@@ -189,6 +217,27 @@ public struct UAPPUserScreen: View {
         .presentationDetents([.medium, .large], selection: $profileDetent)
         .presentationDragIndicator(.visible)
         #endif
+    }
+
+    private var editProfileButton: some View {
+        Button {
+            onEditProfile?()
+        } label: {
+            // Mesmo desenho de `UAPPAccentIconBadge`, sem esconder o ícone do VoiceOver.
+            Image(systemName: "pencil")
+                .font(.body.weight(.semibold))
+                .foregroundStyle(accentColor)
+                .frame(width: 40, height: 40)
+                .background(
+                    accentColor.opacity(UAPPSurface.accentFillOpacity(colorScheme)),
+                    in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+                )
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text(verbatim: localized("user.edit_profile")))
+        .disabled(model.isBusy || model.isUploadingPhoto)
     }
 
     private var avatarRing: some View {
@@ -396,7 +445,10 @@ public struct UAPPUserScreen: View {
             }
         }
     }
+}
 
+/// Partes do histórico e dos cartões de atividade, fora do corpo da tela para mantê-lo enxuto.
+extension UAPPUserScreen {
     private func historyCard(_ item: UAPPUserActivityPage.Item) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             if !isPublicProfile {
