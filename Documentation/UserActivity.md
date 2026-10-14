@@ -49,6 +49,27 @@ para a atividade da conta.
 sem cliente continua compatível, mas não consulta atividade. A sheet abre em
 altura média e pode ser expandida. O botão vermelho de saída permanece na barra.
 
+### Editar perfil
+
+O aplicativo pode oferecer a edição do perfil com o próprio editor. Ao informar
+`onEditProfile`, o cabeçalho da conta conectada mostra um botão com lápis, na
+cor de destaque do tema e com o rótulo "Editar perfil" nos idiomas do pacote.
+Sem a ação, nada muda. Perfis públicos e o perfil local nunca mostram o botão.
+
+```swift
+UAPPUserScreen(
+    session: session,
+    authentication: authentication,
+    client: try UAPPKit.makeClient(),
+    onSessionChange: { accountModel.session = $0 },
+    onEditProfile: { isEditingProfile = true }
+)
+```
+
+Depois de salvar, passe a sessão atualizada em `session` (por exemplo, a de
+`authentication.currentSession()`). A tela adota essa sessão quando ela é da
+mesma conta e mostra o novo nome sem ser reaberta.
+
 `UAPPClient.userActivity(session:limit:cursor:)` consulta o endpoint autenticado
 `public-user-activity`. A identidade é validada pelo token no servidor: o
 aplicativo não escolhe um usuário por ID, e-mail ou instalação. Cada consulta

@@ -106,6 +106,47 @@ struct UAPPUserScreenTests {
         await render(UAPPUserScreen(session: withoutPhoto, authentication: AccountProviderStub()), settling: true)
     }
 
+    @Test("Botão de editar perfil só aparece na conta conectada com ação do aplicativo")
+    func editProfileButtonVisibility() async {
+        let session = UAPPAuthenticationSession(
+            identity: UAPPIdentity(userId: "verified", email: "person@example.test", displayName: "Pessoa Conectada"),
+            accessToken: "fake-token"
+        )
+        let authentication = StubAuthentication()
+        await authentication.setSession(session)
+        let withAction = UAPPUserScreen(
+            session: session, authentication: authentication, client: profileClient(),
+            onSessionChange: { _ in }, onEditProfile: {}
+        )
+        #expect(withAction.showsEditProfile)
+        await render(withAction, settling: true)
+
+        // A closure final continua indo para `onSessionChange`, como antes da nova ação.
+        let withoutAction = UAPPUserScreen(session: session, authentication: authentication) { _ in }
+        #expect(!withoutAction.showsEditProfile)
+
+        let publicProfile = UAPPUserScreen(publicIdentity: UAPPIdentity(userId: "author", displayName: "Pessoa"))
+        #expect(!publicProfile.showsEditProfile)
+        let localProfile = UAPPUserScreen(profile: UAPPIdentity(userId: "local"), client: profileClient())
+        #expect(!localProfile.showsEditProfile)
+    }
+
+    @Test("Estatísticas e histórico usam o termo requisições em todos os idiomas")
+    func requestTermsInEveryLanguage() {
+        #expect(uappLocalized("user.requests", languageIdentifier: "pt-BR") == "Requisições")
+        #expect(uappLocalized("user.history", languageIdentifier: "pt-BR") == "Histórico de requisições")
+        #expect(uappLocalized("user.history_empty", languageIdentifier: "pt-BR") == "Você ainda não enviou requisições.")
+        #expect(uappLocalized("user.requests", languageIdentifier: "en") == "Requests")
+        #expect(uappLocalized("user.history", languageIdentifier: "en") == "Request history")
+        #expect(uappLocalized("user.edit_profile", languageIdentifier: "pt-BR") == "Editar perfil")
+        for language in UAPPLanguage.supported.map(\.identifier) {
+            #expect(uappLocalized("user.edit_profile", languageIdentifier: language) != "user.edit_profile")
+            for key in ["user.requests", "user.history", "user.history_empty"] {
+                #expect(!uappLocalized(key, languageIdentifier: language).localizedCaseInsensitiveContains("feedback"))
+            }
+        }
+    }
+
     @Test("Destino do perfil carrega o item, informa falha e item ausente")
     func profileFeedbackDestination() async {
         let item = #"{"id":"\#(profileFeedbackId)","title":"Modo escuro","body":"Detalhes","vote_count":1,"like_count":0,"public_comment_count":0,"priority":0,"viewer_voted":false,"viewer_liked":false,"created_at":"2026-10-01T12:00:00Z"}"#

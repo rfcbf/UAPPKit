@@ -19142,19 +19142,102 @@
         }
       }
     },
+    "user.edit_profile" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil bearbeiten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit profile"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar perfil"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier le profil"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "प्रोफ़ाइल संपादित करें"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifica profilo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プロフィールを編集"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "프로필 편집"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edytuj profil"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar perfil"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chỉnh sửa hồ sơ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "编辑个人资料"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編輯個人資料"
+          }
+        }
+      }
+    },
     "user.history" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Feedbackverlauf"
+            "value" : "Anfrageverlauf"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Feedback history"
+            "value" : "Request history"
           }
         },
         "es" : {
@@ -19166,13 +19249,13 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Historique des retours"
+            "value" : "Historique des demandes"
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "फ़ीडबैक इतिहास"
+            "value" : "अनुरोध इतिहास"
           }
         },
         "it" : {
@@ -19184,13 +19267,13 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "フィードバック履歴"
+            "value" : "リクエスト履歴"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "피드백 기록"
+            "value" : "요청 기록"
           }
         },
         "pl" : {
@@ -19202,25 +19285,25 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Histórico de feedbacks"
+            "value" : "Histórico de requisições"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lịch sử phản hồi"
+            "value" : "Lịch sử yêu cầu"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "反馈历史"
+            "value" : "请求历史"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "回饋紀錄"
+            "value" : "請求紀錄"
           }
         }
       }
@@ -19231,13 +19314,13 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Du hast noch kein Feedback gesendet."
+            "value" : "Du hast noch keine Anfragen gesendet."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "You haven’t submitted any feedback yet."
+            "value" : "You haven’t submitted any requests yet."
           }
         },
         "es" : {
@@ -19249,13 +19332,13 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vous n’avez pas encore envoyé de retour."
+            "value" : "Vous n’avez pas encore envoyé de demande."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "आपने अभी तक कोई फ़ीडबैक नहीं भेजा है।"
+            "value" : "आपने अभी तक कोई अनुरोध नहीं भेजा है।"
           }
         },
         "it" : {
@@ -19267,13 +19350,13 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "まだフィードバックを送信していません。"
+            "value" : "まだリクエストを送信していません。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "아직 피드백을 보내지 않았습니다."
+            "value" : "아직 요청을 보내지 않았습니다."
           }
         },
         "pl" : {
@@ -19285,25 +19368,25 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Você ainda não enviou feedbacks."
+            "value" : "Você ainda não enviou requisições."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bạn chưa gửi phản hồi nào."
+            "value" : "Bạn chưa gửi yêu cầu nào."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "你还没有提交反馈。"
+            "value" : "你还没有提交请求。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "你還沒有提交回饋。"
+            "value" : "你還沒有提交請求。"
           }
         }
       }
@@ -19563,13 +19646,13 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Feedbacks"
+            "value" : "Anfragen"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Feedbacks"
+            "value" : "Requests"
           }
         },
         "es" : {
@@ -19581,13 +19664,13 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Retours"
+            "value" : "Demandes"
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "फ़ीडबैक"
+            "value" : "अनुरोध"
           }
         },
         "it" : {
@@ -19599,13 +19682,13 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "フィードバック"
+            "value" : "リクエスト"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "피드백"
+            "value" : "요청"
           }
         },
         "pl" : {
@@ -19617,25 +19700,25 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Feedbacks"
+            "value" : "Requisições"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Phản hồi"
+            "value" : "Yêu cầu"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "反馈"
+            "value" : "请求"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "回饋"
+            "value" : "請求"
           }
         }
       }
