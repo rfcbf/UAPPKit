@@ -58,9 +58,10 @@ private struct UAPPSystemTranslationEnabledKey: EnvironmentKey {
     static let defaultValue = true
 }
 
-extension EnvironmentValues {
+public extension EnvironmentValues {
     /// Permite desligar a tradução automática do sistema onde ela não está disponível,
     /// como nos testes, mantendo o texto original sem acionar o framework Translation.
+    /// Vale para avaliações, requisições e a biografia da tela Sobre.
     var uappSystemTranslationEnabled: Bool {
         get { self[UAPPSystemTranslationEnabledKey.self] }
         set { self[UAPPSystemTranslationEnabledKey.self] = newValue }
