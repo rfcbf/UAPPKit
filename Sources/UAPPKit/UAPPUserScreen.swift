@@ -445,7 +445,10 @@ public struct UAPPUserScreen: View {
             }
         }
     }
+}
 
+/// Partes do histórico e dos cartões de atividade, fora do corpo da tela para mantê-lo enxuto.
+extension UAPPUserScreen {
     private func historyCard(_ item: UAPPUserActivityPage.Item) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             if !isPublicProfile {
