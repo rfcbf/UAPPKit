@@ -465,7 +465,7 @@ struct UAPPSubmitFeedbackScreen: View {
 
     static let minimumTitleLength = 3
 
-    let client: UAPPClient
+    let sender: UAPPFeedbackSender
     var accentColor: Color?
     let onComplete: () -> Void
     @Environment(\.dismiss) private var dismiss
@@ -479,7 +479,7 @@ struct UAPPSubmitFeedbackScreen: View {
     @State private var isProcessingImage = false
     @State private var category: UAPPFeedbackCategory = .feature
     @State private var isSending = false
-    @State private var errorMessage: String?
+    @State private var errorMessage: UAPPFeedbackSubmitFailure?
     @FocusState private var focusedField: Field?
     @ScaledMetric(relativeTo: .body) private var descriptionMinHeight: CGFloat = 140
     @ScaledMetric(relativeTo: .title2) private var headerIconSize: CGFloat = 52
@@ -532,7 +532,7 @@ struct UAPPSubmitFeedbackScreen: View {
             sendBar
         }
         .uappToast(message: Binding(
-            get: { errorMessage.map { uappLocalized($0) } },
+            get: { errorMessage?.message },
             set: {
                 if $0 == nil {
                     errorMessage = nil
@@ -784,16 +784,16 @@ struct UAPPSubmitFeedbackScreen: View {
         isSending = true
         errorMessage = nil
         do {
-            _ = try await client.submitFeedback(
+            try await sender.send(UAPPFeedbackSubmission(
                 title: title.trimmingCharacters(in: .whitespacesAndNewlines),
-                body: details.trimmingCharacters(in: .whitespacesAndNewlines),
+                details: details.trimmingCharacters(in: .whitespacesAndNewlines),
                 category: category,
                 imagesData: imageData
-            )
+            ))
             onComplete()
         } catch {
             withAnimation(.easeInOut(duration: 0.2)) {
-                errorMessage = "feedback.submit_error"
+                errorMessage = sender.failure(for: error)
             }
         }
         isSending = false
@@ -801,6 +801,11 @@ struct UAPPSubmitFeedbackScreen: View {
 }
 
 extension UAPPSubmitFeedbackScreen {
+    /// Envia pelo cliente do projeto, como a lista de Feedback.
+    init(client: UAPPClient, accentColor: Color? = nil, onComplete: @escaping () -> Void) {
+        self.init(sender: .client(client), accentColor: accentColor, onComplete: onComplete)
+    }
+
     /// Abre o compositor com título, descrição e tipo já preenchidos.
     init(
         client: UAPPClient,
@@ -808,7 +813,17 @@ extension UAPPSubmitFeedbackScreen {
         draft: UAPPFeedbackDraft,
         onComplete: @escaping () -> Void
     ) {
-        self.init(client: client, accentColor: accentColor, onComplete: onComplete)
+        self.init(sender: .client(client), accentColor: accentColor, draft: draft, onComplete: onComplete)
+    }
+
+    /// Abre o compositor preenchido com o envio informado.
+    init(
+        sender: UAPPFeedbackSender,
+        accentColor: Color? = nil,
+        draft: UAPPFeedbackDraft,
+        onComplete: @escaping () -> Void
+    ) {
+        self.init(sender: sender, accentColor: accentColor, onComplete: onComplete)
         _title = State(initialValue: draft.title)
         _details = State(initialValue: draft.details)
         _category = State(initialValue: draft.category)

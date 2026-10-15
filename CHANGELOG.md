@@ -6,6 +6,21 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+## 1.8.0 - 2026-10-15
+
+- `UAPPFeedbackComposerScreen(draft:theme:submit:onComplete:)`: novo
+  inicializador que mostra o mesmo compositor nativo (tipo, título, descrição,
+  anexos e botão Enviar) sem `UAPPClient`; o aplicativo envia a requisição
+  pela própria função `submit`, por exemplo para o seu backend. Se `submit`
+  lançar um erro, o compositor continua aberto e mostra o aviso de falha, com
+  o texto de `LocalizedError.errorDescription` quando houver, ou a mensagem
+  genérica de sempre. `onComplete` só é chamado depois de um envio sem erro.
+- Novo tipo público `UAPPFeedbackSubmission` (`title`, `details`, `category`,
+  `imagesData`), entregue a `submit` com título e descrição sem espaços nas
+  pontas e os anexos já compactados.
+- O inicializador com `client:` e o envio pela lista de Feedback continuam
+  iguais.
+
 ## 1.7.1 - 2026-10-15
 
 - `UAPPUserScreen`: o botão de editar perfil sai do cabeçalho e vai para a

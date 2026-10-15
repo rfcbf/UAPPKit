@@ -51,12 +51,12 @@ No Xcode, escolha **File → Add Package Dependencies…** e informe:
 https://github.com/rfcbf/UAPPKit
 ```
 
-Selecione a versão `1.7.1` ou posterior e adicione o produto `UAPPKit` ao
+Selecione a versão `1.8.0` ou posterior e adicione o produto `UAPPKit` ao
 target do aplicativo. Em outro `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/rfcbf/UAPPKit", from: "1.7.1")
+    .package(url: "https://github.com/rfcbf/UAPPKit", from: "1.8.0")
 ],
 targets: [
     .target(name: "MeuApp", dependencies: ["UAPPKit"])
@@ -585,6 +585,29 @@ apresente `UAPPFeedbackComposerScreen` com um `UAPPFeedbackDraft`:
     ) {
         isReporting = false
     }
+}
+```
+
+Quando o aplicativo envia a requisição pelo próprio backend, use o mesmo
+compositor sem `client`, informando `submit`. Ele recebe um
+`UAPPFeedbackSubmission` (título e descrição sem espaços nas pontas, tipo e
+anexos compactados). Se `submit` lançar um erro, o compositor continua aberto
+e mostra o aviso de falha, com o texto de `LocalizedError.errorDescription`
+quando houver; `onComplete` só é chamado depois de um envio sem erro:
+
+```swift
+UAPPFeedbackComposerScreen(
+    draft: UAPPFeedbackDraft(category: .feature),
+    submit: { submission in
+        try await backend.sendRequest(
+            title: submission.title,
+            details: submission.details,
+            category: submission.category.rawValue,
+            images: submission.imagesData
+        )
+    }
+) {
+    isReporting = false
 }
 ```
 
