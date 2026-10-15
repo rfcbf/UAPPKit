@@ -40,6 +40,7 @@ struct UAPPFeedbackCard: View {
                     voteButton
                 }
                 textContent
+                tagList
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: 12) {
                         statusBadge.allowsHitTesting(false)
@@ -62,6 +63,7 @@ struct UAPPFeedbackCard: View {
                     voteButton
                 }
                 textContent
+                tagList
                 authorButton
             }
         }
@@ -156,6 +158,20 @@ struct UAPPFeedbackCard: View {
     private var priorityBadge: some View {
         if let priority = UAPPFeedbackPriority(value: item.priority) {
             UAPPFeedbackPriorityBadge(priority: priority, languageIdentifier: selectedLanguage)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(Text(verbatim: UAPPFeedbackTagList.priorityAccessibilityLabel(
+                    priority,
+                    languageIdentifier: selectedLanguage
+                )))
+        }
+    }
+
+    /// Etiquetas aplicadas pela equipe, somente leitura; some quando a requisição não tem etiquetas.
+    @ViewBuilder
+    private var tagList: some View {
+        if !item.tags.isEmpty {
+            UAPPFeedbackTagList(tags: item.tags, languageIdentifier: selectedLanguage)
+                .allowsHitTesting(false)
         }
     }
 

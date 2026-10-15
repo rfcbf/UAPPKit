@@ -128,7 +128,8 @@ Os headers incluem `x-uapp-project` e `x-uapp-installation-id`; o header de
 assinatura é incluído quando há provider configurado.
 
 - **feedback:** itens públicos e publicados, contagens de votos e
-  comentários, categoria, prioridade e estado das reações da instalação.
+  comentários, categoria, prioridade, etiquetas aplicadas (`tags`, opcional
+  em servidores antigos) e estado das reações da instalação.
 - **roadmap:** status visíveis no roadmap e itens publicados agrupados por
   status. O SDK ordena colunas pela posição e não apresenta status ocultos.
 - **changelog:** entradas publicadas com `title`, `slug`, `bodyMarkdown`,

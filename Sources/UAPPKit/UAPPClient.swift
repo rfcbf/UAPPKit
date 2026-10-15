@@ -281,7 +281,8 @@ public actor UAPPClient {
                         statusId: $0.statusId,
                         voters: $0.voters,
                         imageURL: $0.imageURL,
-                        imageURLs: $0.imageURLs
+                        imageURLs: $0.imageURLs,
+                        tags: $0.tags ?? []
                     )
                 }
             return UAPPRoadmapColumn(

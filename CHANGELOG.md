@@ -6,6 +6,23 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+## 1.9.0 - 2026-10-15
+
+- Feedback e Roadmap: quem usa o aplicativo passa a ver a prioridade e as
+  etiquetas da requisição, como a equipe vê na gestão. O detalhe mostra o selo
+  de prioridade, que antes aparecia só no card, e as etiquetas aplicadas; o
+  card mostra as etiquetas abaixo do texto. As etiquetas são selos somente
+  leitura que quebram em linhas, com um ponto na cor da etiqueta e o nome no
+  texto principal do tema, legível em claro e escuro. Sem cor válida, a
+  etiqueta usa a cor neutra do tema. Itens sem prioridade nem etiquetas ficam
+  como antes.
+- Novo tipo público `UAPPFeedbackTag` (`id`, `name` e `color` opcional em
+  hexadecimal, como `#RRGGBB`) e nova propriedade `UAPPFeedbackItem.tags`.
+  O inicializador público de `UAPPFeedbackItem` ganha o parâmetro `tags`, por
+  último e com padrão `[]`, então o código existente continua compilando.
+  Respostas de servidores que ainda não enviam `tags` decodificam lista vazia.
+- Leitores de tela anunciam "Prioridade: …" e "Etiqueta: …" nos 13 idiomas.
+
 ## 1.8.0 - 2026-10-15
 
 - `UAPPFeedbackComposerScreen(draft:theme:submit:onComplete:)`: novo

@@ -51,12 +51,12 @@ No Xcode, escolha **File → Add Package Dependencies…** e informe:
 https://github.com/rfcbf/UAPPKit
 ```
 
-Selecione a versão `1.8.0` ou posterior e adicione o produto `UAPPKit` ao
+Selecione a versão `1.9.0` ou posterior e adicione o produto `UAPPKit` ao
 target do aplicativo. Em outro `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/rfcbf/UAPPKit", from: "1.8.0")
+    .package(url: "https://github.com/rfcbf/UAPPKit", from: "1.9.0")
 ],
 targets: [
     .target(name: "MeuApp", dependencies: ["UAPPKit"])
@@ -284,8 +284,12 @@ com respostas e reações. Feedbacks e comentários aceitam imagens, e a convers
 
 Quando a equipe define uma prioridade para o item no UAPP, o card mostra um
 selo com o nível: baixa, média, grande, muito grande, importante ou urgente.
-Itens sem prioridade não mostram o selo. Para usar o mesmo selo em uma tela
-própria:
+Itens sem prioridade não mostram o selo. As etiquetas aplicadas pela equipe
+aparecem como selos somente leitura, na cor de cada etiqueta, no card e no
+detalhe, onde a prioridade também é exibida. Os dados ficam em
+`UAPPFeedbackItem.tags` (`UAPPFeedbackTag` com `id`, `name` e `color`); com
+servidores que ainda não enviam etiquetas, a lista fica vazia. Para usar o
+mesmo selo de prioridade em uma tela própria:
 
 ```swift
 if let priority = UAPPFeedbackPriority(value: item.priority) {
@@ -315,7 +319,7 @@ aplicativo, veja [Autenticação](#autenticação) e
 </p>
 
 Organiza os itens públicos por status, com os mesmos detalhes, votos,
-comentários e selo de prioridade do Feedback.
+comentários, selo de prioridade e etiquetas do Feedback.
 
 ```swift
 try UAPPKit.showRoadmap()
