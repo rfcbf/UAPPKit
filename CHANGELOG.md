@@ -6,6 +6,12 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+## 1.7.1 - 2026-10-15
+
+- `UAPPUserScreen`: o botão de editar perfil sai do cabeçalho e vai para a
+  barra de navegação, entre sair e o idioma, como ícone de lápis na cor de
+  destaque. O cabeçalho fica só com foto, nome e e-mail.
+
 ## 1.7.0 - 2026-10-14
 
 - `UAPPUserScreen(session:authentication:client:theme:onSessionChange:onEditProfile:)`:
