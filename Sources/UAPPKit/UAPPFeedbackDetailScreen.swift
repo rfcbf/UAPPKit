@@ -193,6 +193,14 @@ struct UAPPFeedbackDetailScreen: View {
             if !item.attachmentURLs.isEmpty {
                 UAPPFeedbackImageGallery(urls: item.attachmentURLs)
             }
+            // Prioridade e etiquetas definidas pela equipe, como aparecem na gestão.
+            if item.priority > 0 || !item.tags.isEmpty {
+                UAPPFeedbackTagList(
+                    tags: item.tags,
+                    priority: UAPPFeedbackPriority(value: item.priority),
+                    languageIdentifier: selectedLanguage
+                )
+            }
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: 12) { statusAndComments; Spacer(minLength: 8); votersAndVotes }
                 VStack(alignment: .leading, spacing: 12) { statusAndComments; votersAndVotes }
@@ -413,37 +421,6 @@ struct UAPPFeedbackDetailScreen: View {
         .accessibilityHidden(true)
     }
 
-    private func reactionLabel(count: Int, selected: Bool) -> some View {
-        Label(count.formatted(), systemImage: "arrow.up")
-            .font(.caption.weight(.semibold)).monospacedDigit()
-            .padding(.horizontal, 10).frame(height: 32)
-            .background(selected ? resolvedAccent.opacity(0.12) : palette.cardBackground, in: Capsule())
-            .overlay(Capsule().strokeBorder(palette.separator, lineWidth: 1))
-            .padding(.vertical, 6).contentShape(Rectangle())
-    }
-
-    private func commentHeading(_ comment: UAPPComment) -> some View {
-        Text(verbatim: displayName(comment)).font(.subheadline.weight(.semibold))
-    }
-
-    private func dateLabel(_ date: Date) -> some View {
-        Text(date, format: .dateTime.day().month(.abbreviated).year())
-            .font(.caption).foregroundStyle(palette.secondaryText)
-    }
-
-    private var authorName: String {
-        normalizedName(item.authorName, fallback: "comments.community")
-    }
-
-    private func displayName(_ comment: UAPPComment) -> String {
-        normalizedName(comment.authorName, fallback: comment.authorKind == .team ? "comments.team" : "comments.community")
-    }
-
-    private func normalizedName(_ name: String?, fallback: String) -> String {
-        let value = name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return value.isEmpty ? uappLocalized(fallback) : value
-    }
-
     private func refresh(showError: Bool = false) async {
         // Uma atualização após envio aguarda a consulta anterior e busca de novo.
         while isRefreshing {
@@ -526,6 +503,40 @@ struct UAPPFeedbackDetailScreen: View {
             message = "detail.comment_submitted"
             await refresh(showError: true)
         } catch { message = "detail.comment_error" }
+    }
+}
+
+/// Textos e rótulos auxiliares do detalhe, fora do corpo principal para manter o tipo enxuto.
+extension UAPPFeedbackDetailScreen {
+    private func reactionLabel(count: Int, selected: Bool) -> some View {
+        Label(count.formatted(), systemImage: "arrow.up")
+            .font(.caption.weight(.semibold)).monospacedDigit()
+            .padding(.horizontal, 10).frame(height: 32)
+            .background(selected ? resolvedAccent.opacity(0.12) : palette.cardBackground, in: Capsule())
+            .overlay(Capsule().strokeBorder(palette.separator, lineWidth: 1))
+            .padding(.vertical, 6).contentShape(Rectangle())
+    }
+
+    private func commentHeading(_ comment: UAPPComment) -> some View {
+        Text(verbatim: displayName(comment)).font(.subheadline.weight(.semibold))
+    }
+
+    private func dateLabel(_ date: Date) -> some View {
+        Text(date, format: .dateTime.day().month(.abbreviated).year())
+            .font(.caption).foregroundStyle(palette.secondaryText)
+    }
+
+    private var authorName: String {
+        normalizedName(item.authorName, fallback: "comments.community")
+    }
+
+    private func displayName(_ comment: UAPPComment) -> String {
+        normalizedName(comment.authorName, fallback: comment.authorKind == .team ? "comments.team" : "comments.community")
+    }
+
+    private func normalizedName(_ name: String?, fallback: String) -> String {
+        let value = name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return value.isEmpty ? uappLocalized(fallback) : value
     }
 }
 

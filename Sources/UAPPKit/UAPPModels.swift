@@ -49,6 +49,8 @@ public struct UAPPFeedbackItem: Identifiable, Sendable, Equatable, Codable {
     public let voters: [UAPPFeedbackVoter]?
     public let imageURL: URL?
     public let imageURLs: [URL]?
+    /// Etiquetas aplicadas pela equipe; servidores antigos não enviam o campo e a lista fica vazia.
+    public let tags: [UAPPFeedbackTag]
     public var attachmentURLs: [URL] {
         imageURLs ?? imageURL.map { [$0] } ?? []
     }
@@ -70,7 +72,8 @@ public struct UAPPFeedbackItem: Identifiable, Sendable, Equatable, Codable {
         statusId: String? = nil,
         voters: [UAPPFeedbackVoter]? = nil,
         imageURL: URL? = nil,
-        imageURLs: [URL]? = nil
+        imageURLs: [URL]? = nil,
+        tags: [UAPPFeedbackTag] = []
     ) {
         self.id = id
         self.title = title
@@ -89,6 +92,7 @@ public struct UAPPFeedbackItem: Identifiable, Sendable, Equatable, Codable {
         self.voters = voters
         self.imageURL = imageURL
         self.imageURLs = imageURLs
+        self.tags = tags
     }
 
     enum CodingKeys: String, CodingKey {
@@ -106,6 +110,34 @@ public struct UAPPFeedbackItem: Identifiable, Sendable, Equatable, Codable {
         case voters
         case imageURL = "image_url"
         case imageURLs = "image_urls"
+        case tags
+    }
+}
+
+public extension UAPPFeedbackItem {
+    /// Decodifica o item; `tags` ausente ou nulo, enviado por servidores antigos, vira lista vazia.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        try self.init(
+            id: container.decode(String.self, forKey: .id),
+            title: container.decode(String.self, forKey: .title),
+            body: container.decodeIfPresent(String.self, forKey: .body),
+            voteCount: container.decode(Int.self, forKey: .voteCount),
+            likeCount: container.decode(Int.self, forKey: .likeCount),
+            commentCount: container.decode(Int.self, forKey: .commentCount),
+            category: container.decodeIfPresent(UAPPFeedbackCategory.self, forKey: .category),
+            priority: container.decode(Int.self, forKey: .priority),
+            viewerVoted: container.decode(Bool.self, forKey: .viewerVoted),
+            viewerLiked: container.decode(Bool.self, forKey: .viewerLiked),
+            createdAt: container.decodeIfPresent(Date.self, forKey: .createdAt),
+            authorName: container.decodeIfPresent(String.self, forKey: .authorName),
+            authorAvatarURL: container.decodeIfPresent(URL.self, forKey: .authorAvatarURL),
+            statusId: container.decodeIfPresent(String.self, forKey: .statusId),
+            voters: container.decodeIfPresent([UAPPFeedbackVoter].self, forKey: .voters),
+            imageURL: container.decodeIfPresent(URL.self, forKey: .imageURL),
+            imageURLs: container.decodeIfPresent([URL].self, forKey: .imageURLs),
+            tags: container.decodeIfPresent([UAPPFeedbackTag].self, forKey: .tags) ?? []
+        )
     }
 }
 
@@ -118,7 +150,7 @@ extension UAPPFeedbackItem {
             category: category, priority: priority, viewerVoted: enabled,
             viewerLiked: viewerLiked, createdAt: createdAt, authorName: authorName,
             authorAvatarURL: authorAvatarURL, statusId: statusId,
-            voters: voters, imageURL: imageURL, imageURLs: imageURLs
+            voters: voters, imageURL: imageURL, imageURLs: imageURLs, tags: tags
         )
     }
 
@@ -130,8 +162,26 @@ extension UAPPFeedbackItem {
             category: category, priority: priority, viewerVoted: viewerVoted,
             viewerLiked: enabled, createdAt: createdAt, authorName: authorName,
             authorAvatarURL: authorAvatarURL, statusId: statusId,
-            voters: voters, imageURL: imageURL, imageURLs: imageURLs
+            voters: voters, imageURL: imageURL, imageURLs: imageURLs, tags: tags
         )
+    }
+}
+
+/// Etiqueta aplicada pela equipe a uma requisição, como aparece na gestão.
+public struct UAPPFeedbackTag: Identifiable, Sendable, Equatable, Hashable, Codable {
+    public let id: String
+    public let name: String
+    /// Cor no formato hexadecimal (`#RRGGBB`); `nil` usa a cor neutra do tema.
+    public let color: String?
+
+    public init(id: String, name: String, color: String? = nil) {
+        self.id = id
+        self.name = name
+        self.color = color
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, color
     }
 }
 
@@ -659,6 +709,7 @@ struct UAPPRoadmapResponse: Decodable {
         let voters: [UAPPFeedbackVoter]?
         let imageURL: URL?
         let imageURLs: [URL]?
+        let tags: [UAPPFeedbackTag]?
 
         enum CodingKeys: String, CodingKey {
             case id, title, body
@@ -675,6 +726,7 @@ struct UAPPRoadmapResponse: Decodable {
             case voters
             case imageURL = "image_url"
             case imageURLs = "image_urls"
+            case tags
         }
     }
 }
