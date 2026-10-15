@@ -26,8 +26,8 @@ public struct UAPPUserScreen: View {
 
     /// - Parameters:
     ///   - onSessionChange: Recebe a sessão atualizada pela tela (nova foto) ou `nil` ao sair da conta.
-    ///   - onEditProfile: Quando informado, o cabeçalho mostra um botão de editar perfil que chama esta
-    ///     ação; o aplicativo apresenta o próprio editor. Depois de salvar, basta passar a sessão
+    ///   - onEditProfile: Quando informado, a barra de navegação mostra um botão de editar perfil, entre sair
+    ///     e o idioma, que chama esta ação; o aplicativo apresenta o próprio editor. Depois de salvar, basta passar a sessão
     ///     atualizada em `session` para a tela exibir o novo nome. Sem ação, o botão não aparece.
     public init(
         session: UAPPAuthenticationSession,
@@ -126,9 +126,6 @@ public struct UAPPUserScreen: View {
                             }
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        if showsEditProfile {
-                            editProfileButton
-                        }
                     }
                     if isPublicProfile {
                         publicActivityContent
@@ -162,6 +159,12 @@ public struct UAPPUserScreen: View {
                         }
                         .accessibilityLabel(Text(verbatim: localized("auth.signout")))
                         .disabled(model.isBusy || model.isUploadingPhoto)
+                    }
+                }
+                // Entre sair e o idioma, que a barra de navegação acrescenta depois.
+                if showsEditProfile {
+                    ToolbarItem(placement: .primaryAction) {
+                        editProfileButton
                     }
                 }
             }
@@ -223,19 +226,9 @@ public struct UAPPUserScreen: View {
         Button {
             onEditProfile?()
         } label: {
-            // Mesmo desenho de `UAPPAccentIconBadge`, sem esconder o ícone do VoiceOver.
             Image(systemName: "pencil")
-                .font(.body.weight(.semibold))
                 .foregroundStyle(accentColor)
-                .frame(width: 40, height: 40)
-                .background(
-                    accentColor.opacity(UAPPSurface.accentFillOpacity(colorScheme)),
-                    in: RoundedRectangle(cornerRadius: 12, style: .continuous)
-                )
-                .frame(minWidth: 44, minHeight: 44)
-                .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
         .accessibilityLabel(Text(verbatim: localized("user.edit_profile")))
         .disabled(model.isBusy || model.isUploadingPhoto)
     }
