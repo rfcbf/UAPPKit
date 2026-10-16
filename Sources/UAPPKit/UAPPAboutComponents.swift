@@ -48,8 +48,10 @@ struct UAPPAboutAppIdentity: View {
                 )
                 .font(.body)
                 .foregroundStyle(palette.secondaryText)
-                .multilineTextAlignment(.center)
+                // Texto longo e com listas lê melhor alinhado à esquerda; ícone, nome e versão ficam centrados.
+                .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             let versionLabel = metadata.versionText.map {
