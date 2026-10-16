@@ -6,6 +6,13 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+- Login com a Apple: depois da troca do código, o `provider_refresh_token`
+  devolvido pelo UAPP segue para a função `apple-signin-token`, que o confere
+  com a Apple e guarda cifrado no servidor para revogar o acesso quando a
+  conta for excluída, como a Apple exige. O token não entra na sessão guardada
+  no Keychain, e uma falha nesse envio não impede o login. Os demais
+  provedores não mudam.
+
 ## 1.9.1 - 2026-10-16
 
 - Sobre: a descrição do aplicativo passa a ficar alinhada à esquerda, o que

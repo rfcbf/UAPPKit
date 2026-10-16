@@ -275,6 +275,57 @@ func supabaseOAuthPKCE(_ method: UAPPLoginMethod) async throws {
     #expect(recorder.requests.count == 1)
 }
 
+private let appleSessionJSON = #"{"access_token":"access","refresh_token":"refresh","expires_in":3600,"provider_refresh_token":"apple-refresh","user":{"id":"verified","email":"person@example.test","user_metadata":{}}}"#
+
+@Test("Login com a Apple envia o refresh token do provedor ao servidor, sem bloquear o login", arguments: [200, 500])
+func appleProviderRefreshTokenIsStored(_ functionStatus: Int) async throws {
+    let recorder = RequestRecorder()
+    let auth = UAPPAuthentication(
+        configuration: authConfiguration(),
+        transport: StubTransport { request in
+            recorder.record(request)
+            if request.url?.lastPathComponent == "apple-signin-token" {
+                return response(functionStatus, #"{"stored":true}"#)
+            }
+            return response(appleSessionJSON)
+        },
+        oauthPresenter: { _, callback in try #require(URL(string: callback.absoluteString + "?code=code")) }
+    )
+
+    #expect(try await auth.signIn(method: .apple).accessToken == "access")
+
+    #expect(recorder.requests.map { $0.url?.path } == ["/auth/v1/token", "/functions/v1/apple-signin-token"])
+    let stored = try #require(recorder.requests.last)
+    #expect(stored.httpMethod == "POST")
+    #expect(stored.value(forHTTPHeaderField: "Authorization") == "Bearer access")
+    #expect(stored.value(forHTTPHeaderField: "apikey") == "sb_publishable_example")
+    let body = try #require(stored.httpBody)
+    #expect(try JSONSerialization.jsonObject(with: body) as? [String: String] == ["refreshToken": "apple-refresh"])
+}
+
+@Test("Outros provedores e respostas sem token não chamam o servidor", arguments: [UAPPLoginMethod.google, .github])
+func otherProvidersDoNotStoreRefreshToken(_ method: UAPPLoginMethod) async throws {
+    let recorder = RequestRecorder()
+    let auth = UAPPAuthentication(
+        configuration: authConfiguration(),
+        transport: StubTransport { request in
+            recorder.record(request)
+            return response(appleSessionJSON)
+        },
+        oauthPresenter: { _, callback in try #require(URL(string: callback.absoluteString + "?code=code")) }
+    )
+    _ = try await auth.signIn(method: method)
+    #expect(recorder.requests.map { $0.url?.lastPathComponent } == ["token"])
+}
+
+@Test("O refresh token do provedor é lido só quando vem preenchido")
+func providerRefreshTokenParsing() {
+    #expect(UAPPAuthentication.providerRefreshToken(in: Data(appleSessionJSON.utf8)) == "apple-refresh")
+    #expect(UAPPAuthentication.providerRefreshToken(in: Data(sessionJSON.utf8)) == nil)
+    #expect(UAPPAuthentication.providerRefreshToken(in: Data(#"{"provider_refresh_token":"  "}"#.utf8)) == nil)
+    #expect(UAPPAuthentication.providerRefreshToken(in: Data("não é json".utf8)) == nil)
+}
+
 @Test("refresh é compartilhado e logout impede recuperar sessão antiga")
 func supabaseRefreshAndConcurrentLogout() async throws {
     let clock = AuthenticationClock()
