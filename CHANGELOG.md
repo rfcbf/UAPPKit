@@ -6,6 +6,12 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+## 1.9.1 - 2026-10-16
+
+- Sobre: a descrição do aplicativo passa a ficar alinhada à esquerda, o que
+  facilita a leitura de textos longos e com listas. Ícone, nome e versão
+  continuam centrados.
+
 ## 1.9.0 - 2026-10-15
 
 - Feedback e Roadmap: quem usa o aplicativo passa a ver a prioridade e as
