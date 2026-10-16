@@ -155,6 +155,10 @@ o Pull Request para a `main`, o agente deve, sem pedir confirmação:
 Se a branch já tiver criado a versão em relação à `main`, não crie outra.
 Nunca altere a versão direto na `main`.
 
+#### Changelog do produto
+
+Toda versão nova do UAPP Web, do UAPPKit ou do UAPP Pulse ganha, no mesmo ciclo da publicação, uma entrada no changelog do produto interno correspondente (tabela `changelogs` do aplicativo "UAPP", "UAPPKit" ou "UAPP Pulse"), em PRD e em DEV, nessa ordem. Título e versão são o número da versão, `released_at` é a data da publicação, o texto abre com um resumo de uma linha e traz só as seções com conteúdo (`new`, `improved`, `fixed`, `security`), em pt-BR e no mesmo formato das entradas existentes. Não duplicar uma versão já registrada. Isso vale além do `CHANGELOG.md` do repositório, quando ele existir.
+
 #### Tag automática no merge
 
 A tag não é criada na mão. O workflow `.github/workflows/release-tag.yml` roda
