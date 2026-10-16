@@ -306,9 +306,44 @@ public actor UAPPAuthentication: UAPPAuthenticationProvider {
         guard let url = components?.url else { throw UAPPAuthenticationError.invalidConfiguration }
         let callback = try await oauthPresenter(url, configuration.callbackURL)
         let code = try Self.callbackCode(callback, expected: configuration.callbackURL)
-        let response = try await token(grant: "pkce", body: ["auth_code": code, "code_verifier": verifier])
+        let data = try await request(
+            path: "token",
+            body: ["auth_code": code, "code_verifier": verifier],
+            query: [URLQueryItem(name: "grant_type", value: "pkce")]
+        )
+        let response = try decodeSession(data)
         guard capturedGeneration == generation else { throw UAPPAuthenticationError.cancelled }
-        return try store(response, recovery: false)
+        let session = try store(response, recovery: false)
+        if method == .apple, let refreshToken = Self.providerRefreshToken(in: data) {
+            await storeAppleRefreshToken(refreshToken, accessToken: response.accessToken)
+        }
+        return session
+    }
+
+    /// Refresh token da Apple devolvido pela troca do código. Não entra na sessão guardada no Keychain:
+    /// só segue para o servidor, que o confere e guarda cifrado.
+    static func providerRefreshToken(in data: Data) -> String? {
+        struct ProviderTokens: Decodable {
+            let providerRefreshToken: String?
+            enum CodingKeys: String, CodingKey { case providerRefreshToken = "provider_refresh_token" }
+        }
+        let value = (try? JSONDecoder().decode(ProviderTokens.self, from: data))?.providerRefreshToken?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return value?.isEmpty == false ? value : nil
+    }
+
+    /// Envia o refresh token da Apple à função `apple-signin-token` do UAPP, que o usa para revogar o acesso
+    /// quando a conta for excluída, como a Apple exige. Melhor esforço: uma falha não impede o login.
+    private func storeAppleRefreshToken(_ refreshToken: String, accessToken: String) async {
+        var request = URLRequest(
+            url: configuration.host.appendingPathComponent("functions/v1/apple-signin-token")
+        )
+        request.httpMethod = "POST"
+        request.setValue(configuration.publishableKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: ["refreshToken": refreshToken])
+        _ = try? await transport.send(request)
     }
 
     public func signOut() async throws {
