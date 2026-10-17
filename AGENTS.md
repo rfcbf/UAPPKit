@@ -103,6 +103,24 @@ atualizada com prefixo `feat/`, `fix/`, `refactor/`, `docs/`, `test/` ou
 `chore/`; fazer commits Conventional Commits; abrir Pull Request e aguardar a CI
 verde antes do merge.
 
+#### Branch local depois do merge
+
+Quando um Pull Request for mesclado, o agente pode apagar a branch local dele
+sem pedir confirmação:
+
+1. Confirmar no GitHub que o Pull Request está mesclado (por exemplo,
+   `gh pr view <branch> --json state` devolve `MERGED`).
+2. Voltar para a `main` e atualizá-la (`git switch main && git pull`).
+3. Apagar a branch com `git branch -d <branch>`. Se o merge foi por squash ou
+   rebase, o Git não reconhece a branch como mesclada; nesse caso, e só com o
+   Pull Request confirmado como mesclado, usar `git branch -D <branch>`.
+4. Rodar `git fetch --prune` para limpar as referências remotas que já não
+   existem.
+
+A regra vale só para a branch local do Pull Request mesclado. Não apagar a
+`main`, branches de Pull Requests ainda abertos nem a branch remota sem pedido
+do proprietário.
+
 ### Sem referência ao uso de IA
 
 Commits, Pull Requests, tags, comentários de código e documentação não podem
