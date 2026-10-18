@@ -13,7 +13,7 @@ public struct UAPPAuthenticationConfiguration: Sendable {
     public init(
         host: URL,
         publishableKey: String,
-        callbackURL: URL,
+        callbackURL: URL = UAPPAuthentication.defaultCallbackURL,
         methods: [UAPPLoginMethod] = UAPPLoginMethod.allCases,
         persistsSession: Bool = true
     ) {
@@ -31,11 +31,21 @@ public typealias UAPPOAuthPresenter = @MainActor @Sendable (URL, URL) async thro
 /// Autenticação do UAPP por código de e-mail e OAuth/PKCE, sem dependências externas.
 /// A sessão é mantida no Keychain e restaurada ao reutilizar a configuração.
 public actor UAPPAuthentication: UAPPAuthenticationProvider {
+    /// Endereço de retorno do login com Apple, Google e GitHub, o mesmo para todos os aplicativos.
+    ///
+    /// O retorno é capturado pela própria sessão de login (`ASWebAuthenticationSession`), sem
+    /// passar pelo sistema: o aplicativo não registra esquema em URL Types e vários aplicativos
+    /// podem usar o mesmo endereço sem conflito. O código devolvido só vale com o verificador
+    /// PKCE guardado por quem iniciou o login. O serviço de autenticação habilita este endereço
+    /// uma única vez para todos os aplicativos.
+    public static let defaultCallbackURL = URL(string: "uappkit://authentication")!
+
     /// Login gerenciado pelo kit, com configuração pública descoberta sob demanda.
-    /// O app registra o esquema do callback e conserva este provedor para reutilizar a sessão.
+    /// Conserve este provedor para reutilizar a sessão. Use o `callbackURL` padrão; um endereço
+    /// próprio só funciona se também for habilitado no serviço de autenticação.
     public nonisolated static func automatic(
         configuration: UAPPConfiguration,
-        callbackURL: URL,
+        callbackURL: URL = defaultCallbackURL,
         methods: [UAPPLoginMethod] = UAPPLoginMethod.allCases
     ) -> any UAPPAuthenticationProvider {
         UAPPAutomaticAuthentication(

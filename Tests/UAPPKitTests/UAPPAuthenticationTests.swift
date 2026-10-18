@@ -275,6 +275,36 @@ func supabaseOAuthPKCE(_ method: UAPPLoginMethod) async throws {
     #expect(recorder.requests.count == 1)
 }
 
+@Test("Retorno do login é único e padrão para todos os aplicativos")
+func defaultCallbackIsShared() throws {
+    #expect(UAPPAuthentication.defaultCallbackURL.absoluteString == "uappkit://authentication")
+    let configuration = try UAPPAuthenticationConfiguration(
+        host: #require(URL(string: "https://example.test")),
+        publishableKey: "sb_publishable_example"
+    )
+    #expect(configuration.callbackURL == UAPPAuthentication.defaultCallbackURL)
+}
+
+@Test("OAuth sem callback informado pede o retorno padrão e aceita a volta nele")
+func oauthUsesDefaultCallback() async throws {
+    let configuration = try UAPPAuthenticationConfiguration(
+        host: #require(URL(string: "https://example.test")),
+        publishableKey: "sb_publishable_example",
+        persistsSession: false
+    )
+    let auth = UAPPAuthentication(
+        configuration: configuration,
+        transport: StubTransport { _ in response(sessionJSON) },
+        oauthPresenter: { url, callback in
+            let values = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+            #expect(values.first { $0.name == "redirect_to" }?.value == "uappkit://authentication")
+            #expect(callback == UAPPAuthentication.defaultCallbackURL)
+            return try #require(URL(string: callback.absoluteString + "?code=code"))
+        }
+    )
+    #expect(try await auth.signIn(method: .google).identity.userId == "verified")
+}
+
 private let appleSessionJSON = #"{"access_token":"access","refresh_token":"refresh","expires_in":3600,"provider_refresh_token":"apple-refresh","user":{"id":"verified","email":"person@example.test","user_metadata":{}}}"#
 
 @Test("Login com a Apple envia o refresh token do provedor ao servidor, sem bloquear o login", arguments: [200, 500])

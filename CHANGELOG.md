@@ -6,6 +6,16 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+## 1.11.0 - 2026-10-18
+
+- Login com Apple, Google e GitHub: o endereço de retorno passa a ser único para
+  todos os aplicativos, `UAPPAuthentication.defaultCallbackURL`
+  (`uappkit://authentication`), e é o padrão de `callbackURL` em
+  `UAPPKit.makeAuthentication`, `UAPPAuthentication.automatic` e
+  `UAPPAuthenticationConfiguration`. O aplicativo não registra mais esquema em
+  URL Types nem pede a habilitação de um endereço próprio. Quem já informa um
+  `callbackURL` continua funcionando.
+
 ## 1.10.0 - 2026-10-16
 
 - Login com a Apple: depois da troca do código, o `provider_refresh_token`

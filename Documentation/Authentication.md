@@ -43,10 +43,16 @@ No Demo, toque na conta conectada na tela principal para abrir suas informaçõe
 Depois do setup, crie e conserve o provedor na camada de conta do aplicativo:
 
 ```swift
-let authentication = try UAPPKit.makeAuthentication(
-    callbackURL: URL(string: "meuapp://authentication")!
-)
+let authentication = try UAPPKit.makeAuthentication()
 ```
+
+O retorno do login com Apple, Google e GitHub usa o endereço único
+`UAPPAuthentication.defaultCallbackURL` (`uappkit://authentication`), igual para
+todos os aplicativos e habilitado uma única vez no serviço de autenticação. A
+`ASWebAuthenticationSession` captura esse retorno dentro da própria sessão, sem
+depender de esquema registrado no aplicativo, e o PKCE garante que o código só
+vale para quem iniciou o login. Um `callbackURL` próprio continua possível, mas
+precisa ser habilitado no serviço; prefira o padrão.
 
 O setup não exige sessão, token ou chave de autenticação. Essa criação não
 inicia login nem consulta a configuração de autenticação. A configuração
@@ -83,7 +89,7 @@ try await UAPPKit.showFeedback(authentication: authentication)
 try await UAPPKit.showRoadmap(authentication: authentication)
 ```
 
-Sem usar a fachada global, `UAPPAuthentication.automatic(configuration:callbackURL:)`
+Sem usar a fachada global, `UAPPAuthentication.automatic(configuration:)`
 cria o provedor diretamente. Provedores próprios continuam suportados. Os novos
 métodos de cadastro e recuperação têm implementação padrão que informa opção
 não suportada, preservando a conformidade dos adaptadores existentes.

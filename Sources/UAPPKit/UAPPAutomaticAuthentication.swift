@@ -15,7 +15,7 @@ actor UAPPAutomaticAuthentication: UAPPAuthenticationProvider {
     init(
         configuration: UAPPConfiguration,
         transport: UAPPTransport = URLSessionTransport(),
-        callbackURL: URL = URL(string: "uappkit://authentication")!,
+        callbackURL: URL = UAPPAuthentication.defaultCallbackURL,
         methods: [UAPPLoginMethod] = [.email],
         sessionStorage: any UAPPSessionStorage = UAPPTransientSessionStorage()
     ) {
