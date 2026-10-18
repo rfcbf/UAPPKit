@@ -165,7 +165,7 @@ public enum UAPPKit {
 
     /// Cria o provedor reutilizável da conta do app sem iniciar login no setup.
     public static func makeAuthentication(
-        callbackURL: URL,
+        callbackURL: URL = UAPPAuthentication.defaultCallbackURL,
         methods: [UAPPLoginMethod] = UAPPLoginMethod.allCases
     ) throws -> any UAPPAuthenticationProvider {
         guard let configuration else { throw UAPPKitError.notConfigured }

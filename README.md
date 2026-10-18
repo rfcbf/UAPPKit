@@ -51,12 +51,12 @@ No Xcode, escolha **File → Add Package Dependencies…** e informe:
 https://github.com/rfcbf/UAPPKit
 ```
 
-Selecione a versão `1.10.0` ou posterior e adicione o produto `UAPPKit` ao
+Selecione a versão `1.11.0` ou posterior e adicione o produto `UAPPKit` ao
 target do aplicativo. Em outro `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/rfcbf/UAPPKit", from: "1.10.0")
+    .package(url: "https://github.com/rfcbf/UAPPKit", from: "1.11.0")
 ],
 targets: [
     .target(name: "MeuApp", dependencies: ["UAPPKit"])
@@ -419,7 +419,6 @@ de conta:
 
 ```swift
 let authentication = try UAPPKit.makeAuthentication(
-    callbackURL: URL(string: "meuapp://authentication")!,
     methods: [.apple, .google, .email]
 )
 
@@ -440,15 +439,16 @@ servidor e projeto, e renova tokens expirados. Senhas não são armazenadas.
 mostrar a conta ou a opção de login. Uma falha temporária de rede não apaga a
 sessão salva.
 
-Para o login com Google, Apple e GitHub retornar ao aplicativo, registre o
-esquema de `callbackURL` no target:
+O login com Google, Apple e GitHub volta ao aplicativo pelo endereço único
+`UAPPAuthentication.defaultCallbackURL` (`uappkit://authentication`), o mesmo
+para todos os aplicativos. Não é preciso registrar esquema em **URL Types** nem
+pedir a habilitação de um endereço próprio: o retorno é capturado pela própria
+sessão de login (`ASWebAuthenticationSession`), então aplicativos diferentes não
+entram em conflito, e o código devolvido só pode ser trocado por sessão com o
+verificador PKCE guardado pelo aplicativo que iniciou o login.
 
-1. No Xcode, selecione o target do aplicativo e abra **Info → URL Types**.
-2. Em **URL Schemes**, informe o esquema sem `://` (por exemplo, `meuapp`).
-3. Use o endereço completo (`meuapp://authentication`) em `callbackURL`.
-
-A habilitação do endereço de retorno no serviço de autenticação é feita pela
-equipe responsável pelo UAPP; informe o endereço adotado para habilitação.
+`callbackURL` continua aceitando um endereço próprio, mas ele só funciona se
+também for habilitado no serviço de autenticação. Prefira o padrão.
 
 ### 3. `UAPPAuthenticationProvider` próprio
 
