@@ -54,7 +54,6 @@
 		625099D4008B13D9170FE443 /* UAPPKitDemoActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UAPPKitDemoActions.swift; sourceTree = "<group>"; };
 		663BCD399F1979DBBC8E8873 /* UAPPKitDemoMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = UAPPKitDemoMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		69B6B21E02756B4BC5EE7C7F /* DemoAccountScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoAccountScreen.swift; sourceTree = "<group>"; };
-		6A7CFD5B4CC72910B31B1337 /* uappkit-macos-native-e943a7 */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "uappkit-macos-native-e943a7"; path = ../..; sourceTree = SOURCE_ROOT; };
 		720450AB273A812437FB1FA0 /* DemoAccountModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoAccountModelTests.swift; sourceTree = "<group>"; };
 		73C782F8841FCCA38799F669 /* UAPPKitDemoTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UAPPKitDemoTheme.swift; sourceTree = "<group>"; };
 		86C499082AFEE4EA5EC73E4A /* UAPPKitDemoContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UAPPKitDemoContentView.swift; sourceTree = "<group>"; };
@@ -67,6 +66,7 @@
 		AD62410A26135FF3D46570AC /* UAPPKitDemoSections.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UAPPKitDemoSections.swift; sourceTree = "<group>"; };
 		B318E9966D6FE595FBF42611 /* UAPPKitDemoSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UAPPKitDemoSupport.swift; sourceTree = "<group>"; };
 		C23FE361BD825ED69E7E8B5E /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		D13BC7612CCDA1DCEB35EC71 /* UAPPKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = UAPPKit; path = ../..; sourceTree = SOURCE_ROOT; };
 		F35452C154D16D70A7984693 /* DemoMockData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoMockData.swift; sourceTree = "<group>"; };
 		F532A208A2BC93FEFF936EFC /* UAPPKitDemoMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UAPPKitDemoMacApp.swift; sourceTree = "<group>"; };
 		F5550BD2CE3113488F939F26 /* UAPPKitDemoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UAPPKitDemoApp.swift; sourceTree = "<group>"; };
@@ -199,7 +199,7 @@
 		E64D4C5AB6A34249D002F97B /* Swift Package Dependencies */ = {
 			isa = PBXGroup;
 			children = (
-				6A7CFD5B4CC72910B31B1337 /* uappkit-macos-native-e943a7 */,
+				D13BC7612CCDA1DCEB35EC71 /* UAPPKit */,
 			);
 			name = "Swift Package Dependencies";
 			sourceTree = "<group>";
