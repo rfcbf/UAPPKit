@@ -175,3 +175,15 @@ func onChangeModifierNotifiesChanges() async {
         #expect(received == [2])
     }
 }
+
+@Test("idiomas incluem os textos das janelas, do menu e do recorte de foto do Mac", arguments: UAPPLanguage.supported)
+func macTranslations(_ language: UAPPLanguage) {
+    let keys = [
+        "common.cancel", "common.refresh", "account.no_account", "account.has_account", "feedback.select_prompt", "menu.feedback", "menu.about_app",
+        "photo.choose_file", "photo.crop_title", "photo.crop_hint", "photo.zoom", "photo.use"
+    ]
+    for key in keys {
+        #expect(uappLocalized(key, languageIdentifier: language.identifier) != key)
+    }
+    #expect(uappLocalized("menu.about_app", languageIdentifier: language.identifier).contains("%@"))
+}

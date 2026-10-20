@@ -359,7 +359,9 @@ extension ContentView {
                             automaticallyScrolls: true,
                             interval: 15,
                             pageSize: 10
-                        )
+                        ),
+                        showsReviews: true,
+                        reviewsPageSize: 20
                     ))
                 }
             } label: {

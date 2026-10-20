@@ -11,6 +11,8 @@ public struct UAPPRoadmapScreen: View {
     private var selectedLanguage = UAPPLocalizationPreferences.defaultIdentifier
 
     @State private var isLoading = true
+    /// A primeira carga terminou e a cor do projeto já é conhecida.
+    @State private var hasLoaded = false
     @State private var isRefreshing = false
     @State private var errorMessage: String?
     @State private var errorMascotState: UAPPMascotState = .unavailable
@@ -34,10 +36,23 @@ public struct UAPPRoadmapScreen: View {
     }
 
     public var body: some View {
-        screenBody.uappTextSizeLimit()
+        #if os(macOS)
+        // No Mac, um quadro com uma coluna por status; o item escolhido abre no painel à direita.
+        screenChrome(listBody.uappRoadmapDetailPanel(selection: $selectedFeedback) { item in
+            UAPPFeedbackDetailScreen(
+                client: client, item: item, accentColor: accentColor,
+                status: statuses.first { $0.id == item.statusId },
+                onUpdate: replace
+            )
+        })
+        .uappTextSizeLimit()
+        #else
+        screenChrome(listBody)
+            .uappTextSizeLimit()
+        #endif
     }
 
-    @ViewBuilder private var screenBody: some View {
+    private var listBody: some View {
         content
             .modifier(UAPPFeedbackItemNavigation(
                 client: client, accentColor: accentColor, statuses: statuses,
@@ -52,8 +67,13 @@ public struct UAPPRoadmapScreen: View {
                     )
                 }
             }
-            .background(palette.background.ignoresSafeArea())
+            .uappScreenBackground(palette.background)
             .foregroundStyle(palette.primaryText)
+    }
+
+    /// Título, barra de ferramentas, busca e carga da tela.
+    private func screenChrome(_ content: some View) -> some View {
+        content
             #if canImport(UIKit)
             .toolbar(.visible, for: .navigationBar)
             #endif
@@ -75,8 +95,18 @@ public struct UAPPRoadmapScreen: View {
                 query: $query,
                 isPresented: $showsSearch,
                 accentColor: accentColor,
-                promptKey: "common.search"
+                promptKey: "common.search",
+                isPersistentOnMac: true
             ))
+            .modifier(UAPPMacFeedbackCommands(
+                accentColor: accentColor,
+                isRefreshing: isRefreshing,
+                onRefresh: { Task { await load() } }
+            ))
+            #if os(macOS)
+            // No Mac, os botões da barra só aparecem quando a cor do projeto já é conhecida.
+            .environment(\.uappToolbarItemsHidden, !hasLoaded)
+            #endif
             .environment(\.uappFeedbackTranslationCache, translationCache)
             .environment(\.locale, Locale(identifier: selectedLanguage))
             .uappOnChange(of: showsSearch) { isPresented in
@@ -131,6 +161,11 @@ public struct UAPPRoadmapScreen: View {
             if presented.allSatisfy(\.items.isEmpty) {
                 UAPPStateCard { UAPPFeedbackNoResults() }
             } else {
+                #if os(macOS)
+                UAPPRoadmapBoard(columns: presented, selectedId: selectedFeedback?.id, accentColor: accentColor) { item, status in
+                    card(item, status: status)
+                }
+                #else
                 List {
                     ForEach(presented, id: \.status.key) { column in
                         Section(uappFeedbackStatusTitle(column.status)) {
@@ -150,6 +185,7 @@ public struct UAPPRoadmapScreen: View {
                 .scrollContentBackground(.hidden)
                 .background(palette.background)
                 .listRowSeparatorTint(palette.separator)
+                #endif
             }
         }
     }
@@ -193,6 +229,7 @@ public struct UAPPRoadmapScreen: View {
         defer {
             isRefreshing = false; if !silently {
                 isLoading = false
+                hasLoaded = true
             }
         }
         do {
@@ -228,6 +265,7 @@ extension UAPPRoadmapScreen {
     ) {
         self.init(client: client)
         _isLoading = State(initialValue: isLoading)
+        _hasLoaded = State(initialValue: !isLoading)
         _errorMessage = State(initialValue: errorMessage)
         _errorMascotState = State(initialValue: errorMascotState)
         _projectColor = State(initialValue: projectColor)

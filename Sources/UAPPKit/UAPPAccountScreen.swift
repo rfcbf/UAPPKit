@@ -10,7 +10,8 @@ import AppKit
 @MainActor
 public struct UAPPAccountScreen: View {
     @StateObject private var model: UAPPAccountModel
-    @Environment(\.dismiss) private var dismiss
+    /// Fecha a sheet ou, quando é a raiz de uma janela do Mac aberta pelo pacote, a janela.
+    private var dismiss = UAPPScreenCloser()
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.locale) private var locale
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -22,6 +23,11 @@ public struct UAPPAccountScreen: View {
     @State private var loadedIcon: Image?
     @State private var isReady = false
     @State private var path: [UAPPAccountModel.Step] = []
+    #if os(macOS)
+    /// No Mac a conta abre direto no login, sem a tela de boas-vindas; login e cadastro se
+    /// alternam na raiz pelo link do rodapé, sem botão de voltar.
+    @State private var rootStep: UAPPAccountModel.Step = .login
+    #endif
     @State private var discoveredAppName: String?
     private let client: UAPPClient?
     private let appName: String
@@ -142,7 +148,11 @@ public struct UAPPAccountScreen: View {
         NavigationStack(path: $path) {
             Group {
                 if isReady {
+                    #if os(macOS)
+                    page(isWelcome: false, step: rootStep, isRoot: true)
+                    #else
                     page(isWelcome: true)
+                    #endif
                 } else {
                     ProgressView()
                         .tint(accentColor)
@@ -158,7 +168,7 @@ public struct UAPPAccountScreen: View {
                 page(isWelcome: false, step: step)
                     .navigationBarBackButtonHidden(true)
                     .toolbar {
-                        if !model.isBusy, step != .newPassword, !model.isCompletingSignup {
+                        if Self.showsBackButton, !model.isBusy, step != .newPassword, !model.isCompletingSignup {
                             ToolbarItem(placement: .navigation) {
                                 Button {
                                     guard !path.isEmpty else { return }
@@ -207,17 +217,28 @@ public struct UAPPAccountScreen: View {
         }
         .uappOnChange(of: model.step) { step in
             visiblePasswordFields.removeAll()
+            #if os(macOS)
+            // Na raiz, login e cadastro só trocam de lugar; as demais etapas são empilhadas.
+            guard path.last != step, !(path.isEmpty && (step == .login || step == .signup)) else { return }
+            #else
             guard !path.isEmpty, path.last != step else { return }
+            #endif
             path.append(step)
         }
         .uappOnChange(of: path) { routes in
+            #if os(macOS)
+            let step = routes.last ?? rootStep
+            #else
             let step = routes.last ?? .login
+            #endif
             if model.step != step {
                 model.navigate(to: step)
             }
             focusedField = nil
         }
         .onDisappear { Task { await model.cancelRecovery() } }
+        .uappMacSheetFrame(width: 480, height: 940, minHeight: 600)
+        .background { dismiss.windowReader }
     }
 }
 
@@ -233,7 +254,7 @@ extension UAPPAccountScreen {
 }
 
 private extension UAPPAccountScreen {
-    func page(isWelcome: Bool, step: UAPPAccountModel.Step = .login) -> some View {
+    func page(isWelcome: Bool, step: UAPPAccountModel.Step = .login, isRoot: Bool = false) -> some View {
         GeometryReader { geometry in
             Group {
                 if usesTwoColumnLayout(
@@ -256,7 +277,7 @@ private extension UAPPAccountScreen {
                     splitFallback(for: step)
                     #endif
                 } else {
-                    singleColumnContent(height: geometry.size.height, isWelcome: isWelcome, step: step)
+                    singleColumnContent(height: geometry.size.height, isWelcome: isWelcome, step: step, isRoot: isRoot)
                 }
             }
         }
@@ -281,7 +302,8 @@ private extension UAPPAccountScreen {
         .uappNavigationBar(
             verbatimTitle: "",
             accentColor: accentColor,
-            showsCloseButton: showsCloseButton && (isWelcome || (step != .login && step != .signup && step != .recover)),
+            showsCloseButton: showsCloseButton &&
+                (isWelcome || isRoot || (step != .login && step != .signup && step != .recover)),
             onClose: {
                 guard !model.isBusy else { return }
                 dismiss()
@@ -302,10 +324,20 @@ private extension UAPPAccountScreen {
         #endif
     }
 
+    /// No Mac a janela é mais alta que o login: o formulário fica centralizado, sem vão embaixo.
+    private func centersVertically(isWelcome: Bool) -> Bool {
+        #if os(macOS)
+        true
+        #else
+        isWelcome || horizontalSizeClass == .regular
+        #endif
+    }
+
     private func singleColumnContent(
         height: CGFloat,
         isWelcome: Bool,
-        step: UAPPAccountModel.Step
+        step: UAPPAccountModel.Step,
+        isRoot: Bool = false
     ) -> some View {
         ScrollView {
             VStack(spacing: 28) {
@@ -313,6 +345,11 @@ private extension UAPPAccountScreen {
                 if !isWelcome {
                     authenticationContent(for: step)
                 }
+                #if os(macOS)
+                if isRoot, !model.isCompletingSignup, model.methods.contains(.email) {
+                    accountSwitchFooter(for: step)
+                }
+                #endif
             }
             .padding(.horizontal, 24)
             .padding(.vertical, 28)
@@ -320,7 +357,7 @@ private extension UAPPAccountScreen {
             .frame(maxWidth: .infinity)
             // Em tela larga (iPad e iPhone Duo aberto em retrato) o formulário fica centralizado;
             // no iPhone ele começa no topo, perto do título.
-            .frame(minHeight: isWelcome || horizontalSizeClass == .regular ? height : 0, alignment: .center)
+            .frame(minHeight: centersVertically(isWelcome: isWelcome) ? height : 0, alignment: .center)
         }
     }
 
@@ -388,6 +425,40 @@ private extension UAPPAccountScreen {
         }
     }
 
+    /// No Mac as etapas não têm seta de voltar: o link do rodapé leva ao login.
+    static var showsBackButton: Bool {
+        #if os(macOS)
+        false
+        #else
+        true
+        #endif
+    }
+
+    #if os(macOS)
+    /// Rodapé do login e do cadastro no Mac: leva de um para o outro na mesma tela.
+    func accountSwitchFooter(for step: UAPPAccountModel.Step) -> some View {
+        let isLogin = step != .signup
+        return HStack(spacing: 4) {
+            Text(verbatim: localized(isLogin ? "account.no_account" : "account.has_account"))
+                .foregroundStyle(palette.secondaryText)
+            Button(localized(isLogin ? "account.create" : "account.connect")) {
+                switchRoot(to: isLogin ? .signup : .login)
+            }
+            .buttonStyle(.link)
+            .disabled(model.isBusy)
+        }
+        .font(.subheadline)
+        .frame(maxWidth: .infinity)
+    }
+
+    func switchRoot(to step: UAPPAccountModel.Step) {
+        guard !model.isBusy else { return }
+        focusedField = nil
+        rootStep = step
+        model.navigate(to: step)
+    }
+    #endif
+
     func open(_ step: UAPPAccountModel.Step) {
         guard !model.isBusy else { return }
         focusedField = nil
@@ -451,18 +522,14 @@ private extension UAPPAccountScreen {
         if model.methods.contains(.email) {
             VStack(alignment: .leading, spacing: 18) {
                 if model.isCompletingSignup {
-                    #if os(iOS)
                     UAPPProfilePhotoPicker(photo: $model.photo, theme: theme, languageIdentifier: selectedLanguage)
-                    #endif
                 } else {
                     switch step {
                     case .login, .signup:
                         if step == .signup {
-                            #if os(iOS)
                             if model.supportsProfilePhoto {
                                 UAPPProfilePhotoPicker(photo: $model.photo, theme: theme, languageIdentifier: selectedLanguage)
                             }
-                            #endif
                             nameField
                         }
                         emailField
@@ -473,6 +540,10 @@ private extension UAPPAccountScreen {
                         } else {
                             Button(localized("account.forgot")) { open(.recover) }
                                 .font(.subheadline.weight(.semibold))
+                                #if os(macOS)
+                                // No Mac o botão padrão ganharia moldura; aqui ele é um link.
+                                .buttonStyle(.link)
+                                #endif
                                 .frame(maxWidth: .infinity, minHeight: 44, alignment: .trailing)
                         }
                     case .recover:
@@ -514,19 +585,32 @@ private extension UAPPAccountScreen {
             if !model.isCompletingSignup, step == .login || step == .signup {
                 socialButtons
                 legalLinks
-            } else if !model.isCompletingSignup, step != .newPassword, step != .recover {
-                Button(localized("account.back_login")) {
-                    focusedField = nil
-                    path = [.login]
-                    model.navigate(to: .login)
-                }
-                .font(.subheadline.weight(.semibold))
-                .frame(minHeight: 44)
-                .disabled(model.isBusy)
+            } else if !model.isCompletingSignup, step != .newPassword, Self.showsBackButton ? step != .recover : true {
+                backToLoginButton
             }
         } else {
             socialButtons
         }
+    }
+
+    private var backToLoginButton: some View {
+        Button(localized("account.back_login")) {
+            focusedField = nil
+            #if os(macOS)
+            // No Mac o login é a raiz da tela: volta para ela sem empilhar outra etapa.
+            path.removeAll()
+            switchRoot(to: .login)
+            #else
+            path = [.login]
+            model.navigate(to: .login)
+            #endif
+        }
+        .font(.subheadline.weight(.semibold))
+        #if os(macOS)
+        .buttonStyle(.link)
+        #endif
+        .frame(minHeight: 44)
+        .disabled(model.isBusy)
     }
 
     private var nameField: some View {

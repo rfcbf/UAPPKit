@@ -37,7 +37,9 @@ enum DemoMockData {
             license: "MIT",
             showsChangelog: true,
             showsAppStoreReview: true,
-            changelogConfiguration: .init(automaticallyScrolls: false, interval: 15, pageSize: 10)
+            changelogConfiguration: .init(automaticallyScrolls: false, interval: 15, pageSize: 10),
+            showsReviews: true,
+            reviewsPageSize: 20
         )
     }
 

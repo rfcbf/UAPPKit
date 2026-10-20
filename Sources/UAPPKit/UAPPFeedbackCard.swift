@@ -81,6 +81,11 @@ struct UAPPFeedbackCard: View {
     private var authorButton: some View {
         Button(action: onProfile) {
             HStack(spacing: 10) {
+                #if os(macOS)
+                // No Mac, sem foto, as iniciais do autor, como no detalhe.
+                UAPPFeedbackAvatar(name: authorName, url: item.authorAvatarURL, size: isCompact ? 22 : 30)
+                    .accessibilityHidden(true)
+                #else
                 UAPPCachedImage(url: item.authorAvatarURL) { phase in
                     if let image = phase.image {
                         image.resizable().scaledToFill()
@@ -93,6 +98,7 @@ struct UAPPFeedbackCard: View {
                 .frame(width: isCompact ? 22 : 30, height: isCompact ? 22 : 30)
                 .clipShape(Circle())
                 .accessibilityHidden(true)
+                #endif
                 Text(verbatim: authorName)
                     .font(isCompact ? .footnote.weight(.medium) : .subheadline.weight(.medium))
                     .foregroundStyle(palette.secondaryText)
@@ -108,6 +114,9 @@ struct UAPPFeedbackCard: View {
 
     private var voteButton: some View {
         Button(action: onReact) {
+            #if os(macOS)
+            UAPPMacVoteLabel(count: item.voteCount, isVoted: item.viewerVoted, accentColor: accentColor)
+            #else
             HStack(spacing: 5) {
                 Image(systemName: item.viewerVoted ? "arrow.up.circle.fill" : "arrow.up.circle")
                 Text(verbatim: item.voteCount.formatted())
@@ -121,6 +130,7 @@ struct UAPPFeedbackCard: View {
             .background(accentColor.opacity(item.viewerVoted ? 0.16 : 0.08), in: Capsule())
             .frame(minHeight: isCompact ? 32 : 44)
             .contentShape(Rectangle())
+            #endif
         }
         .buttonStyle(.plain)
         .uappVoteBurst(isSelected: item.viewerVoted, tint: accentColor)

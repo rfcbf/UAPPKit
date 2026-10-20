@@ -85,6 +85,7 @@ public struct UAPPAboutScreen: View {
                 }
                 .environment(\.uappTheme, theme)
                 .environment(\.locale, Locale(identifier: selectedLanguage))
+                .uappMacSheetFrame(width: 640, height: 700)
                 .presentationDetents([.large])
                 .presentationDragIndicator(.hidden)
             }
@@ -96,6 +97,7 @@ public struct UAPPAboutScreen: View {
                 }
                 .environment(\.uappTheme, theme)
                 .environment(\.locale, Locale(identifier: selectedLanguage))
+                .uappMacSheetFrame(width: 640, height: 700)
                 .presentationDetents([.large])
                 .presentationDragIndicator(.hidden)
             }

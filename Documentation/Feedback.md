@@ -157,9 +157,12 @@ try await UAPPKit.showFeedback(authentication: appAuthentication)
 try await UAPPKit.showRoadmap(authentication: appAuthentication)
 ```
 
-Cada abertura cria um cliente isolado. Para navegação própria/macOS, use
+Cada abertura cria um cliente isolado. No Mac, `show…` abre uma janela própria
+com a lista ao lado do detalhe. Para navegação própria, use
 `try await UAPPKit.makeClient(authentication: appAuthentication)` e injete-o
-em `UAPPFeedbackScreen`/`UAPPRoadmapScreen`.
+em `UAPPFeedbackScreen`/`UAPPRoadmapScreen`; no Mac, sem `NavigationStack` em
+volta, porque a tela já traz a própria divisão lista/detalhe (Feedback) ou o
+quadro com painel de detalhe (Roadmap).
 
 A tela mostra conta confirmada (nome, e-mail e foto), permite sair e pede
 login ao enviar, votar ou comentar. Após login, retoma a ação solicitada.

@@ -126,7 +126,7 @@ struct UAPPStateCard<Content: View>: View {
         content
             .frame(maxWidth: 520)
             .padding(24)
-            .uappCardSurface(palette, cornerRadius: 28)
+            .uappEmptyStateSurface(palette)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             .padding(.horizontal, 16)
     }
@@ -143,6 +143,47 @@ extension Color {
             blue: Double(rgb & 0xFF) / 255,
             opacity: 1
         )
+    }
+}
+
+struct UAPPEmptyContent: View {
+    let mascotState: UAPPMascotState
+    let title: Text
+    let message: Text
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.uappTheme) private var theme
+
+    private var palette: UAPPResolvedPalette {
+        theme.resolved(for: colorScheme)
+    }
+
+    init(mascotState: UAPPMascotState, title: String, message: String) {
+        self.mascotState = mascotState
+        self.title = Text(verbatim: title)
+        self.message = Text(verbatim: message)
+    }
+
+    init(mascotState: UAPPMascotState, titleKey: String, messageKey: String) {
+        self.mascotState = mascotState
+        title = Text(verbatim: uappLocalized(titleKey))
+        message = Text(verbatim: uappLocalized(messageKey))
+    }
+
+    var body: some View {
+        UAPPStateCard {
+            VStack(spacing: 12) {
+                UAPPMascotIllustration(state: mascotState)
+
+                title
+                    .font(.headline)
+                    .multilineTextAlignment(.center)
+
+                message
+                    .font(.subheadline)
+                    .foregroundStyle(palette.secondaryText)
+                    .multilineTextAlignment(.center)
+            }
+        }
     }
 }
 #endif

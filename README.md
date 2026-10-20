@@ -3,7 +3,9 @@
 SDK Swift para adicionar telas nativas do UAPP a aplicativos Apple: Sobre,
 Desenvolvedor, Changelog, Reviews, Feedback, Roadmap e Conta/Perfil. A
 interface é SwiftUI, acompanha o tema e o idioma do aplicativo e não incorpora
-conteúdo em WebView.
+conteúdo em WebView. No iPhone e no iPad as telas abrem em sheets; no Mac, em
+janelas próprias, com barra de ferramentas, atalhos de teclado e lista ao lado
+do detalhe.
 
 <p align="center">
   <img src="Documentation/Images/feedback-light.png" width="230" alt="Tela de Feedback no modo claro">
@@ -24,6 +26,7 @@ conteúdo em WebView.
   - [Feedback](#feedback)
   - [Roadmap](#roadmap)
   - [Conta e Perfil](#conta-e-perfil)
+- [Mac](#mac)
 - [Autenticação](#autenticação)
 - [Cliente para interface própria](#cliente-para-interface-própria)
 - [Idioma e tradução](#idioma-e-tradução)
@@ -37,11 +40,12 @@ conteúdo em WebView.
 
 - Swift 6.0 ou posterior.
 - iOS 18 ou posterior, incluindo iPadOS.
-- macOS 13 ou posterior para o cliente e as views SwiftUI.
+- macOS 13 ou posterior. A barra de ferramentas das janelas abertas por
+  `UAPPKit.show…` exige macOS 14; no macOS 13 a janela abre sem ela.
 
 O pacote não declara suporte a watchOS, tvOS ou visionOS. No iOS, o recorte da
 foto de perfil usa a biblioteca Mantis, resolvida automaticamente pelo Swift
-Package Manager.
+Package Manager; no Mac o recorte é próprio do pacote, sem dependências.
 
 ## Instalação
 
@@ -51,12 +55,12 @@ No Xcode, escolha **File → Add Package Dependencies…** e informe:
 https://github.com/rfcbf/UAPPKit
 ```
 
-Selecione a versão `1.11.0` ou posterior e adicione o produto `UAPPKit` ao
+Selecione a versão `1.12.0` ou posterior e adicione o produto `UAPPKit` ao
 target do aplicativo. Em outro `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/rfcbf/UAPPKit", from: "1.11.0")
+    .package(url: "https://github.com/rfcbf/UAPPKit", from: "1.12.0")
 ],
 targets: [
     .target(name: "MeuApp", dependencies: ["UAPPKit"])
@@ -112,11 +116,12 @@ lançam `UAPPKitError.notConfigured`.
 
 ## Telas prontas
 
-No iOS, os métodos `UAPPKit.show…` apresentam a tela como sheet a partir do
-view controller ativo. Em macOS, ou para usar a navegação do próprio
-aplicativo, incorpore a view SwiftUI correspondente.
+Os métodos `UAPPKit.show…` apresentam a tela pronta: no iPhone e no iPad, como
+sheet a partir do view controller ativo; no Mac, em uma janela própria (veja
+[Mac](#mac)). Para usar a navegação do próprio aplicativo, incorpore a view
+SwiftUI correspondente.
 
-| Tela | Apresentação pelo kit (iOS) | View SwiftUI |
+| Tela | Apresentação pelo kit | View SwiftUI |
 | --- | --- | --- |
 | Sobre | `UAPPKit.showAbout(configuration:)` | `UAPPAboutScreen` |
 | Desenvolvedor | `UAPPKit.showDeveloperAbout()` | `UAPPDeveloperAboutScreen` |
@@ -306,6 +311,9 @@ NavigationStack {
 }
 ```
 
+No Mac, a tela já monta a lista ao lado do detalhe. Ao incorporá-la, coloque-a
+direto na janela, sem envolvê-la em `NavigationStack`.
+
 Sem nenhuma configuração adicional, o kit oferece login por código enviado
 por e-mail apenas no momento de participar. Para reutilizar a conta do
 aplicativo, veja [Autenticação](#autenticação) e
@@ -319,12 +327,14 @@ aplicativo, veja [Autenticação](#autenticação) e
 </p>
 
 Organiza os itens públicos por status, com os mesmos detalhes, votos,
-comentários, selo de prioridade e etiquetas do Feedback.
+comentários, selo de prioridade e etiquetas do Feedback. No Mac, aparece em
+quadro, com uma coluna por status lado a lado, e o item escolhido abre em um
+painel à direita.
 
 ```swift
 try UAPPKit.showRoadmap()
 
-// Ou na navegação do aplicativo:
+// Ou na navegação do aplicativo (no Mac, sem o NavigationStack):
 NavigationStack {
     UAPPRoadmapScreen(client: try UAPPKit.makeParticipationClient())
 }
@@ -398,6 +408,72 @@ UAPPUserScreen(
 
 Veja [conta e participação global](Documentation/UserActivity.md) e
 [fotos de perfil](Documentation/ProfilePhotos.md).
+
+## Mac
+
+As mesmas APIs funcionam no Mac, com telas pensadas para a plataforma e não
+uma adaptação da tela do iPad:
+
+- **Janelas próprias.** Cada `UAPPKit.show…` abre a tela em uma janela do Mac,
+  com título, barra de ferramentas e botão de fechar do sistema, centralizada
+  no monitor. Chamar de novo traz a mesma janela para a frente. Conta e Perfil abrem em janelas estreitas e fecham sozinhas depois
+  do login ou de sair da conta.
+- **Lista e detalhe lado a lado.** No Feedback, como no Mail, a lista fica à
+  esquerda e o item escolhido, à direita; o divisor é arrastável e a largura da
+  lista é lembrada. Cada linha mostra autor (foto ou iniciais) e data, título,
+  descrição, status, prioridade, comentários e o voto, na mesma cápsula do
+  iPhone.
+- **Roadmap em quadro.** Uma coluna por status, lado a lado, com a quantidade
+  de itens; o item escolhido abre em um painel à direita (macOS 14+) ou em
+  uma sheet (macOS 13).
+- **Barra de ferramentas e teclado.** Uma barra única sobre a janela, com os
+  ícones na cor do sistema: busca sempre visível, Atualizar com ⌘R, Enviar
+  feedback com ⌘N, idioma em um menu com a marca no idioma atual e conta pelo
+  avatar. Os botões aparecem quando a cor do projeto já foi carregada. A
+  janela usa o próprio botão de fechar; sheets têm "Fechar" com Esc, e o envio
+  de feedback usa o botão padrão com ⌘↩.
+- **Conta.** Abre direto no login; um link no rodapé alterna entre login e
+  cadastro, sem tela de boas-vindas nem botão de voltar.
+- **Foto de perfil.** O seletor oferece o app Fotos e arquivos do Finder, com
+  recorte circular ajustável por arrasto e zoom. A câmera não é oferecida no Mac.
+
+### Menu Ajuda
+
+`UAPPKitCommands` coloca as telas do kit no fim do menu Ajuda da barra de
+menus. Com `aboutConfiguration`, o item "Sobre" do menu do aplicativo passa a
+abrir a tela Sobre do kit no lugar do painel padrão:
+
+```swift
+@main
+struct ExampleApp: App {
+    init() {
+        UAPPKit.setup(projectId: "meu-app")
+    }
+
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+        }
+        .commands {
+            UAPPKitCommands(
+                items: [.feedback, .roadmap, .changelog, .rateOnAppStore],
+                aboutConfiguration: UAPPAboutConfiguration(showsChangelog: true)
+            )
+        }
+    }
+}
+```
+
+Os itens disponíveis são `.feedback`, `.roadmap`, `.changelog`, `.reviews`,
+`.rateOnAppStore` e `.developerAbout`. Os mesmos comandos aparecem no menu do
+iPad com teclado.
+
+### Sandbox do aplicativo
+
+Em um app Mac com App Sandbox, ative **Outgoing Connections (Client)** para o
+kit acessar o UAPP e **User Selected File → Read Only** para escolher a foto de
+perfil em um arquivo do Finder. O login com Google, Apple ou GitHub retorna ao
+aplicativo pelo esquema de URL configurado no target, como no iOS.
 
 ## Autenticação
 
@@ -752,7 +828,9 @@ e cancela downloads pendentes.
 
 No iOS, `UAPPProfilePhotoPicker(photo: $photo)` permite escolher uma imagem da
 biblioteca ou da câmera, ajustar o recorte circular e receber um JPEG
-comprimido de até 512 pixels.
+comprimido de até 512 pixels. No Mac, a mesma view oferece o app Fotos e um
+arquivo do Finder, com o recorte circular nativo do pacote (arrastar para
+posicionar e controle de zoom); o resultado é o mesmo JPEG.
 
 A câmera exige `NSCameraUsageDescription` no Info.plist **do aplicativo**; o
 pacote não adiciona essa chave. No Xcode, selecione o target do aplicativo,
@@ -766,6 +844,7 @@ Info.plist:
 
 Sem essa descrição, o seletor informa que a câmera está indisponível. A
 biblioteca usa `PhotosPicker` e não exige `NSPhotoLibraryUsageDescription`.
+No Mac não há câmera no seletor, e a chave não é necessária.
 Veja [uso e configuração](Documentation/ProfilePhotos.md).
 
 Para encaixar só o avatar editável em um formulário próprio, sem o texto de
@@ -878,7 +957,8 @@ As ferramentas podem ser instaladas com
 O app de demonstração fica em [`.Examples/UAPPKitDemo`](.Examples/UAPPKitDemo/README.md),
 em um diretório oculto para não aparecer na árvore da dependência local no
 Xcode. Para gerar o projeto, entre nesse diretório e execute
-`xcodegen generate`.
+`xcodegen generate`. O projeto tem dois apps: `UAPPKitDemo` (iPhone e iPad) e
+`UAPPKitDemoMac` (Mac, macOS 14+), cada um com o próprio scheme.
 
 As capturas de tela deste README ficam em
 [`Documentation/Images`](Documentation/Images/README.md). Consulte

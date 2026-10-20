@@ -1,6 +1,8 @@
 import SwiftUI
 #if canImport(UIKit)
 import UIKit
+#elseif canImport(AppKit)
+import AppKit
 #endif
 
 @MainActor
@@ -17,11 +19,18 @@ struct UAPPFeedbackLiveModifier: ViewModifier {
     @Environment(\.scenePhase) private var scenePhase
     #if canImport(UIKit)
     @State private var isForeground = UIApplication.shared.applicationState != .background
+    #elseif canImport(AppKit)
+    /// Ocultar o aplicativo (⌘H) pausa as atualizações no Mac.
+    @State private var isAppHidden = NSApplication.shared.isHidden
     #endif
 
     private var canRefresh: Bool {
         #if canImport(UIKit)
         isForeground
+        #elseif canImport(AppKit)
+        // Fora de uma cena SwiftUI (janelas de `UAPPKit.show…`), o `scenePhase` fica sempre em
+        // `.background`; por isso no Mac só ocultar o aplicativo pausa as atualizações.
+        !isAppHidden
         #else
         scenePhase != .background
         #endif
@@ -58,6 +67,13 @@ struct UAPPFeedbackLiveModifier: ViewModifier {
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
                 isForeground = true
+            }
+            #elseif canImport(AppKit)
+            .onReceive(NotificationCenter.default.publisher(for: NSApplication.didHideNotification)) { _ in
+                isAppHidden = true
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSApplication.didUnhideNotification)) { _ in
+                isAppHidden = false
             }
             #endif
     }

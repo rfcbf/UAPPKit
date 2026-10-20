@@ -12,7 +12,8 @@ public struct UAPPUserScreen: View {
     /// Sessão recebida do aplicativo; quando muda para a mesma conta, a tela passa a exibi-la.
     private let hostSession: UAPPAuthenticationSession?
     private let onEditProfile: (@MainActor () -> Void)?
-    @Environment(\.dismiss) private var dismiss
+    /// Fecha a sheet ou, quando é a raiz de uma janela do Mac aberta pelo pacote, a janela.
+    private var dismiss = UAPPScreenCloser()
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.locale) private var locale
     @AppStorage(UAPPLocalizationPreferences.presentationStorageKey)
@@ -220,6 +221,8 @@ public struct UAPPUserScreen: View {
         .presentationDetents([.medium, .large], selection: $profileDetent)
         .presentationDragIndicator(.visible)
         #endif
+        .uappMacSheetFrame(width: 480, height: 620)
+        .background { dismiss.windowReader }
     }
 
     private var editProfileButton: some View {
@@ -227,7 +230,7 @@ public struct UAPPUserScreen: View {
             onEditProfile?()
         } label: {
             Image(systemName: "pencil")
-                .foregroundStyle(accentColor)
+                .foregroundStyle(Color.uappToolbarIcon(accentColor))
         }
         .accessibilityLabel(Text(verbatim: localized("user.edit_profile")))
         .disabled(model.isBusy || model.isUploadingPhoto)
@@ -242,7 +245,6 @@ public struct UAPPUserScreen: View {
 
     @ViewBuilder
     private var avatarFrame: some View {
-        #if os(iOS)
         if !isPublicProfile, model.supportsProfilePhoto {
             UAPPProfilePhotoPicker(
                 photo: Binding(
@@ -273,9 +275,6 @@ public struct UAPPUserScreen: View {
         } else {
             readOnlyAvatar
         }
-        #else
-        readOnlyAvatar
-        #endif
     }
 
     private var readOnlyAvatar: some View {

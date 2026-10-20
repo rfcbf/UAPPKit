@@ -28,8 +28,12 @@ O recorte usa [Mantis](https://github.com/guoyingtao/Mantis/tree/v3.1.0),
 dependência SPM restrita ao iOS e fixada em 3.1.0 para manter a API utilizada.
 O integrador adiciona somente UAPPKit, sem configurar Mantis separadamente.
 Se já depender de Mantis, use a mesma URL do pacote para evitar dois produtos
-com o mesmo nome. O componente de seleção/recorte não está disponível no macOS;
-as demais APIs do kit continuam independentes dessa dependência.
+com o mesmo nome. No macOS, Mantis não é compilado: o mesmo
+`UAPPProfilePhotoPicker` oferece o app Fotos (`PhotosPicker`) e um arquivo do
+Finder (`fileImporter`), e o recorte circular é feito pelo próprio pacote
+(`UAPPProfilePhotoCropper`, com arrasto e zoom). A câmera não é oferecida no
+Mac. Em app com App Sandbox, a leitura do arquivo exige o direito
+`com.apple.security.files.user-selected.read-only`.
 
 A seleção da biblioteca usa o seletor nativo de fotos. Para oferecer a câmera,
 o aplicativo precisa incluir `NSCameraUsageDescription` em seu Info.plist,
@@ -95,8 +99,8 @@ o provedor só oferece envio. Depois do recorte, a tela mostra imediatamente a
 nova foto, chama `uploadProfilePhoto(_:)` e, ao concluir, exibe a URL da sessão
 atualizada e a entrega em `onSessionChange`. Sair e fechar a tela ficam
 bloqueados durante o envio. Se o envio falhar, a última foto definida volta a
-ser exibida e um aviso permite tentar novamente. No macOS e em provedores sem
-suporte, o avatar continua somente para leitura.
+ser exibida e um aviso permite tentar novamente. Em provedores sem suporte, o
+avatar continua somente para leitura; no macOS o fluxo é o mesmo do iOS.
 
 Adaptadores próprios continuam compatíveis: `supportsProfilePhoto` tem valor
 padrão `false` e `uploadProfilePhoto(_:)` lança `unsupportedMethod` por padrão.

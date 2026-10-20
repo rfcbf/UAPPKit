@@ -54,5 +54,29 @@ janela estreita, um único `Form` mostra primeiro a configuração e depois os
 atalhos. O layout é decidido pela size class, geometria local e região da
 dobradiça; versões anteriores do iOS mantêm um `HStack` simples.
 
+## App para Mac
+
+O target `UAPPKitDemoMac` (scheme de mesmo nome, macOS 14+) é um app Mac
+nativo para testar o kit no computador. A janela principal tem uma barra
+lateral com:
+
+- **Início**: projeto (`public_slug`) e servidor, salvos com as mesmas chaves do
+  app do iPhone; botões que abrem cada tela do kit em janela própria por
+  `UAPPKit.show…`; a conta (entrar, criar conta, abrir o perfil ou sair); e o
+  perfil local (nome, e-mail e foto), com o mesmo modelo e as mesmas regras do
+  app do iPhone.
+- **Novidades embutidas**: o Changelog colocado na navegação do próprio app,
+  sem `show…`.
+
+O target é assinado com a equipe do projeto (`DEVELOPMENT_TEAM`), para a
+assinatura não mudar a cada build: sem isso, o macOS pede a senha das chaves
+"login" sempre que o app acessa a sessão guardada.
+
+O menu Ajuda recebe os itens de `UAPPKitCommands`, e o item "Sobre" do menu do
+app abre a tela Sobre do kit. O argumento `--mock-data` usa os mesmos dados
+fictícios do app do iPhone. O target usa App Sandbox com acesso à rede e a
+arquivos escolhidos pela pessoa (para a foto de perfil) e o esquema
+`uappkit` para o retorno do login.
+
 O projeto referencia o pacote pelo caminho local. Para gerar o projeto Xcode,
 execute `xcodegen generate` neste diretório e abra `UAPPKitDemo.xcodeproj`.

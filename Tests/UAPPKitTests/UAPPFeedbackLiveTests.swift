@@ -3,6 +3,8 @@ import SwiftUI
 import Testing
 #if canImport(UIKit)
 import UIKit
+#elseif canImport(AppKit)
+import AppKit
 #endif
 @testable import UAPPKit
 
@@ -224,6 +226,30 @@ func liveModifierRefreshesOnChanges() async {
     #expect(counter.count >= 3)
     #expect(connections >= 1)
 }
+
+#if os(macOS)
+@Test("no Mac, a atualização ao vivo funciona fora de uma cena e volta depois de ocultar o app")
+@MainActor
+func liveModifierRunsInMacWindowsWithoutScene() async {
+    let client = makeClient { _ in
+        response(#"{"websocketURL":"wss://exemplo.uapp.com/realtime/v1/websocket","apiKey":"public-key","topic":"uapp-feedback-app:meu-app"}"#)
+    }
+    let counter = ChangeCounter()
+    let modifier = UAPPFeedbackLiveModifier(
+        client: client,
+        onChange: { counter.count += 1 },
+        updates: { _ in AsyncThrowingStream { $0.finish(throwing: URLError(.networkConnectionLost)) } },
+        debounce: .milliseconds(1), reconnectDelay: .milliseconds(1), fallbackInterval: .milliseconds(5)
+    )
+    // Janelas de `UAPPKit.show…` ficam com o `scenePhase` em `.background`.
+    await render(Text("Lista").modifier(modifier).environment(\.scenePhase, .background), settling: true) {
+        NotificationCenter.default.post(name: NSApplication.didHideNotification, object: nil)
+        await Task.yield()
+        NotificationCenter.default.post(name: NSApplication.didUnhideNotification, object: nil)
+    }
+    #expect(counter.count >= 1)
+}
+#endif
 
 @Test("modificador live sem cliente não consulta nem recarrega")
 @MainActor

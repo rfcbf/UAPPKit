@@ -216,8 +216,33 @@ struct UAPPLanguageMenu: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.uappTheme) private var theme
     @State private var isPresented = false
+    @AppStorage(UAPPLocalizationPreferences.presentationStorageKey)
+    private var selectedIdentifier = UAPPLocalizationPreferences.defaultIdentifier
 
     var body: some View {
+        #if os(macOS)
+        // No Mac, um menu da barra de ferramentas com a marca no idioma atual.
+        Menu {
+            Picker(selection: Binding(
+                get: { selectedIdentifier },
+                set: { selectedIdentifier = UAPPLocalizationPreferences.selectPresentation(identifier: $0) }
+            )) {
+                ForEach(UAPPLanguage.supported) { language in
+                    Text(verbatim: language.displayName(in: Locale(identifier: selectedIdentifier)))
+                        .tag(language.identifier)
+                }
+            } label: {
+                Text(verbatim: uappLocalized("language.menu"))
+            }
+            .pickerStyle(.inline)
+        } label: {
+            Label(uappLocalized("language.menu"), systemImage: "globe")
+        }
+        .menuIndicator(.hidden)
+        .foregroundStyle(.primary)
+        .help(Text(verbatim: uappLocalized("language.menu")))
+        .accessibilityLabel(Text(verbatim: uappLocalized("language.menu")))
+        #else
         Button {
             isPresented = true
         } label: {
@@ -229,6 +254,7 @@ struct UAPPLanguageMenu: View {
             UAPPLanguageOptions(accentColor: accentColor, isPresented: $isPresented)
                 .uappCompactPopover()
         }
+        #endif
     }
 
     private var accentColor: Color {

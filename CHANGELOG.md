@@ -6,6 +6,69 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+## 1.12.0 - 2026-10-20
+
+- Mac: as telas do kit passam a ter versão nativa para o Mac. `UAPPKit.show…`
+  abre cada tela em uma janela própria, reaproveitada a cada abertura, com
+  título, barra de ferramentas (macOS 14+), centralizada no monitor. Conta
+  e Perfil fecham a janela depois do login ou de sair da conta.
+  `openAppStoreReview()` também fica disponível no Mac.
+- Mac: Feedback mostra a lista ao lado do detalhe, com divisor arrastável e
+  largura lembrada; Roadmap vira um quadro com uma coluna por status e abre o
+  item em um painel à direita. Os ícones da barra usam a cor do sistema. A
+  busca fica sempre visível na barra de ferramentas,
+  com Atualizar (⌘R) e Enviar feedback (⌘N); o idioma vira um menu nativo, as
+  sheets ganham "Fechar" com Esc, o envio de feedback usa ⌘↩ e as sheets têm
+  tamanho próprio no Mac.
+- Mac: `UAPPProfilePhotoPicker` passa a existir no Mac, com o app Fotos, arquivo
+  do Finder e recorte circular próprio do pacote (arrasto e zoom). Cadastro,
+  conclusão do cadastro e Perfil passam a oferecer a foto no Mac.
+- Mac: a sessão da conta passa a ser guardada no Keychain moderno (o mesmo do
+  iPhone), que não pede a senha das chaves "login". Apps sem o direito de usá-lo
+  continuam no Keychain clássico. Ao atualizar, a sessão salva no Keychain
+  clássico não é migrada: a pessoa entra de novo uma vez.
+- Novo `UAPPKitCommands`: coloca Feedback, Roadmap, Novidades, Avaliações,
+  avaliação na App Store e Sobre o desenvolvedor no menu Ajuda e, com
+  `aboutConfiguration`, substitui o item "Sobre" do menu do aplicativo pela
+  tela Sobre do kit.
+- Mac: Feedback, Roadmap e o detalhe se atualizam sozinhos nas janelas do kit
+  (mudanças de status, itens publicados e comentários aparecem sem reabrir a
+  tela) e pausam enquanto o aplicativo está oculto (⌘H). Fora de uma cena
+  SwiftUI o `scenePhase` fica sempre em `.background`, por isso o Mac não
+  depende dele.
+- Mac: o botão "Fechar" só aparece dentro de sheets; em janelas, do kit ou do
+  próprio aplicativo (tela incorporada), vale o botão de fechar da janela. A
+  barra de Feedback e Roadmap fica sobre a divisão inteira, do lado do
+  detalhe, com a mesma cor nas duas colunas. Conta e Perfil abrem em janelas
+  só com o botão de fechar.
+- Mac: a lista de Feedback ganha uma linha própria, no estilo do Mail: autor e
+  data, título, descrição, status, prioridade, comentários e o voto, com
+  destaque no item escolhido. No Mac, o voto da pessoa aparece preenchido com
+  a cor de destaque; sem voto, a cápsula é neutra, com contorno. Vale também
+  para o voto no detalhe e nos comentários, e "Responder" vira texto simples
+  na cor do sistema. O botão de anexar imagem usa a
+  cor do sistema.
+- Mac: estados vazios e de erro (sem novidades, sem avaliações, sem
+  resultados, falha de carga) aparecem direto sobre o fundo da janela, sem a
+  caixa com contorno.
+- Mac: o compositor de feedback vira um formulário agrupado do sistema: tipo
+  em cartões com ícone (duas colunas, selecionado realçado na cor do sistema),
+  título e descrição em seções, imagens em miniaturas
+  menores e uma única barra no rodapé com Cancelar (Esc) e Enviar (⌘↩), sem
+  o botão Fechar nem o menu de idioma da sheet.
+- Mac: a conta abre direto no login, sem a tela de boas-vindas nem botão de
+  voltar. O rodapé leva do login ao cadastro ("Não tem uma conta? Criar conta")
+  e do cadastro ao login ("Já tem uma conta? Conectar"). Recuperar senha e as
+  etapas de código também não têm a seta de voltar: o link "Voltar para o
+  login" no fim da tela leva de volta. "Esqueci minha senha" vira link.
+- Mac: em Feedback e Roadmap, autor sem foto mostra as iniciais, como no
+  detalhe, em vez do ícone genérico. Filtro e ordenação usam a cor do sistema.
+- Mac: em Feedback, Roadmap e Changelog, idioma, conta, busca e ações da barra só
+  aparecem depois que a primeira carga traz a cor do projeto, sem piscar na
+  cor padrão. Fechar continua sempre visível.
+- Demo: novo app `UAPPKitDemoMac` (macOS 14+) para testar as janelas, o menu
+  Ajuda e a foto de perfil no Mac.
+
 ## 1.11.0 - 2026-10-18
 
 - Login com Apple, Google e GitHub: o endereço de retorno passa a ser único para
