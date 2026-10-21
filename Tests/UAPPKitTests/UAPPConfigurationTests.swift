@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 @Test("configuração deriva a URL de functions do host")
 func configurationDerivesFunctionsURL() throws {
@@ -21,6 +21,25 @@ func configurationUsesProductionHostByDefault() {
 
     #expect(configuration.host == UAPPConfiguration.defaultHost)
     #expect(configuration.host.absoluteString == "https://qyjxwtvfmrkfcvisipke.supabase.co")
+}
+
+@Test("APIs públicas usam sempre o servidor de produção")
+func publicAPIsUseProductionServer() async throws {
+    #expect(UAPPAuthenticationConfiguration(publishableKey: "chave-publica").host == UAPPConfiguration.defaultHost)
+    let custom = try UAPPAuthenticationConfiguration(
+        host: #require(URL(string: "https://outro.uapp.test")), publishableKey: "chave"
+    )
+    #expect(custom.host.host == "outro.uapp.test")
+
+    let recorder = RequestRecorder()
+    let activity = UAPPClient(accountActivityTransport: StubTransport { request in
+        recorder.record(request)
+        return (200, Data(#"{"items":[],"apps":[]}"#.utf8))
+    })
+    _ = try? await activity.userActivity(
+        session: UAPPAuthenticationSession(identity: .init(userId: "conta"), accessToken: "token")
+    )
+    #expect(recorder.requests.first?.url?.host == UAPPConfiguration.defaultHost.host)
 }
 
 @Test("configuração preserva o locale inicial")

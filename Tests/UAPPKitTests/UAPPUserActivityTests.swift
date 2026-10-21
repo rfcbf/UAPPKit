@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 @Test("estatísticas usam votos separados dos campos legados")
 func userActivityUsesVoteTotals() throws {

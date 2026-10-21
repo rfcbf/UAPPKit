@@ -53,8 +53,14 @@ public actor UAPPClient {
         localeIdentifier = configuration.localeIdentifier
     }
 
-    /// Creates a client for global signed-in account activity, without an app slug.
-    /// This client is intended for `userActivity(session:limit:cursor:)` only.
+    /// Creates a client for global signed-in account activity on the production UAPP server,
+    /// without an app slug. This client is intended for `userActivity(session:limit:cursor:)` only.
+    public init(accountActivityTransport transport: UAPPTransport = URLSessionTransport()) {
+        self.init(accountActivityHost: UAPPConfiguration.defaultHost, transport: transport)
+    }
+
+    /// Internal variant for another UAPP server (team tools and tests).
+    @_spi(UAPPInternal)
     public init(accountActivityHost host: URL, transport: UAPPTransport = URLSessionTransport()) {
         configuration = UAPPConfiguration(projectId: "", host: host)
         self.transport = transport

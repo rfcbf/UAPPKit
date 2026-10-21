@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 #if os(macOS)
 import AppKit
@@ -90,6 +90,26 @@ struct UAPPKitTests {
             await Task.yield()
         }
         #expect(await client.currentIdentity() == nil)
+    }
+
+    @Test("Setup público acessa sempre o servidor de produção")
+    @MainActor
+    func appKitSetupUsesProductionServer() async {
+        let previousTransport = UAPPKit.makeTransport
+        defer {
+            UAPPKit.makeTransport = previousTransport
+            UAPPKit.reset()
+        }
+        let recorder = RequestRecorder()
+        UAPPKit.makeTransport = {
+            StubTransport { request in
+                recorder.record(request)
+                return (200, Data(#"{"items":[],"statuses":[]}"#.utf8))
+            }
+        }
+        UAPPKit.setup(projectId: "somente-producao")
+        _ = try? await UAPPKit.makeClient().feedbackPage(limit: 1)
+        #expect(recorder.requests.first?.url?.host == UAPPConfiguration.defaultHost.host)
     }
 
     @Test("Feedback/Roadmap usam login automático e compartilham conta sem afetar conteúdo público")

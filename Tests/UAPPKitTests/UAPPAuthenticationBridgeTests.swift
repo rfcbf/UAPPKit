@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 @Test("token da sessão acompanha leitura e todas as interações sem alterar assinatura")
 func accessTokenIsAttachedToRequests() async throws {

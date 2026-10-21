@@ -2,7 +2,7 @@
 import AppKit
 import SwiftUI
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 @MainActor
 @Suite(.serialized)

@@ -65,9 +65,11 @@ ou sincronização automática do changelog.
 
 ## Configuração e identidade
 
-`projectId` é o `public_slug` do projeto no UAPP. O host padrão aponta para a
-URL pública do projeto Supabase de produção; `setup` permite substituí-lo,
-como ao usar DEV. A leitura pública não exige chave de API. O adaptador de
+`projectId` é o `public_slug` do projeto no UAPP. O host é sempre a URL
+pública do projeto Supabase de produção: a API pública não aceita outro
+servidor. As ferramentas da equipe, os testes e os dados fictícios do Demo
+usam a variante interna com `host`, disponível só com
+`@_spi(UAPPInternal) import UAPPKit`. A leitura pública não exige chave de API. O adaptador de
 login opcional recebe apenas a chave pública do Supabase; credenciais
 administrativas nunca entram no SDK.
 

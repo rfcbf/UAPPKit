@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 struct UAPPSessionPersistenceTests: Sendable {
     private let json = #"{"access_token":"access","refresh_token":"refresh","expires_in":3600,"user":{"id":"user","email":"user@example.test","user_metadata":{"full_name":"Visitante","picture":"https://example.test/avatar.png"}}}"#

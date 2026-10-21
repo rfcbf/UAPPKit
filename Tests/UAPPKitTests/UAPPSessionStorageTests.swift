@@ -1,7 +1,7 @@
 import Foundation
 import Security
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 /// Keychain em memória que registra as operações e permite forçar status de erro.
 private final class KeychainDouble: @unchecked Sendable {

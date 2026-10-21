@@ -1,6 +1,6 @@
 import SwiftUI
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 @Test("Descrição do Sobre ignora texto vazio e apara espaços")
 func aboutDescriptionIgnoresBlankText() {

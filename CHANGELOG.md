@@ -6,6 +6,23 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+## 2.0.0 - 2026-10-21
+
+- **Quebra de compatibilidade:** o kit acessa sempre o servidor de produção do
+  UAPP. Os aplicativos não escolhem mais servidor:
+  - `UAPPKit.setup(projectId:theme:signatureProvider:locale:)` perde o
+    parâmetro `host`.
+  - `UAPPConfiguration(projectId:signatureProvider:locale:)` e
+    `UAPPAuthenticationConfiguration(publishableKey:…)` perdem `host`.
+  - `UAPPClient(accountActivityHost:)` dá lugar a
+    `UAPPClient(accountActivityTransport:)`, também em produção.
+  - Para migrar, remova o argumento `host:`. Ferramentas da equipe que precisam
+    de outro servidor usam as variantes com `host`, disponíveis só com
+    `@_spi(UAPPInternal) import UAPPKit`.
+- Demos: sem campo de servidor; o projeto padrão passa a ser o `app-demo` de
+  produção, e os dados fictícios (`--mock-data`) respondem no lugar do
+  servidor de produção, sem acessar a rede.
+
 ## 1.12.0 - 2026-10-20
 
 - Mac: as telas do kit passam a ter versão nativa para o Mac. `UAPPKit.show…`

@@ -1,5 +1,5 @@
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 #if canImport(SwiftUI)
 @Test("resumo de feedback preserva quebras de linha e sinaliza conteúdo oculto")

@@ -4,11 +4,9 @@ import UAPPKit
 
 enum DemoSettings {
     static let defaultLanguage = "pt-BR"
-    static let projectSlug = "calcjuros-dev"
-    static let supabaseServer = "UAPPKitDemo.supabaseServer"
-    static let legacySupabaseServer = "https://zmmdvtykqbpwkwddjeyb.supabase.co"
-    static let defaultProjectSlug = "calcjuros-dev"
-    static let defaultSupabaseServer = "https://zmmdvtykqbpwkwddjeyb.supabase.co"
+    /// Projeto do UAPP usado pelo Demo; o kit acessa sempre o servidor de produção.
+    static let projectSlug = "UAPPKitDemo.projectSlug"
+    static let defaultProjectSlug = "app-demo"
     static let appearance = "UAPPKitDemo.appearance"
     static let lightBackgroundDefault = "#F8F9F8"
     static let lightCardBackgroundDefault = "#FFFFFF"
@@ -61,24 +59,10 @@ struct UAPPKitDemoApp: App {
             ?? DemoSettings.defaultLanguage
         let slug = defaults.string(forKey: DemoSettings.projectSlug)
             ?? DemoSettings.defaultProjectSlug
-        let savedServer = defaults.string(forKey: DemoSettings.supabaseServer)?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        let legacyServer = defaults.string(forKey: DemoSettings.legacySupabaseServer)?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        let serverString = savedServer.flatMap { $0.isEmpty ? nil : $0 }
-            ?? legacyServer.flatMap { $0.isEmpty ? nil : $0 }
-            ?? DemoSettings.defaultSupabaseServer
-        if savedServer == nil || savedServer?.isEmpty == true {
-            defaults.set(serverString, forKey: DemoSettings.supabaseServer)
-        }
-        let server = URL(string: serverString)
-            ?? URL(string: DemoSettings.defaultSupabaseServer)
-            ?? UAPPConfiguration.defaultHost
 
         DemoMockData.activateIfNeeded()
         UAPPKit.setup(
             projectId: DemoMockData.isEnabled ? DemoMockData.projectSlug : slug,
-            host: DemoMockData.isEnabled ? DemoMockData.host : server,
             locale: Locale(identifier: languageIdentifier)
         )
         

@@ -31,10 +31,10 @@ UAPPUserScreen(
 
 Para apps de administração que mostram a atividade global da conta sem
 representar um aplicativo UAPP específico, crie um cliente restrito a esse
-histórico com o host do ambiente desejado:
+histórico, no servidor de produção:
 
 ```swift
-let activityClient = UAPPClient(accountActivityHost: serverURL)
+let activityClient = UAPPClient(accountActivityTransport: URLSessionTransport())
 UAPPUserScreen(
     session: session,
     authentication: authentication,

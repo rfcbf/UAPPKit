@@ -1,5 +1,5 @@
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 @Test("Tradução de review mantém original até sucesso e aceita nova tradução")
 @MainActor

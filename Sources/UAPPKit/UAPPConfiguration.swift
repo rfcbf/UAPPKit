@@ -14,7 +14,7 @@ public struct UAPPConfiguration: Sendable {
     /// Identificador público do projeto/aplicativo no UAPP (o `public_slug`).
     public let projectId: String
 
-    /// Host base do UAPP. Default: produção.
+    /// Host base do UAPP: produção, exceto na variante interna.
     public let host: URL
 
     /// Fornecedor opcional de assinatura para identificar usuários finais de
@@ -25,9 +25,23 @@ public struct UAPPConfiguration: Sendable {
     /// Quando `nil`, o UAPPKit usa a preferência do aplicativo/sistema.
     public let localeIdentifier: String?
 
+    /// Configuração do projeto `projectId` no servidor de produção do UAPP.
     public init(
         projectId: String,
-        host: URL = UAPPConfiguration.defaultHost,
+        signatureProvider: UAPPSignatureProvider? = nil,
+        locale: Locale? = nil
+    ) {
+        self.init(
+            projectId: projectId, host: UAPPConfiguration.defaultHost,
+            signatureProvider: signatureProvider, locale: locale
+        )
+    }
+
+    /// Variante interna para outro servidor do UAPP (ferramentas da equipe e testes).
+    @_spi(UAPPInternal)
+    public init(
+        projectId: String,
+        host: URL,
         signatureProvider: UAPPSignatureProvider? = nil,
         locale: Locale? = nil
     ) {

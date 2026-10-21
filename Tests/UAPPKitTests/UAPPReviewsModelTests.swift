@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 @Test("Reviews mantém tamanho configurado em todas as páginas e retries", arguments: [-10, 0, 1, 10, 20, 50, 100])
 @MainActor

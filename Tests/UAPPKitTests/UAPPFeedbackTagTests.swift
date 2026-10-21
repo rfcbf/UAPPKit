@@ -1,6 +1,6 @@
 import SwiftUI
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 @Test("feedback decodifica as etiquetas aplicadas com e sem cor")
 func feedbackItemDecodesTags() throws {

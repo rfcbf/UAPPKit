@@ -11,7 +11,7 @@ import AppKit
 private let becameActive = NSApplication.didBecomeActiveNotification
 private let resignedActive = NSApplication.didResignActiveNotification
 #endif
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 @Test("autoplay depende do aplicativo ativo, visibilidade, configuração e acessibilidade")
 func changelogAutoplayConditions() {

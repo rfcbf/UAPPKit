@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 @Test("changelog usa o tamanho configurado na primeira página, próximas páginas e retries", arguments: [-10, 0, 1, 10, 20, 50, 100])
 @MainActor

@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 private let profileFeedbackId = "7C4D1A52-0D6B-4E8B-9A3C-1F2E3D4C5B6A"
 private let profileStatusId = "2B5E8F11-6C3A-4D7E-8F90-A1B2C3D4E5F6"

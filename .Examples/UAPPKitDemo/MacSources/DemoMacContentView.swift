@@ -29,7 +29,6 @@ struct DemoMacContentView: View {
     @StateObject private var account = DemoAccountModel()
     @State private var section: DemoMacSection? = .home
     @State private var projectSlug = DemoMacSettings.savedSlug
-    @State private var supabaseServer = DemoMacSettings.savedServer
     @State private var status: String?
     @State private var isTesting = false
 
@@ -59,7 +58,6 @@ struct DemoMacContentView: View {
         Form {
             Section {
                 TextField("Projeto (public_slug)", text: $projectSlug)
-                TextField("Servidor Supabase", text: $supabaseServer)
                 HStack {
                     if let status {
                         Text(status).font(.callout).foregroundStyle(.secondary)
@@ -199,15 +197,13 @@ struct DemoMacContentView: View {
     private func save() {
         guard !DemoMockData.isEnabled else { return }
         let slug = projectSlug.trimmingCharacters(in: .whitespacesAndNewlines)
-        let server = supabaseServer.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !slug.isEmpty, let url = URL(string: server), url.scheme != nil, url.host != nil else {
-            status = "Informe um projeto e um servidor válidos."
+        guard !slug.isEmpty else {
+            status = "Informe o projeto."
             return
         }
         UserDefaults.standard.set(slug, forKey: DemoMacSettings.projectSlug)
-        UserDefaults.standard.set(server, forKey: DemoMacSettings.supabaseServer)
-        UAPPKit.setup(projectId: slug, host: url, locale: Locale(identifier: Locale.preferredLanguages.first ?? "pt-BR"))
-        account.configure(projectId: slug, host: url)
+        UAPPKit.setup(projectId: slug, locale: Locale(identifier: Locale.preferredLanguages.first ?? "pt-BR"))
+        account.configure(projectId: slug)
         status = "Configuração salva."
     }
 
@@ -223,13 +219,9 @@ struct DemoMacContentView: View {
         }
     }
 
-    /// O provedor da conta segue o projeto e o servidor configurados.
+    /// O provedor da conta segue o projeto configurado.
     private func configureAccount() {
-        if DemoMockData.isEnabled {
-            account.configure(projectId: DemoMockData.projectSlug, host: DemoMockData.host)
-        } else if let url = URL(string: DemoMacSettings.savedServer) {
-            account.configure(projectId: DemoMacSettings.savedSlug, host: url)
-        }
+        account.configure(projectId: DemoMockData.isEnabled ? DemoMockData.projectSlug : DemoMacSettings.savedSlug)
     }
 
     /// Como no iPhone: sem conta conectada e com perfil local, o kit recebe só a identidade

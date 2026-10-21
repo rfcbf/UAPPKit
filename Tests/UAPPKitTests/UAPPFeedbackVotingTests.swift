@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 @Test("comentários expõem votação a partir do contrato compatível")
 func commentVotingUsesCompatibleTransport() {

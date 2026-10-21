@@ -1,6 +1,6 @@
 import SwiftUI
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 @Test("Prioridade segue o valor do servidor e ignora requisições sem prioridade")
 func feedbackPriorityMapsServerValues() {

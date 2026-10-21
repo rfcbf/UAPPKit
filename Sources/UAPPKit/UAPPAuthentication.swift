@@ -10,6 +10,21 @@ public struct UAPPAuthenticationConfiguration: Sendable {
     public let methods: [UAPPLoginMethod]
     public let persistsSession: Bool
 
+    /// Login no servidor de produção do UAPP, com a chave pública desse servidor.
+    public init(
+        publishableKey: String,
+        callbackURL: URL = UAPPAuthentication.defaultCallbackURL,
+        methods: [UAPPLoginMethod] = UAPPLoginMethod.allCases,
+        persistsSession: Bool = true
+    ) {
+        self.init(
+            host: UAPPConfiguration.defaultHost, publishableKey: publishableKey,
+            callbackURL: callbackURL, methods: methods, persistsSession: persistsSession
+        )
+    }
+
+    /// Variante interna para outro servidor do UAPP (ferramentas da equipe e testes).
+    @_spi(UAPPInternal)
     public init(
         host: URL,
         publishableKey: String,

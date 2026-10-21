@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 @Test("Identificador da App Store aceita todas as chaves alternativas", arguments: [
     "appleAppId", "apple_app_id", "appStoreAppId", "app_store_app_id", "appStoreId", "app_store_id",
