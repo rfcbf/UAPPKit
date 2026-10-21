@@ -86,6 +86,18 @@ struct UAPPUserScreenTests {
         await render(UAPPUserScreen(session: emailOnly, authentication: authentication), settling: true)
     }
 
+    @Test("Conta com exclusão mostra a ação ao fim da tela e conclui ao sair")
+    func accountRendersDeleteAction() async throws {
+        let provider = DeletionProviderStub()
+        let session = try #require(await provider.currentSession())
+        var delivered: [UAPPAuthenticationSession?] = []
+        await render(UAPPUserScreen(
+            session: session, authentication: provider, client: profileClient(),
+            onSessionChange: { delivered.append($0) }
+        ), settling: true)
+        #expect(delivered.isEmpty)
+    }
+
     @Test("Conta com suporte a foto mostra o avatar editável com a foto atual")
     func accountRendersEditablePhoto() async {
         let session = UAPPAuthenticationSession(

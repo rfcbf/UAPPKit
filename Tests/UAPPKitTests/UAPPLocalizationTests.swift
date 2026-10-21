@@ -187,3 +187,22 @@ func macTranslations(_ language: UAPPLanguage) {
     }
     #expect(uappLocalized("menu.about_app", languageIdentifier: language.identifier).contains("%@"))
 }
+
+@Test("exclusão de conta tem textos próprios em todos os idiomas", arguments: UAPPLanguage.supported)
+func accountDeletionTranslations(_ language: UAPPLanguage) {
+    let keys = [
+        "user.delete_account", "user.delete_account.hint", "user.delete_account.progress",
+        "user.delete_account.title", "user.delete_account.message", "user.delete_account.confirm",
+        "user.delete_account.done_title", "user.delete_account.done_message",
+        "user.delete_account.done_apple_message", "user.delete_account.done_action",
+        "user.delete_account.error", "user.delete_account.subscription_error",
+        "user.delete_account.owner_error", "common.cancel"
+    ]
+    for key in keys {
+        #expect(uappLocalized(key, languageIdentifier: language.identifier) != key)
+    }
+    if language.identifier != "pt-BR" {
+        #expect(uappLocalized("user.delete_account.message", languageIdentifier: language.identifier)
+            != uappLocalized("user.delete_account.message", languageIdentifier: "pt-BR"))
+    }
+}

@@ -73,6 +73,7 @@ public actor UAPPAuthentication: UAPPAuthenticationProvider {
 
     public nonisolated let methods: [UAPPLoginMethod]
     public nonisolated let supportsProfilePhoto = true
+    public nonisolated let supportsAccountDeletion = true
     private let configuration: UAPPAuthenticationConfiguration
     private let transport: UAPPTransport
     private let oauthPresenter: UAPPOAuthPresenter
@@ -596,6 +597,45 @@ public actor UAPPAuthentication: UAPPAuthenticationProvider {
               codes.count == 1, let code = codes.first?.value, !code.isEmpty
         else { throw UAPPAuthenticationError.invalidCallback }
         return code
+    }
+}
+
+public extension UAPPAuthentication {
+    /// Exclui a conta pela função `delete-account` do UAPP, a mesma do painel web: o servidor apaga
+    /// a foto, revoga o "Iniciar sessão com a Apple", encerra as sessões e remove o usuário. Requisições
+    /// e comentários publicados continuam, sem autor. Só depois da confirmação a sessão local é apagada.
+    func deleteAccount() async throws -> UAPPAccountDeletion {
+        guard let session = try await currentSession(), !isRecoverySession else {
+            throw UAPPAuthenticationError.signInRequired
+        }
+        try validateConfiguration()
+        var request = URLRequest(url: configuration.host.appendingPathComponent("functions/v1/delete-account"))
+        request.httpMethod = "POST"
+        request.setValue(configuration.publishableKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer " + session.accessToken, forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = Data("{}".utf8)
+        let (data, response) = try await transport.send(request)
+        do {
+            try UAPPClient.validate(response, data: data)
+        } catch UAPPKitError.http(status: 409, let message) {
+            throw message == "apple_subscription_active"
+                ? UAPPAccountDeletionError.activeAppStoreSubscription
+                : UAPPAccountDeletionError.organizationOwnershipTransferRequired
+        }
+        struct DeletionResponse: Decodable {
+            let deleted: Bool
+            let appleRevocation: String?
+            enum CodingKeys: String, CodingKey { case deleted, appleRevocation }
+        }
+        guard let result = try? JSONDecoder().decode(DeletionResponse.self, from: data), result.deleted else {
+            throw UAPPKitError.invalidResponse
+        }
+        // A conta já não existe: a sessão local sai mesmo que outra operação tenha mudado o estado.
+        try clear()
+        return UAPPAccountDeletion(
+            requiresAppleAccessRemoval: result.appleRevocation == "failed" || result.appleRevocation == "unavailable"
+        )
     }
 }
 

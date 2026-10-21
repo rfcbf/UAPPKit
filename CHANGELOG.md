@@ -6,6 +6,25 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+## 2.2.0 - 2026-10-21
+
+- Conta: `UAPPUserScreen` (e `UAPPKit.showUser`) ganha **Excluir conta** ao fim
+  da tela, no iPhone, no iPad e no Mac, como a App Store exige de apps que
+  permitem criar conta. Um alerta destrutivo explica o que será apagado; durante
+  a exclusão a ação mostra o progresso e a tela não fecha. O kit chama a função
+  `delete-account` do UAPP, que apaga a foto, revoga o "Iniciar sessão com a
+  Apple", encerra as sessões e remove o usuário. Concluída a exclusão, a sessão
+  sai do Keychain, um aviso final confirma (e orienta a remover o acesso da
+  Apple quando o servidor não conseguiu revogá-lo) e, ao fechá-lo,
+  `onSessionChange` recebe `nil`, como em Sair. Assinatura da App Store ativa e
+  conta proprietária de empresa no UAPP são recusadas com orientação na tela.
+  Textos nos 13 idiomas do kit.
+- `UAPPAuthenticationProvider` ganha `supportsAccountDeletion` e
+  `deleteAccount() -> UAPPAccountDeletion`, com implementação padrão (sem
+  suporte), por isso provedores do aplicativo continuam compilando sem mudança.
+  O provedor do kit (`UAPPKit.makeAuthentication()` e `UAPPAuthentication`)
+  implementa a exclusão. Recusas chegam como `UAPPAccountDeletionError`.
+
 ## 2.1.0 - 2026-10-21
 
 - `UAPPProject.autoPublishSeconds`: no app de demonstração do UAPP, o

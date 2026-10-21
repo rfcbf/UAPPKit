@@ -440,3 +440,70 @@ func supabaseLogoutClearsSessionOnFailure() async throws {
     #expect(try await auth.currentSession() == nil)
     try await auth.signOut()
 }
+
+@Test("Exclusão de conta chama delete-account autenticada e só então apaga a sessão local", arguments: [
+    ("not_needed", false), ("revoked", false), ("failed", true), ("unavailable", true)
+])
+func deleteAccountClearsSession(revocation: String, requiresRemoval: Bool) async throws {
+    let recorder = RequestRecorder()
+    let auth = UAPPAuthentication(configuration: authConfiguration(), transport: StubTransport { request in
+        recorder.record(request)
+        if request.url?.lastPathComponent == "delete-account" {
+            return response(#"{"deleted":true,"appleRevocation":"\#(revocation)","deletedOrganizations":0}"#)
+        }
+        return response(sessionJSON)
+    })
+    #expect(auth.supportsAccountDeletion)
+    _ = try await auth.verifyEmailCode(email: "person@example.test", code: "123456")
+    let deletion = try await auth.deleteAccount()
+    #expect(deletion.requiresAppleAccessRemoval == requiresRemoval)
+    #expect(try await auth.currentSession() == nil)
+    let request = try #require(recorder.requests.last)
+    #expect(request.url?.absoluteString == "https://example.test/functions/v1/delete-account")
+    #expect(request.httpMethod == "POST")
+    #expect(request.value(forHTTPHeaderField: "apikey") == "sb_publishable_example")
+    #expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer access")
+    #expect(request.httpBody == Data("{}".utf8))
+}
+
+@Test("Recusas do servidor viram motivos claros e preservam a sessão", arguments: [
+    (409, #"{"error":"apple_subscription_active"}"#),
+    (409, #"{"error":"owner_transfer_required"}"#),
+    (500, #"{"error":"Não foi possível excluir a conta."}"#),
+    (200, #"{"deleted":false}"#),
+    (200, "não é json")
+])
+func deleteAccountFailures(status: Int, body: String) async throws {
+    let auth = UAPPAuthentication(configuration: authConfiguration(), transport: StubTransport { request in
+        if request.url?.lastPathComponent == "delete-account" {
+            return (status, Data(body.utf8))
+        }
+        return response(sessionJSON)
+    })
+    let session = try await auth.verifyEmailCode(email: "person@example.test", code: "123456")
+    do {
+        _ = try await auth.deleteAccount()
+        Issue.record("A exclusão deveria falhar")
+    } catch let error as UAPPAccountDeletionError {
+        #expect(status == 409)
+        #expect(error == (body.contains("apple") ? .activeAppStoreSubscription : .organizationOwnershipTransferRequired))
+    } catch let UAPPKitError.http(status: code, _) {
+        #expect(code == 500)
+    } catch UAPPKitError.invalidResponse {
+        #expect(status == 200)
+    }
+    #expect(try await auth.currentSession() == session)
+}
+
+@Test("Exclusão exige sessão e não chama o servidor sem conta")
+func deleteAccountRequiresSession() async throws {
+    let recorder = RequestRecorder()
+    let auth = UAPPAuthentication(configuration: authConfiguration(), transport: StubTransport { request in
+        recorder.record(request)
+        return response("{}")
+    })
+    await #expect(throws: UAPPAuthenticationError.signInRequired) {
+        try await auth.deleteAccount()
+    }
+    #expect(recorder.requests.isEmpty)
+}
