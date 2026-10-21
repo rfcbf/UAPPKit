@@ -581,6 +581,9 @@ public struct UAPPProject: Sendable, Equatable, Codable {
     public let appleAppId: String?
     public let primaryColor: String?
     public let locale: String?
+    /// Só no app de demonstração do UAPP: segundos até a requisição e o comentário de quem testa
+    /// serem publicados sozinhos, sem moderação. Nulo nos apps comuns.
+    public let autoPublishSeconds: Int?
 
     public init(
         slug: String,
@@ -590,7 +593,8 @@ public struct UAPPProject: Sendable, Equatable, Codable {
         appStoreURL: URL? = nil,
         appleAppId: String? = nil,
         primaryColor: String?,
-        locale: String?
+        locale: String?,
+        autoPublishSeconds: Int? = nil
     ) {
         self.slug = slug
         self.displayName = displayName
@@ -600,6 +604,7 @@ public struct UAPPProject: Sendable, Equatable, Codable {
         self.appleAppId = appleAppId
         self.primaryColor = primaryColor
         self.locale = locale
+        self.autoPublishSeconds = autoPublishSeconds
     }
 
     /// URL da página de avaliação pública do app configurado no UAPP.
@@ -621,6 +626,7 @@ public struct UAPPProject: Sendable, Equatable, Codable {
         case appleAppId
         case primaryColor
         case locale
+        case autoPublishSeconds
     }
 
     private enum AlternateCodingKeys: String, CodingKey {
@@ -661,6 +667,7 @@ public struct UAPPProject: Sendable, Equatable, Codable {
             ?? uappDecodeStringOrInt(from: alternateValues, forKey: .appleIdSnakeCase)
         primaryColor = try values.decodeIfPresent(String.self, forKey: .primaryColor)
         locale = try values.decodeIfPresent(String.self, forKey: .locale)
+        autoPublishSeconds = try? values.decodeIfPresent(Int.self, forKey: .autoPublishSeconds)
     }
 }
 

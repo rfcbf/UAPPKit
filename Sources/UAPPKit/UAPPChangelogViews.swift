@@ -359,13 +359,15 @@ struct UAPPChangelogDetailScreen: View {
             .frame(maxWidth: .infinity)
             .padding()
         }
-        .background(palette.background.ignoresSafeArea())
+        .uappScreenBackground(palette.background)
         .foregroundStyle(palette.primaryText)
         .environment(\.uappChangelogTranslationCache, translationCache ?? inheritedCache)
         .navigationTitle(entry.version.map {
             String(format: uappLocalized("changelog.detail_title", languageIdentifier: locale.identifier), $0)
         } ?? entry.title)
         .tint(tint)
+        // No Mac vale o voltar nativo da navegação, à esquerda do título e na cor do sistema.
+        #if !os(macOS)
         .navigationBarBackButtonHidden()
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
@@ -377,6 +379,7 @@ struct UAPPChangelogDetailScreen: View {
                 .accessibilityLabel(Text(verbatim: uappLocalized("changelog.back")))
             }
         }
+        #endif
     }
 }
 

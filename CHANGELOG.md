@@ -6,6 +6,39 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+## 2.1.0 - 2026-10-21
+
+- `UAPPProject.autoPublishSeconds`: no app de demonstração do UAPP, o
+  servidor informa em quantos segundos a requisição e o comentário de quem
+  testa são publicados sozinhos. Depois de enviar, o Feedback (requisição) e o
+  detalhe (comentário) mostram um aviso com a contagem e recarregam quando o
+  tempo acaba, já com o envio publicado. Nos apps comuns o valor é nulo e nada
+  muda: o envio segue para a moderação.
+- Conta: depois do login, o kit usa o nome e a foto do perfil do UAPP, os
+  mesmos do painel web, quando a conta não tem esses dados. A foto escolhida
+  no kit continua valendo primeiro e, ao ser trocada, passa a ser gravada
+  também no perfil do UAPP. Antes, quem tinha foto só no painel aparecia sem
+  foto e com o e-mail no lugar do nome.
+- Mac: login e cadastro abertos pelo Feedback ou pelo Roadmap usam a mesma
+  janela da conta de `UAPPKit.showAuthentication`, com a altura toda e sem
+  rolagem. Antes abriam numa sheet presa à altura da janela de baixo. Ao fechar
+  a janela, a tela de origem atualiza a sessão e conclui a ação que pediu o
+  login, como um voto.
+- Mac: "Fechar" e Esc voltam a fechar as sheets abertas pelo kit com navegação
+  própria (Changelog e Avaliações dentro do Sobre, compositor de feedback,
+  conta e perfil do autor). O `dismiss` do SwiftUI não fechava essas sheets a
+  partir da barra no Mac; agora quem abre a sheet informa como fechá-la.
+- Mac: o detalhe de uma versão do Changelog e o detalhe de um feedback aberto
+  pelo histórico do perfil usam o voltar nativo da navegação, à esquerda do
+  título, no lugar da seta própria do kit.
+- Mac: as janelas de Novidades, Avaliações, Sobre e Desenvolvedor têm só o
+  botão de fechar, sem minimizar nem maximizar, e continuam redimensionáveis
+  pelas bordas. Feedback e Roadmap mantêm os três botões.
+- Mac: a lista do Feedback cresce junto com a janela (uma fração da largura,
+  entre 300 e 560 pontos), e o divisor arrastado guarda a fração escolhida.
+  No Roadmap, as colunas dividem a largura da janela e só rolam na horizontal
+  quando não cabem com 280 pontos cada.
+
 ## 2.0.0 - 2026-10-21
 
 - **Quebra de compatibilidade:** o kit acessa sempre o servidor de produção do

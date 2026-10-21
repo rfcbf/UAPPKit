@@ -6,7 +6,8 @@ import SwiftUI
 ///
 /// No Mac a coluna da lista não é uma barra lateral (`NavigationSplitView`), que o sistema
 /// pintaria com material próprio até a barra de ferramentas, deixando a barra com duas cores.
-/// A largura da lista abre em `UAPPListColumnWidth.standard` e é lembrada ao arrastar o divisor.
+/// A lista ocupa uma fração da janela (`UAPPListColumnWidth`): cresce junto com a janela, dentro
+/// dos limites, e o divisor arrastado guarda a fração escolhida.
 struct UAPPFeedbackSplitView<Sidebar: View>: View {
     let client: UAPPClient
     let accentColor: Color
@@ -15,20 +16,23 @@ struct UAPPFeedbackSplitView<Sidebar: View>: View {
     let onUpdate: (UAPPFeedbackItem) -> Void
     @ViewBuilder let list: () -> Sidebar
     #if os(macOS)
-    @AppStorage(UAPPListColumnWidth.storageKey) private var listWidth = Double(UAPPListColumnWidth.standard)
+    @AppStorage(UAPPListColumnWidth.storageKey) private var listFraction = Double(UAPPListColumnWidth.standardFraction)
     #endif
 
     var body: some View {
         #if os(macOS)
-        HStack(spacing: 0) {
-            list()
-                .frame(width: UAPPListColumnWidth.clamped(listWidth))
-            UAPPColumnDivider(width: $listWidth)
-            UAPPFeedbackSplitDetail(
-                client: client, accentColor: accentColor, statuses: statuses,
-                selectedFeedback: selectedFeedback, onUpdate: onUpdate
-            )
-            .frame(minWidth: 380, maxWidth: .infinity)
+        GeometryReader { proxy in
+            let total = proxy.size.width
+            HStack(spacing: 0) {
+                list()
+                    .frame(width: UAPPListColumnWidth.width(fraction: listFraction, total: total))
+                UAPPColumnDivider(fraction: $listFraction, total: total)
+                UAPPFeedbackSplitDetail(
+                    client: client, accentColor: accentColor, statuses: statuses,
+                    selectedFeedback: selectedFeedback, onUpdate: onUpdate
+                )
+                .frame(minWidth: UAPPListColumnWidth.minimumDetailWidth, maxWidth: .infinity)
+            }
         }
         #else
         list()
@@ -37,21 +41,32 @@ struct UAPPFeedbackSplitView<Sidebar: View>: View {
 }
 
 #if os(macOS)
-/// Largura da coluna da lista no Mac: abre estreita, como a lista de mensagens do Mail.
+/// Largura da coluna da lista no Mac: uma fração da janela, como a lista de mensagens do Mail,
+/// entre `range` e sem apertar o detalhe abaixo de `minimumDetailWidth`.
 enum UAPPListColumnWidth {
-    static let storageKey = "UAPPKit.listColumnWidth"
-    static let standard: CGFloat = 400
+    static let storageKey = "UAPPKit.listColumnFraction"
+    /// 400 pontos na janela padrão de 1180.
+    static let standardFraction: CGFloat = 0.34
     static let range: ClosedRange<CGFloat> = 300 ... 560
+    static let minimumDetailWidth: CGFloat = 380
 
-    static func clamped(_ width: Double) -> CGFloat {
-        min(max(CGFloat(width), range.lowerBound), range.upperBound)
+    static func width(fraction: Double, total: CGFloat) -> CGFloat {
+        let upper = max(range.lowerBound, min(range.upperBound, total - minimumDetailWidth - 1))
+        return min(max(CGFloat(fraction) * total, range.lowerBound), upper)
+    }
+
+    /// Fração guardada depois de arrastar o divisor até `width`.
+    static func fraction(width: CGFloat, total: CGFloat) -> Double {
+        guard total > 0 else { return Double(standardFraction) }
+        return Double(self.width(fraction: Double(width / total), total: total) / total)
     }
 }
 
 /// Divisor arrastável entre a lista e o detalhe, com o cursor de redimensionar do sistema.
 struct UAPPColumnDivider: View {
-    @Binding var width: Double
-    @State private var dragStart: Double?
+    @Binding var fraction: Double
+    let total: CGFloat
+    @State private var dragStart: CGFloat?
 
     var body: some View {
         Divider()
@@ -72,9 +87,9 @@ struct UAPPColumnDivider: View {
                     .gesture(
                         DragGesture(minimumDistance: 1, coordinateSpace: .global)
                             .onChanged { value in
-                                let start = dragStart ?? width
+                                let start = dragStart ?? UAPPListColumnWidth.width(fraction: fraction, total: total)
                                 dragStart = start
-                                width = Double(UAPPListColumnWidth.clamped(start + value.translation.width))
+                                fraction = UAPPListColumnWidth.fraction(width: start + value.translation.width, total: total)
                             }
                             .onEnded { _ in dragStart = nil }
                     )

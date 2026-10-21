@@ -13,6 +13,10 @@ private struct UAPPToolbarItemsHiddenKey: EnvironmentKey {
     static let defaultValue = false
 }
 
+private struct UAPPSheetCloseKey: EnvironmentKey {
+    static let defaultValue: (@MainActor @Sendable () -> Void)? = nil
+}
+
 extension EnvironmentValues {
     /// Verdadeiro na coluna de detalhe da divisão lista/detalhe do Mac.
     var uappIsSplitDetail: Bool {
@@ -26,6 +30,14 @@ extension EnvironmentValues {
         get { self[UAPPToolbarItemsHiddenKey.self] }
         set { self[UAPPToolbarItemsHiddenKey.self] = newValue }
     }
+
+    /// Fecha a sheet aberta por outra tela do pacote (como o Changelog e as Avaliações dentro do
+    /// Sobre), mudando o estado de quem a apresentou. Mais confiável que o `dismiss` do SwiftUI
+    /// a partir da barra de uma sheet com navegação própria no Mac.
+    var uappSheetClose: (@MainActor @Sendable () -> Void)? {
+        get { self[UAPPSheetCloseKey.self] }
+        set { self[UAPPSheetCloseKey.self] = newValue }
+    }
 }
 
 /// Fecha a tela pelo meio certo: a sheet ou a navegação com `dismiss` e, no Mac, a janela aberta
@@ -37,6 +49,7 @@ extension EnvironmentValues {
 struct UAPPScreenCloser: DynamicProperty {
     @Environment(\.dismiss) private var dismiss
     #if os(macOS)
+    @Environment(\.uappSheetClose) private var sheetClose
     @State private var hostWindow = UAPPWeakWindow()
     @State private var isInPackageWindow = false
     /// `nil` enquanto a janela ainda não é conhecida.
@@ -70,6 +83,10 @@ struct UAPPScreenCloser: DynamicProperty {
 
     @MainActor func callAsFunction() {
         #if os(macOS)
+        if let sheetClose {
+            sheetClose()
+            return
+        }
         if isInPackageWindow, isInSheet != true, let window = hostWindow.window {
             window.performClose(nil)
             return

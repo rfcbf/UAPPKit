@@ -70,6 +70,13 @@ struct UAPPFeedbackSplitViewTests {
         #expect(!UAPPMacWindowPresenter.isPackageWindow(nil))
         await render(CloserProbe(), settling: true)
     }
+
+    @Test("Em uma sheet aberta pelo pacote, fechar usa a ação de quem a apresentou")
+    func screenCloserUsesSheetClose() async {
+        let counter = SheetCloseCounter()
+        await render(CloserProbe().environment(\.uappSheetClose) { counter.value += 1 }, settling: true)
+        #expect(counter.value == 1)
+    }
     #endif
 }
 
@@ -114,12 +121,19 @@ struct UAPPMacBoardAndDividerTests {
         }
     }
 
-    @Test("Largura da lista fica entre os limites e o divisor é montado")
+    @Test("Lista cresce com a janela dentro dos limites e o divisor é montado")
     func listColumnWidth() async {
-        #expect(UAPPListColumnWidth.clamped(10) == UAPPListColumnWidth.range.lowerBound)
-        #expect(UAPPListColumnWidth.clamped(10000) == UAPPListColumnWidth.range.upperBound)
-        #expect(UAPPListColumnWidth.clamped(400) == 400)
-        await render(UAPPColumnDivider(width: .constant(360)))
+        #expect(abs(UAPPListColumnWidth.width(fraction: 0.34, total: 1180) - 401.2) < 0.01)
+        #expect(UAPPListColumnWidth.width(fraction: 0.34, total: 2400) == UAPPListColumnWidth.range.upperBound)
+        #expect(UAPPListColumnWidth.width(fraction: 0.34, total: 720) == UAPPListColumnWidth.range.lowerBound)
+        #expect(UAPPListColumnWidth.width(fraction: 0.6, total: 800) == 419)
+        #expect(abs(UAPPListColumnWidth.fraction(width: 500, total: 1000) - 0.5) < 0.0001)
+        #expect(UAPPListColumnWidth.fraction(width: 500, total: 0) == Double(UAPPListColumnWidth.standardFraction))
+        #expect(abs(UAPPRoadmapBoard<Text>.columnWidth(available: 2000, count: 5) - 382.4) < 0.01)
+        #expect(UAPPRoadmapBoard<Text>.columnWidth(available: 900, count: 5) == UAPPRoadmapBoard<Text>.minimumColumnWidth)
+        #expect(UAPPRoadmapBoard<Text>.columnWidth(available: 3000, count: 1) == UAPPRoadmapBoard<Text>.maximumColumnWidth)
+        #expect(UAPPRoadmapBoard<Text>.columnWidth(available: 900, count: 0) == UAPPRoadmapBoard<Text>.minimumColumnWidth)
+        await render(UAPPColumnDivider(fraction: .constant(0.34), total: 1180))
         #expect(Color.uappToolbarIcon(.purple) == .primary)
     }
 }
@@ -148,3 +162,8 @@ struct UAPPFeedbackMacRowTests {
     }
 }
 #endif
+
+@MainActor
+private final class SheetCloseCounter {
+    var value = 0
+}

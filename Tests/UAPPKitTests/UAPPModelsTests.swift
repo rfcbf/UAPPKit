@@ -188,6 +188,27 @@ func projectBuildsAppStoreReviewDestination() throws {
     #expect(projectWithOnlyId.appStoreReviewDestination?.absoluteString == "itms-apps://itunes.apple.com/app/id987654321?action=write-review")
 }
 
+@Test("projeto informa o tempo de publicação automática só no app de demonstração")
+func projectDecodesCommentAutoPublishSeconds() throws {
+    let demo = try JSONDecoder().decode(UAPPProject.self, from: json("""
+    {"slug":"app-demo","displayName":"App Demo","autoPublishSeconds":15}
+    """))
+    #expect(demo.autoPublishSeconds == 15)
+
+    let regular = try JSONDecoder().decode(UAPPProject.self, from: json("""
+    {"slug":"app","displayName":"App","autoPublishSeconds":null}
+    """))
+    #expect(regular.autoPublishSeconds == nil)
+
+    let invalid = try JSONDecoder().decode(UAPPProject.self, from: json("""
+    {"slug":"app","autoPublishSeconds":"abc"}
+    """))
+    #expect(invalid.autoPublishSeconds == nil)
+
+    let manual = UAPPProject(slug: "app", displayName: nil, iconURL: nil, publicBaseURL: nil, primaryColor: nil, locale: nil)
+    #expect(manual.autoPublishSeconds == nil)
+}
+
 @Test("changelog decodifica seções e campos opcionais")
 func changelogDecodesSections() throws {
     let decoder = JSONDecoder()

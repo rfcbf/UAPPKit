@@ -35,6 +35,8 @@ struct Toast: Identifiable, Equatable {
     let id = UUID()
     let message: String
     let kind: UAPPToastKind
+    /// Tempo próprio até fechar sozinho; nulo segue o padrão do tipo.
+    var duration: Duration?
 }
 
 @MainActor
@@ -107,7 +109,7 @@ private struct ToastView: View {
     /// notifications stay until dismissed.
     private var dismissInterval: Duration? {
         guard action == nil, !voiceOverEnabled, !dynamicTypeSize.isAccessibilitySize else { return nil }
-        return toast.kind.autoDismissInterval
+        return toast.duration ?? toast.kind.autoDismissInterval
     }
 
     var body: some View {
@@ -322,6 +324,7 @@ private struct UAPPToastModifier: ViewModifier {
     let title: String?
     let actionTitle: String?
     let action: (@MainActor () -> Void)?
+    var duration: Duration?
     @State private var toasts: [Toast] = []
 
     func body(content: Content) -> some View {
@@ -345,7 +348,7 @@ private struct UAPPToastModifier: ViewModifier {
             return
         }
         guard toasts.last?.message != message || toasts.last?.kind != kind else { return }
-        toasts = [Toast(message: message, kind: kind)]
+        toasts = [Toast(message: message, kind: kind, duration: duration)]
     }
 }
 
@@ -361,6 +364,26 @@ public extension View {
         action: (@MainActor () -> Void)? = nil
     ) -> some View {
         modifier(UAPPToastModifier(message: message, kind: kind, title: title, actionTitle: actionTitle, action: action))
+    }
+}
+
+extension View {
+    /// Aviso que fecha sozinho depois de `duration`, com a contagem no anel.
+    @MainActor
+    func uappToast(
+        message: Binding<String?>,
+        kind: UAPPToastKind,
+        title: String?,
+        duration: Duration
+    ) -> some View {
+        modifier(UAPPToastModifier(
+            message: message,
+            kind: kind,
+            title: title,
+            actionTitle: nil,
+            action: nil,
+            duration: duration
+        ))
     }
 }
 
