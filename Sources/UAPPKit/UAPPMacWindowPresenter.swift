@@ -70,6 +70,15 @@ extension UAPPPresentedScreen {
         default: false
         }
     }
+
+    /// Só Feedback e Roadmap, janelas de trabalho, minimizam e maximizam. As demais têm só o
+    /// botão de fechar; Novidades, Avaliações, Sobre e Desenvolvedor continuam redimensionáveis.
+    var showsMinimizeAndZoom: Bool {
+        switch self {
+        case .feedback, .roadmap: true
+        case .changelog, .reviews, .about, .developerAbout, .account, .user: false
+        }
+    }
 }
 
 /// Abre as telas do pacote em janelas nativas do Mac. Cada tela tem uma única janela: chamar de
@@ -81,8 +90,20 @@ final class UAPPMacWindowPresenter: NSObject, NSWindowDelegate {
     var hostWindowProvider: @MainActor () -> NSWindow? = { NSApp.keyWindow ?? NSApp.mainWindow }
     /// Desligado nos testes, para não exibir janelas nem roubar o foco.
     var ordersWindowsFront = true
+    /// Avisos de fechamento, por tela: quem abriu a janela por dentro de outra tela do pacote
+    /// (a conta aberta pelo Feedback, por exemplo) atualiza o próprio estado quando ela fecha.
+    private var closeHandlers: [UAPPPresentedScreen: @MainActor () -> Void] = [:]
 
-    func present(_ screen: UAPPPresentedScreen, content: some View) {
+    func present(
+        _ screen: UAPPPresentedScreen,
+        content: some View,
+        onClose: (@MainActor () -> Void)? = nil
+    ) {
+        // Quem tinha aberto esta janela antes deixa de ser o dono dela e é avisado como num
+        // fechamento, para não ficar esperando um aviso que não vem mais.
+        let replaced = closeHandlers.removeValue(forKey: screen)
+        closeHandlers[screen] = onClose
+        replaced?()
         let window = windows[screen] ?? makeWindow(for: screen)
         let controller = NSHostingController(rootView: AnyView(content))
         // A janela segue o tamanho escolhido pela pessoa; o SwiftUI só impõe o mínimo.
@@ -93,7 +114,7 @@ final class UAPPMacWindowPresenter: NSObject, NSWindowDelegate {
         }
         let frame = window.frame
         window.contentViewController = controller
-        if screen.isCompactPanel {
+        if !screen.showsMinimizeAndZoom {
             window.standardWindowButton(.miniaturizeButton)?.isHidden = true
             window.standardWindowButton(.zoomButton)?.isHidden = true
         }
@@ -131,8 +152,11 @@ final class UAPPMacWindowPresenter: NSObject, NSWindowDelegate {
 
     private func makeWindow(for screen: UAPPPresentedScreen) -> NSWindow {
         var style: NSWindow.StyleMask = [.titled, .closable]
+        if screen.showsMinimizeAndZoom {
+            style.insert(.miniaturizable)
+        }
         if !screen.isCompactPanel {
-            style.formUnion([.miniaturizable, .resizable])
+            style.insert(.resizable)
         }
         // Com a barra de ferramentas unificada do SwiftUI (macOS 14+), o conteúdo passa por baixo
         // dela como nas janelas do próprio SwiftUI.
@@ -185,6 +209,7 @@ final class UAPPMacWindowPresenter: NSObject, NSWindowDelegate {
             windows[screen] = nil
             // Libera a tela e suas tarefas (atualização ao vivo, carregamentos) ao fechar.
             window.contentViewController = nil
+            closeHandlers.removeValue(forKey: screen)?()
         }
     }
 }

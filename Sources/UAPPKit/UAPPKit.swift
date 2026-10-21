@@ -297,12 +297,21 @@ public enum UAPPKit {
 
     #if os(macOS)
     private static func present(_ content: some View, screen: UAPPPresentedScreen) {
+        presentWindow(content, screen: screen)
+    }
+
+    /// Abre uma tela do pacote na janela própria dela. `onClose` roda quando a janela fecha.
+    static func presentWindow(
+        _ content: some View,
+        screen: UAPPPresentedScreen,
+        onClose: (@MainActor () -> Void)? = nil
+    ) {
         windowPresenter.present(screen, content: UAPPKitPresentationRoot(
             content: content,
             theme: theme,
             initialLanguage: hostLocaleIdentifier,
             wrapsInNavigationStack: screen.wrapsInNavigationStack
-        ))
+        ), onClose: onClose)
     }
     #else
     private static func present(_ content: some View, screen _: UAPPPresentedScreen) {

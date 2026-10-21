@@ -152,34 +152,66 @@ struct UAPPParticipationModifier: ViewModifier {
                     }
                 }
             }
+            #if os(macOS)
+            // No Mac, login e cadastro abrem na mesma janela da conta usada por
+            // `UAPPKit.showAuthentication`, com a altura toda; uma sheet ficaria presa à altura da
+            // janela do Feedback ou do Roadmap e precisaria de rolagem.
+            // A própria tela de conta fecha a janela ao concluir o login.
+            .uappOnChange(of: model.showsAccount) { shows in
+                if shows {
+                    presentAccountWindow()
+                }
+            }
+            #else
             .sheet(isPresented: $model.showsAccount, onDismiss: {
                 Task {
                     await model.refresh()
                     await model.finishPresentation()
                 }
             }) {
-                if let session = model.session, let authentication = model.client.authentication {
-                    UAPPUserScreen(
-                        session: session,
-                        authentication: authentication,
-                        client: model.client,
-                        theme: theme
-                    )
-                } else if let identity = model.identity, !model.isEnabled {
-                    UAPPUserScreen(profile: identity, client: model.client, theme: theme)
-                } else if let authentication = model.client.authentication {
-                    UAPPAccountScreen(
-                        authentication: authentication,
-                        client: model.client,
-                        theme: theme
-                    )
-                }
+                accountSheet
+                    .environment(\.uappSheetClose) { [model] in model.showsAccount = false }
             }
+            #endif
             .task {
                 if enabled {
                     await model.refresh()
                 }
             }
+    }
+
+    #if os(macOS)
+    private func presentAccountWindow() {
+        let showsProfile = model.session != nil || (model.identity != nil && !model.isEnabled)
+        let screen: UAPPPresentedScreen = showsProfile ? .user : .account
+        UAPPKit.presentWindow(accountSheet, screen: screen) { [model] in
+            model.showsAccount = false
+            Task {
+                await model.refresh()
+                await model.finishPresentation()
+            }
+        }
+    }
+    #endif
+
+    @ViewBuilder
+    private var accountSheet: some View {
+        if let session = model.session, let authentication = model.client.authentication {
+            UAPPUserScreen(
+                session: session,
+                authentication: authentication,
+                client: model.client,
+                theme: theme
+            )
+        } else if let identity = model.identity, !model.isEnabled {
+            UAPPUserScreen(profile: identity, client: model.client, theme: theme)
+        } else if let authentication = model.client.authentication {
+            UAPPAccountScreen(
+                authentication: authentication,
+                client: model.client,
+                theme: theme
+            )
+        }
     }
 
     @ViewBuilder

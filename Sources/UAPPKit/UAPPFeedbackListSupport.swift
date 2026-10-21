@@ -175,6 +175,7 @@ struct UAPPFeedbackItemNavigation: ViewModifier {
                     displayName: author.authorName ?? uappLocalized("comments.community"),
                     avatarURL: author.authorAvatarURL
                 ), theme: theme, client: client, feedbackId: author.id)
+                    .environment(\.uappSheetClose) { selectedAuthor = nil }
                     .environment(\.locale, Locale(identifier: selectedLanguage))
                     .uappPresentationBackground(theme.resolved(for: colorScheme).background)
             }

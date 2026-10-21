@@ -42,6 +42,10 @@ public struct UAPPFeedbackScreen: View {
     @StateObject private var changelogModel: UAPPChangelogModel
     @StateObject private var participation: UAPPParticipationModel
     @State private var isSubmittingFeedback = false
+    /// App de demonstração: aviso com a contagem até a requisição enviada ser publicada sozinha.
+    @State private var autoPublishNotice: String?
+    @State private var autoPublishSeconds: Int?
+    @State private var autoPublishTicket: UUID?
     @State private var showsChangelogSearch = false
     @State private var changelogQuery = ""
     @State private var changelogTranslationCache = UAPPReviewTranslationCache()
@@ -188,14 +192,40 @@ public struct UAPPFeedbackScreen: View {
                 NavigationStack {
                     UAPPSubmitFeedbackScreen(client: client, accentColor: accentColor) {
                         isSubmittingFeedback = false
-                        Task { await load() }
+                        Task { await feedbackSubmitted() }
                     }
+                    .environment(\.uappSheetClose) { isSubmittingFeedback = false }
                 }
                 .environment(\.uappTheme, theme)
                 .environment(\.locale, Locale(identifier: selectedLanguage))
                 .uappPresentationBackground(palette.background)
                 .uappPresentationPlacement(.trailing)
             }
+            .uappToast(
+                message: $autoPublishNotice,
+                kind: .information,
+                title: uappLocalized("feedback.demo_title"),
+                duration: .seconds(autoPublishSeconds ?? 0)
+            )
+            .task(id: autoPublishTicket) { await reloadAfterAutoPublish() }
+    }
+
+    /// Depois de enviar uma requisição. No app de demonstração, avisa quando ela vai aparecer e
+    /// recarrega a lista nessa hora; nos demais, só recarrega.
+    private func feedbackSubmitted() async {
+        if let seconds = await client.currentProject()?.autoPublishSeconds, seconds > 0 {
+            autoPublishSeconds = seconds
+            autoPublishNotice = uappLocalizedFormat("feedback.demo_auto_publish", seconds)
+            autoPublishTicket = UUID()
+        }
+        await load()
+    }
+
+    private func reloadAfterAutoPublish() async {
+        guard autoPublishTicket != nil, let seconds = autoPublishSeconds else { return }
+        do { try await Task.sleep(for: .seconds(seconds)) } catch { return }
+        autoPublishNotice = nil
+        await load(silently: true)
     }
 
     private var palette: UAPPResolvedPalette {

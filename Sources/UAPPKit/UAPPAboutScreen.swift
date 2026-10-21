@@ -82,6 +82,7 @@ public struct UAPPAboutScreen: View {
             if let changelogScreen {
                 NavigationStack {
                     changelogScreen
+                        .environment(\.uappSheetClose) { isChangelogPresented = false }
                 }
                 .environment(\.uappTheme, theme)
                 .environment(\.locale, Locale(identifier: selectedLanguage))
@@ -94,6 +95,7 @@ public struct UAPPAboutScreen: View {
             if let client {
                 NavigationStack {
                     UAPPReviewsScreen(client: client, pageSize: configuration.reviewsPageSize)
+                        .environment(\.uappSheetClose) { isReviewsPresented = false }
                 }
                 .environment(\.uappTheme, theme)
                 .environment(\.locale, Locale(identifier: selectedLanguage))

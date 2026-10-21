@@ -1,11 +1,31 @@
 #if os(macOS) && canImport(SwiftUI)
 import SwiftUI
 
-/// Roadmap no Mac em quadro: uma coluna por status, lado a lado, com rolagem horizontal quando
-/// não cabem todas. Cada coluna rola na vertical e mostra quantos itens tem.
+/// Roadmap no Mac em quadro: uma coluna por status, lado a lado, dividindo a largura da janela.
+/// Só quando as colunas não cabem com a largura mínima o quadro rola na horizontal. Cada coluna
+/// rola na vertical e mostra quantos itens tem.
 struct UAPPRoadmapBoard<Card: View>: View {
-    static var columnWidth: CGFloat {
-        320
+    static var minimumColumnWidth: CGFloat {
+        280
+    }
+
+    static var maximumColumnWidth: CGFloat {
+        560
+    }
+
+    static var spacing: CGFloat {
+        14
+    }
+
+    static var padding: CGFloat {
+        16
+    }
+
+    /// Largura de cada coluna para `count` colunas em `available` pontos.
+    static func columnWidth(available: CGFloat, count: Int) -> CGFloat {
+        guard count > 0 else { return minimumColumnWidth }
+        let usable = available - padding * 2 - spacing * CGFloat(count - 1)
+        return min(max(usable / CGFloat(count), minimumColumnWidth), maximumColumnWidth)
     }
 
     let columns: [UAPPRoadmapColumn]
@@ -21,14 +41,15 @@ struct UAPPRoadmapBoard<Card: View>: View {
 
     var body: some View {
         GeometryReader { proxy in
+            let width = Self.columnWidth(available: proxy.size.width, count: columns.count)
             ScrollView(.horizontal) {
-                HStack(alignment: .top, spacing: 14) {
+                HStack(alignment: .top, spacing: Self.spacing) {
                     ForEach(columns, id: \.status.key) { column in
                         boardColumn(column)
-                            .frame(width: Self.columnWidth, height: max(240, proxy.size.height - 32), alignment: .top)
+                            .frame(width: width, height: max(240, proxy.size.height - Self.padding * 2), alignment: .top)
                     }
                 }
-                .padding(16)
+                .padding(Self.padding)
             }
         }
     }

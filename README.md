@@ -55,12 +55,12 @@ No Xcode, escolha **File → Add Package Dependencies…** e informe:
 https://github.com/rfcbf/UAPPKit
 ```
 
-Selecione a versão `2.0.0` ou posterior e adicione o produto `UAPPKit` ao
+Selecione a versão `2.1.0` ou posterior e adicione o produto `UAPPKit` ao
 target do aplicativo. Em outro `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/rfcbf/UAPPKit", from: "2.0.0")
+    .package(url: "https://github.com/rfcbf/UAPPKit", from: "2.1.0")
 ],
 targets: [
     .target(name: "MeuApp", dependencies: ["UAPPKit"])

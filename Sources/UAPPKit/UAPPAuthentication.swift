@@ -131,7 +131,11 @@ public actor UAPPAuthentication: UAPPAuthenticationProvider {
             task = refreshTask
         } else {
             task = Task {
-                try await self.token(grant: "refresh_token", body: ["refresh_token": storedSession.refreshToken])
+                let response = try await self.token(
+                    grant: "refresh_token",
+                    body: ["refresh_token": storedSession.refreshToken]
+                )
+                return await self.withProfile(response, previous: storedSession.user)
             }
             refreshTask = task
         }
@@ -157,7 +161,7 @@ public actor UAPPAuthentication: UAPPAuthenticationProvider {
     public func signIn(email: String, password: String) async throws -> UAPPAuthenticationSession {
         guard methods.contains(.email) else { throw UAPPAuthenticationError.unsupportedMethod }
         let capturedGeneration = generation
-        let response = try await token(grant: "password", body: ["email": email, "password": password])
+        let response = try await withProfile(token(grant: "password", body: ["email": email, "password": password]))
         guard capturedGeneration == generation else { throw UAPPAuthenticationError.cancelled }
         return try store(response, recovery: false)
     }
@@ -179,7 +183,9 @@ public actor UAPPAuthentication: UAPPAuthenticationProvider {
         guard capturedGeneration == generation else { throw UAPPAuthenticationError.cancelled }
         let result = try JSONDecoder().decode(RegistrationResponse.self, from: data)
         if let token = result.accessToken, !token.isEmpty {
-            return try .signedIn(store(decodeSession(data), recovery: false))
+            let response = try await withProfile(decodeSession(data))
+            guard capturedGeneration == generation else { throw UAPPAuthenticationError.cancelled }
+            return try .signedIn(store(response, recovery: false))
         }
         guard let userId = result.id ?? result.user?.id, !userId.isEmpty else { throw UAPPKitError.invalidResponse }
         return .confirmationRequired
@@ -250,12 +256,20 @@ public actor UAPPAuthentication: UAPPAuthenticationProvider {
             guard capturedGeneration == generation, let current = storedSession else {
                 throw UAPPAuthenticationError.cancelled
             }
-            let user = try JSONDecoder().decode(SessionResponse.User.self, from: userData)
-            guard user.id == session.identity.userId,
-                  user.metadata[SessionResponse.User.chosenAvatarKey] == avatarURL.absoluteString
+            let decoded = try JSONDecoder().decode(SessionResponse.User.self, from: userData)
+            guard decoded.id == session.identity.userId,
+                  decoded.metadata[SessionResponse.User.chosenAvatarKey] == avatarURL.absoluteString
             else {
                 throw UAPPKitError.invalidResponse
             }
+            // O perfil do UAPP é o mesmo do painel web: a foto nova vale nos dois lugares.
+            let savedInProfile = await saveProfileAvatar(avatarURL, userId: decoded.id, accessToken: session.accessToken)
+            var metadata = decoded.metadata
+            metadata[SessionResponse.User.profileNameKey] = current.user.metadata[SessionResponse.User.profileNameKey]
+            if savedInProfile {
+                metadata[SessionResponse.User.profileAvatarKey] = avatarURL.absoluteString
+            }
+            let user = SessionResponse.User(id: decoded.id, email: decoded.email, metadata: metadata)
             let updated = SessionResponse(
                 accessToken: current.accessToken, refreshToken: current.refreshToken,
                 expiresIn: current.expiresIn, user: user
@@ -282,7 +296,8 @@ public actor UAPPAuthentication: UAPPAuthenticationProvider {
         guard methods.contains(.email) else { throw UAPPAuthenticationError.unsupportedMethod }
         let capturedGeneration = generation
         let data = try await request(path: "verify", body: ["email": email, "token": code, "type": type])
-        let result = try decodeSession(data)
+        let session = try decodeSession(data)
+        let result = type == "recovery" ? session : await withProfile(session)
         guard capturedGeneration == generation else { throw UAPPAuthenticationError.cancelled }
         return try store(result, recovery: type == "recovery")
     }
@@ -306,7 +321,7 @@ public actor UAPPAuthentication: UAPPAuthenticationProvider {
         guard methods.contains(.email) else { throw UAPPAuthenticationError.unsupportedMethod }
         let capturedGeneration = generation
         let data = try await request(path: "verify", body: ["email": email, "token": code, "type": "email"])
-        let response = try decodeSession(data)
+        let response = try await withProfile(decodeSession(data))
         guard capturedGeneration == generation else { throw UAPPAuthenticationError.cancelled }
         return try store(response, recovery: false)
     }
@@ -336,7 +351,7 @@ public actor UAPPAuthentication: UAPPAuthenticationProvider {
             body: ["auth_code": code, "code_verifier": verifier],
             query: [URLQueryItem(name: "grant_type", value: "pkce")]
         )
-        let response = try decodeSession(data)
+        let response = try await withProfile(decodeSession(data))
         guard capturedGeneration == generation else { throw UAPPAuthenticationError.cancelled }
         let session = try store(response, recovery: false)
         if method == .apple, let refreshToken = Self.providerRefreshToken(in: data) {
@@ -379,6 +394,80 @@ public actor UAPPAuthentication: UAPPAuthenticationProvider {
         if let token {
             _ = try await request(path: "logout", body: [:], accessToken: token, query: [URLQueryItem(name: "scope", value: "local")])
         }
+    }
+
+    /// Completa a sessão com o nome e a foto do perfil do UAPP (`profiles`), os mesmos do painel
+    /// web. Melhor esforço: sem resposta, mantém o que a sessão anterior já tinha.
+    private func withProfile(
+        _ response: SessionResponse,
+        previous: SessionResponse.User? = nil
+    ) async -> SessionResponse {
+        var metadata = response.user.metadata
+        let nameKey = SessionResponse.User.profileNameKey
+        let avatarKey = SessionResponse.User.profileAvatarKey
+        if let profile = await fetchProfile(userId: response.user.id, accessToken: response.accessToken) {
+            metadata[nameKey] = profile.displayName(for: response.user.email)
+            metadata[avatarKey] = profile.avatarURL
+        } else if previous?.id == response.user.id {
+            metadata[nameKey] = previous?.metadata[nameKey]
+            metadata[avatarKey] = previous?.metadata[avatarKey]
+        }
+        return SessionResponse(
+            accessToken: response.accessToken,
+            refreshToken: response.refreshToken,
+            expiresIn: response.expiresIn,
+            user: SessionResponse.User(id: response.user.id, email: response.user.email, metadata: metadata)
+        )
+    }
+
+    private func fetchProfile(userId: String, accessToken: String) async -> UAPPProfileRow? {
+        guard !userId.isEmpty,
+              var components = URLComponents(
+                  url: configuration.host.appendingPathComponent("rest/v1/profiles"),
+                  resolvingAgainstBaseURL: false
+              )
+        else { return nil }
+        components.queryItems = [
+            URLQueryItem(name: "id", value: "eq." + userId),
+            URLQueryItem(name: "select", value: "display_name,avatar_url")
+        ]
+        guard let url = components.url else { return nil }
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue(configuration.publishableKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer " + accessToken, forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        guard let (data, response) = try? await transport.send(request),
+              (200 ..< 300).contains(response.statusCode),
+              let rows = try? JSONDecoder().decode([UAPPProfileRow].self, from: data)
+        else { return nil }
+        return rows.first ?? UAPPProfileRow(displayName: nil, avatarURL: nil)
+    }
+
+    /// Grava a foto escolhida no kit também no perfil do UAPP. Devolve se o perfil aceitou.
+    private func saveProfileAvatar(_ avatarURL: URL, userId: String, accessToken: String) async -> Bool {
+        guard var components = URLComponents(
+            url: configuration.host.appendingPathComponent("rest/v1/profiles"),
+            resolvingAgainstBaseURL: false
+        ) else { return false }
+        // A resposta traz só as colunas que o kit usa: o telefone do perfil não é legível.
+        components.queryItems = [
+            URLQueryItem(name: "id", value: "eq." + userId),
+            URLQueryItem(name: "select", value: "display_name,avatar_url")
+        ]
+        guard let url = components.url else { return false }
+        var request = URLRequest(url: url)
+        request.httpMethod = "PATCH"
+        request.setValue(configuration.publishableKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer " + accessToken, forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("return=representation", forHTTPHeaderField: "Prefer")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: ["avatar_url": avatarURL.absoluteString])
+        guard let (data, response) = try? await transport.send(request),
+              (200 ..< 300).contains(response.statusCode),
+              let rows = try? JSONDecoder().decode([UAPPProfileRow].self, from: data)
+        else { return false }
+        return rows.contains { $0.avatarURL == avatarURL.absoluteString }
     }
 
     private func clear() throws {
@@ -530,11 +619,20 @@ private struct SessionResponse: Codable, Sendable {
         /// Foto escolhida no kit. Provedores sociais podem sobrescrever `avatar_url` a cada login,
         /// mas não esta chave; assim a última foto definida pelo usuário prevalece.
         static let chosenAvatarKey = "uapp_avatar_url"
+        /// Nome e foto do perfil do UAPP (`profiles`), guardados só na sessão local.
+        static let profileNameKey = "uapp_profile_display_name"
+        static let profileAvatarKey = "uapp_profile_avatar_url"
         let id: String
         let email: String?
         let metadata: [String: String]
 
         enum CodingKeys: String, CodingKey { case id, email, metadata = "user_metadata" }
+
+        init(id: String, email: String?, metadata: [String: String]) {
+            self.id = id
+            self.email = email
+            self.metadata = metadata
+        }
 
         init(from decoder: Decoder) throws {
             let values = try decoder.container(keyedBy: CodingKeys.self)
@@ -556,8 +654,12 @@ private struct SessionResponse: Codable, Sendable {
         UAPPAuthenticationSession(
             identity: UAPPIdentity(
                 userId: user.id, email: user.email,
-                displayName: user.metadata["full_name"] ?? user.metadata["name"],
-                avatarURL: (user.metadata[User.chosenAvatarKey] ?? user.metadata["avatar_url"] ?? user.metadata["picture"])
+                displayName: user.metadata["full_name"] ?? user.metadata["name"]
+                    ?? user.metadata[User.profileNameKey],
+                // Foto escolhida no kit, depois a do perfil do UAPP (a mesma do painel web) e, por
+                // último, a do provedor social.
+                avatarURL: (user.metadata[User.chosenAvatarKey] ?? user.metadata[User.profileAvatarKey]
+                    ?? user.metadata["avatar_url"] ?? user.metadata["picture"])
                     .flatMap(URL.init(string:))
             ),
             accessToken: accessToken
@@ -577,5 +679,25 @@ private struct MetadataKey: CodingKey {
 
     init?(intValue _: Int) {
         nil
+    }
+}
+
+/// Linha de `profiles` que o próprio usuário pode ler e atualizar.
+struct UAPPProfileRow: Decodable, Sendable {
+    let displayName: String?
+    let avatarURL: String?
+
+    enum CodingKeys: String, CodingKey {
+        case displayName = "display_name"
+        case avatarURL = "avatar_url"
+    }
+
+    /// O cadastro preenche o nome com a parte do e-mail antes do "@" quando a pessoa não informa
+    /// um; esse valor não é um nome escolhido e fica de fora.
+    func displayName(for email: String?) -> String? {
+        let name = displayName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let emailPrefix = email?.split(separator: "@").first.map(String.init)
+        guard !name.isEmpty, name != emailPrefix else { return nil }
+        return name
     }
 }

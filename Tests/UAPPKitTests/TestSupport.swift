@@ -12,9 +12,17 @@ import AppKit
 
 struct StubTransport: UAPPTransport {
     let handler: @Sendable (URLRequest) async throws -> (Int, Data)
+    /// A leitura do perfil do UAPP depois do login responde vazia sem passar pelo `handler`,
+    /// para os testes que conferem a sequência de chamadas da autenticação. Os testes do perfil
+    /// ligam esta opção e respondem eles mesmos.
+    var handlesProfiles = false
 
     func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
-        let (status, data) = try await handler(request)
+        let (status, data) = if !handlesProfiles, request.url?.path == "/rest/v1/profiles" {
+            (200, Data("[]".utf8))
+        } else {
+            try await handler(request)
+        }
         guard let url = request.url,
               let response = HTTPURLResponse(
                   url: url,

@@ -25,6 +25,33 @@ struct UAPPToastTests {
         #expect(ToastCountdown.secondsLeft(total: 6, elapsed: 7) == 0)
     }
 
+    @Test("Aviso com duração própria substitui o tempo padrão do tipo")
+    func customDuration() {
+        let toast = Toast(message: "Publicando", kind: .information, duration: .seconds(15))
+        #expect(toast.duration == .seconds(15))
+        #expect(Toast(message: "Erro", kind: .error).duration == nil)
+    }
+
+    @Test("Avisos do app de demonstração existem em todos os idiomas, com os segundos")
+    func demoCommentTexts() {
+        for language in UAPPLanguage.supported {
+            for key in [
+                "detail.comment_demo_title", "detail.comment_demo_auto_publish",
+                "feedback.demo_title", "feedback.demo_auto_publish"
+            ] {
+                let text = uappLocalized(key, languageIdentifier: language.identifier)
+                #expect(!text.isEmpty && text != key)
+            }
+            for key in ["detail.comment_demo_auto_publish", "feedback.demo_auto_publish"] {
+                #expect(uappLocalized(key, languageIdentifier: language.identifier).contains("%lld"))
+            }
+        }
+        let request = String(format: uappLocalized("feedback.demo_auto_publish", languageIdentifier: "pt-BR"), 15)
+        #expect(request == "Este app é uma demonstração: sua requisição será publicada em 15 segundos.")
+        let text = String(format: uappLocalized("detail.comment_demo_auto_publish", languageIdentifier: "pt-BR"), 15)
+        #expect(text == "Este app é uma demonstração: seu comentário será publicado em 15 segundos.")
+    }
+
     @Test("Cada tipo de aviso tem título em todos os idiomas")
     func kindTitles() {
         for kind in UAPPToastKind.allCases {

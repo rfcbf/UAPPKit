@@ -31,7 +31,17 @@ struct UAPPMacWindowPresenterTests {
         #expect(account.styleMask.contains(.closable))
         #expect(account.standardWindowButton(.zoomButton)?.isHidden != false)
         #expect(account.standardWindowButton(.miniaturizeButton)?.isHidden != false)
-        #expect(presenter.windows.count == 2)
+
+        for screen in [UAPPPresentedScreen.changelog, .reviews, .about, .developerAbout] {
+            presenter.present(screen, content: Text("Tela"))
+            let window = try #require(presenter.windows[screen])
+            #expect(window.styleMask.contains(.resizable))
+            #expect(!window.styleMask.contains(.miniaturizable))
+            #expect(window.standardWindowButton(.zoomButton)?.isHidden != false)
+            #expect(window.standardWindowButton(.miniaturizeButton)?.isHidden != false)
+        }
+        #expect(window.styleMask.contains(.miniaturizable))
+        #expect(presenter.windows.count == 6)
     }
 
     @Test("Fechar a janela libera a tela, e a próxima abertura cria outra")
@@ -50,6 +60,33 @@ struct UAPPMacWindowPresenterTests {
         #expect(presenter.windows[.about] !== first)
         presenter.closeAll()
         #expect(presenter.windows.isEmpty)
+    }
+
+    @Test("Quem abre a janela é avisado uma vez quando ela fecha ou passa para outra tela")
+    func closeHandlerRunsOnceOnCloseOrReplacement() throws {
+        let presenter = UAPPMacWindowPresenter()
+        presenter.ordersWindowsFront = false
+        defer { presenter.closeAll() }
+        var first = 0
+        var second = 0
+
+        presenter.present(.account, content: Text("Conta"), onClose: { first += 1 })
+        let window = try #require(presenter.windows[.account])
+        // Outra tela abre a mesma janela: a primeira deixa de ser dona e é avisada.
+        presenter.present(.account, content: Text("Conta"), onClose: { second += 1 })
+        #expect(presenter.windows[.account] === window)
+        #expect(first == 1)
+        #expect(second == 0)
+
+        presenter.close(.account)
+        #expect(first == 1)
+        #expect(second == 1)
+
+        // Sem aviso registrado, fechar não chama nada nem guarda o aviso anterior.
+        presenter.present(.account, content: Text("Conta"))
+        presenter.close(.account)
+        #expect(first == 1)
+        #expect(second == 1)
     }
 
     @Test("A janela abre no centro do monitor e cabe na área útil")

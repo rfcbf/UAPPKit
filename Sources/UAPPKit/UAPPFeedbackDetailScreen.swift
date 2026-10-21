@@ -29,6 +29,10 @@ struct UAPPFeedbackDetailScreen: View {
     @State private var reactingComments: Set<String> = []
     @State private var message: String?
     @State private var commentsError: String?
+    /// App de demonstração: aviso com a contagem até o comentário ser publicado sozinho.
+    @State private var autoPublishNotice: String?
+    @State private var autoPublishSeconds: Int?
+    @State private var autoPublishTicket: UUID?
     @StateObject private var participation: UAPPParticipationModel
     @FocusState private var focusedField: Field?
 
@@ -133,6 +137,13 @@ struct UAPPFeedbackDetailScreen: View {
             ),
             kind: message == "detail.comment_submitted" ? .success : .error
         )
+        .uappToast(
+            message: $autoPublishNotice,
+            kind: .information,
+            title: uappLocalized("detail.comment_demo_title"),
+            duration: .seconds(autoPublishSeconds ?? 0)
+        )
+        .task(id: autoPublishTicket) { await refreshAfterAutoPublish() }
         .uappKeyboardFieldNavigation(
             focusedField: $focusedField,
             fields: [.comment],
@@ -145,6 +156,8 @@ struct UAPPFeedbackDetailScreen: View {
             showsCloseButton: false,
             showsLanguageMenu: false
         )
+        // No Mac vale o voltar nativo da navegação; ao lado da lista, não há voltar.
+        #if !os(macOS)
         .navigationBarBackButtonHidden(true)
         .toolbar {
             if !isSplitDetail {
@@ -160,6 +173,7 @@ struct UAPPFeedbackDetailScreen: View {
                 }
             }
         }
+        #endif
         .task(id: scenePhase) {
             if isLoading || scenePhase == .active {
                 await refresh(showError: isLoading)
@@ -170,6 +184,7 @@ struct UAPPFeedbackDetailScreen: View {
         .environment(\.locale, Locale(identifier: selectedLanguage))
     }
 
+    #if !os(macOS)
     private var backButtonPlacement: ToolbarItemPlacement {
         #if canImport(UIKit)
         .navigationBarLeading
@@ -177,6 +192,7 @@ struct UAPPFeedbackDetailScreen: View {
         .navigation
         #endif
     }
+    #endif
 
     private var feedbackContent: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -493,7 +509,10 @@ struct UAPPFeedbackDetailScreen: View {
             await refresh(showError: true)
         } catch { message = "detail.reaction_error" }
     }
+}
 
+/// Envio de comentário e, no app de demonstração, a recarga depois da publicação automática.
+extension UAPPFeedbackDetailScreen {
     private func submitComment() async {
         let body = commentBody.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !body.isEmpty, !isSending, !isProcessingImage else { return }
@@ -510,9 +529,29 @@ struct UAPPFeedbackDetailScreen: View {
             commentImage = []
             replyingTo = nil
             focusedField = nil
-            message = "detail.comment_submitted"
+            if let seconds = await client.currentProject()?.autoPublishSeconds, seconds > 0 {
+                autoPublishSeconds = seconds
+                autoPublishNotice = uappLocalizedFormat("detail.comment_demo_auto_publish", seconds)
+                autoPublishTicket = UUID()
+            } else {
+                message = "detail.comment_submitted"
+            }
             await refresh(showError: true)
         } catch { message = "detail.comment_error" }
+    }
+
+    /// No app de demonstração, o servidor publica o comentário quando o tempo acaba; a tela
+    /// recarrega nessa hora e, se ainda estiver pendente, mais uma vez logo depois.
+    private func refreshAfterAutoPublish() async {
+        guard autoPublishTicket != nil, let seconds = autoPublishSeconds else { return }
+        do { try await Task.sleep(for: .seconds(seconds)) } catch { return }
+        autoPublishNotice = nil
+        await refresh()
+        guard comments.contains(where: { $0.viewerOwned == true && $0.moderationState == "pending" }) else {
+            return
+        }
+        do { try await Task.sleep(for: .seconds(2)) } catch { return }
+        await refresh()
     }
 }
 
