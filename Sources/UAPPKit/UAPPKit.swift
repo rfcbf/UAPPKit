@@ -172,16 +172,23 @@ public enum UAPPKit {
         return UAPPAuthentication.automatic(configuration: configuration, callbackURL: callbackURL, methods: methods)
     }
 
-    #if canImport(UIKit) && canImport(SwiftUI)
-    #if DEBUG
+    #if canImport(SwiftUI) && (canImport(UIKit) || os(macOS))
+    #if canImport(UIKit) && DEBUG
     @MainActor
     static var presenterProvider: () -> UIViewController? = {
         topViewController()
     }
     #endif
 
+    #if os(macOS)
+    /// Janelas abertas pelo pacote no Mac; substituível nos testes.
+    static var windowPresenter = UAPPMacWindowPresenter()
+    #endif
+
+    /// No iPhone e no iPad, apresenta em uma sheet grande. No Mac, abre em uma janela própria,
+    /// trazida para a frente se já estiver aberta.
     public static func showFeedback() throws {
-        try present(UAPPFeedbackScreen(client: makeParticipationClient(), mode: .feedback))
+        try present(UAPPFeedbackScreen(client: makeParticipationClient(), mode: .feedback), screen: .feedback)
     }
 
     /// Abre as informações da conta já conectada no aplicativo.
@@ -193,7 +200,7 @@ public enum UAPPKit {
         try present(UAPPUserScreen(
             session: session, authentication: authentication, client: requireClient(), theme: theme,
             onSessionChange: onSessionChange
-        ))
+        ), screen: .user)
     }
 
     /// Abre login/cadastro/recuperação com a identidade visual do aplicativo.
@@ -204,7 +211,7 @@ public enum UAPPKit {
         try present(UAPPAccountScreen(
             authentication: authentication, client: requireClient(), theme: theme,
             onSessionChange: onSessionChange
-        ))
+        ), screen: .account)
     }
 
     public static func showFeedback(
@@ -212,7 +219,7 @@ public enum UAPPKit {
         authentication: any UAPPAuthenticationProvider
     ) async throws {
         let client = try await makeClient(identity: identity, authentication: authentication)
-        present(UAPPFeedbackScreen(client: client, mode: .feedback))
+        present(UAPPFeedbackScreen(client: client, mode: .feedback), screen: .feedback)
     }
 
     public static func showFeedback(
@@ -220,11 +227,11 @@ public enum UAPPKit {
         accessTokenProvider: UAPPAccessTokenProvider?
     ) async throws {
         let client = try await makeClient(identity: identity, accessTokenProvider: accessTokenProvider)
-        present(UAPPFeedbackScreen(client: client, mode: .feedback))
+        present(UAPPFeedbackScreen(client: client, mode: .feedback), screen: .feedback)
     }
 
     public static func showRoadmap() throws {
-        try present(UAPPRoadmapScreen(client: makeParticipationClient()))
+        try present(UAPPRoadmapScreen(client: makeParticipationClient()), screen: .roadmap)
     }
 
     public static func showRoadmap(
@@ -232,7 +239,7 @@ public enum UAPPKit {
         authentication: any UAPPAuthenticationProvider
     ) async throws {
         let client = try await makeClient(identity: identity, authentication: authentication)
-        present(UAPPRoadmapScreen(client: client))
+        present(UAPPRoadmapScreen(client: client), screen: .roadmap)
     }
 
     public static func showRoadmap(
@@ -240,7 +247,7 @@ public enum UAPPKit {
         accessTokenProvider: UAPPAccessTokenProvider?
     ) async throws {
         let client = try await makeClient(identity: identity, accessTokenProvider: accessTokenProvider)
-        present(UAPPRoadmapScreen(client: client))
+        present(UAPPRoadmapScreen(client: client), screen: .roadmap)
     }
 
     public static func showChangelog() throws {
@@ -250,38 +257,36 @@ public enum UAPPKit {
     public static func showChangelog(configuration: UAPPChangelogConfiguration) throws {
         try present(UAPPFeedbackScreen(
             client: requireClient(), mode: .changelog, changelogConfiguration: configuration
-        ))
+        ), screen: .changelog)
     }
 
     /// Apresenta avaliações com páginas de 1 a 50 itens (valores fora da faixa são ajustados).
     public static func showReviews(pageSize: Int) throws {
-        try present(UAPPReviewsScreen(client: requireClient(), pageSize: pageSize))
+        try present(UAPPReviewsScreen(client: requireClient(), pageSize: pageSize), screen: .reviews)
     }
 
     public static func showAbout(
         configuration: UAPPAboutConfiguration = .init()
     ) throws {
         let client = try requireClient()
-        present(UAPPAboutScreen(configuration: configuration, client: client))
-    }
-
-    /// Busca o app definido em `setup(projectId:)` e abre sua tela de avaliação
-    /// na App Store.
-    public static func openAppStoreReview() async throws {
-        let client = try requireClient()
-        guard let destination = try await client.appStoreReviewDestination() else {
-            throw UAPPKitError.appStoreURLUnavailable
-        }
-        guard await uappOpenExternalURLAndReportSuccess(destination, opener: urlOpener) else {
-            throw UAPPKitError.appStoreURLCouldNotOpen
-        }
+        present(UAPPAboutScreen(configuration: configuration, client: client), screen: .about)
     }
 
     public static func showDeveloperAbout() throws {
-        try present(UAPPDeveloperAboutScreen(client: requireClient()))
+        try present(UAPPDeveloperAboutScreen(client: requireClient()), screen: .developerAbout)
     }
 
-    private static func present(_ content: some View) {
+    #if os(macOS)
+    private static func present(_ content: some View, screen: UAPPPresentedScreen) {
+        windowPresenter.present(screen, content: UAPPKitPresentationRoot(
+            content: content,
+            theme: theme,
+            initialLanguage: hostLocaleIdentifier,
+            wrapsInNavigationStack: screen.wrapsInNavigationStack
+        ))
+    }
+    #else
+    private static func present(_ content: some View, screen _: UAPPPresentedScreen) {
         #if DEBUG
         let presenter = presenterProvider()
         #else
@@ -323,6 +328,19 @@ public enum UAPPKit {
         return top
     }
     #endif
+    #endif
+
+    /// Busca o app definido em `setup(projectId:)` e abre sua tela de avaliação
+    /// na App Store.
+    public static func openAppStoreReview() async throws {
+        let client = try requireClient()
+        guard let destination = try await client.appStoreReviewDestination() else {
+            throw UAPPKitError.appStoreURLUnavailable
+        }
+        guard await uappOpenExternalURLAndReportSuccess(destination, opener: urlOpener) else {
+            throw UAPPKitError.appStoreURLCouldNotOpen
+        }
+    }
 }
 
 #if canImport(SwiftUI)
@@ -342,9 +360,12 @@ struct UAPPKitPresentationRoot<Content: View>: View {
     @AppStorage(UAPPLocalizationPreferences.presentationStorageKey)
     private var selectedLanguage = UAPPLocalizationPreferences.defaultIdentifier
 
-    init(content: Content, theme: UAPPTheme, initialLanguage: String) {
+    private let wrapsInNavigationStack: Bool
+
+    init(content: Content, theme: UAPPTheme, initialLanguage: String, wrapsInNavigationStack: Bool = true) {
         self.content = content
         self.theme = theme
+        self.wrapsInNavigationStack = wrapsInNavigationStack
         let resolvedLanguage = UAPPLocalizationPreferences.preparePresentation(
             initialIdentifier: initialLanguage
         )
@@ -355,10 +376,19 @@ struct UAPPKitPresentationRoot<Content: View>: View {
     }
 
     var body: some View {
-        NavigationStack { content }
+        navigationContent
             .environment(\.uappTheme, theme)
             .environment(\.locale, Locale(identifier: selectedLanguage))
             .background { UAPPThemePresentationBackground() }
+    }
+
+    /// Feedback e Roadmap no Mac já trazem a divisão lista/detalhe e não entram em uma pilha.
+    @ViewBuilder private var navigationContent: some View {
+        if wrapsInNavigationStack {
+            NavigationStack { content }
+        } else {
+            content
+        }
     }
 }
 #endif

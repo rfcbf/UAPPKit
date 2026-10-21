@@ -9,13 +9,16 @@ struct UAPPChangelogSearchModifier: ViewModifier {
     var promptKey: String = "changelog.search"
     /// Texto pronto do aplicativo; quando presente, substitui a chave do pacote.
     var promptText: String?
+    /// No Mac, o campo fica sempre na barra de ferramentas, sem depender do botão de lupa.
+    var isPersistentOnMac = false
+    @Environment(\.uappToolbarItemsHidden) private var itemsHidden
 
     private var prompt: String {
         promptText ?? uappLocalized(promptKey)
     }
 
     func body(content: Content) -> some View {
-        if enabled {
+        if enabled, !itemsHidden {
             #if os(iOS)
             if #available(iOS 26, *) {
                 if isPresented {
@@ -33,6 +36,13 @@ struct UAPPChangelogSearchModifier: ViewModifier {
             } else {
                 legacySearch(content)
             }
+            #elseif os(macOS)
+            if isPersistentOnMac || isPresented {
+                content
+                    .searchable(text: $query, placement: .toolbar, prompt: Text(verbatim: prompt))
+            } else {
+                content
+            }
             #else
             legacySearch(content)
             #endif
@@ -41,6 +51,7 @@ struct UAPPChangelogSearchModifier: ViewModifier {
         }
     }
 
+    #if !os(macOS)
     private func legacySearch(_ content: Content) -> some View {
         content.safeAreaInset(edge: .bottom) {
             if isPresented {
@@ -55,5 +66,6 @@ struct UAPPChangelogSearchModifier: ViewModifier {
             }
         }
     }
+    #endif
 }
 #endif

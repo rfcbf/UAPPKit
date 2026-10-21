@@ -112,43 +112,77 @@ struct UAPPNavigationBarModifier: ViewModifier {
     var showsLanguageMenu = true
     var onClose: (() -> Void)?
 
-    @Environment(\.dismiss) private var dismiss
+    private var closer = UAPPScreenCloser()
+    @Environment(\.uappToolbarItemsHidden) private var itemsHidden
+    /// O detalhe ao lado da lista (Mac) não troca o título da janela da lista.
+    @Environment(\.uappIsSplitDetail) private var isSplitDetail
+
+    init(
+        title: Text,
+        accentColor: Color,
+        showsCloseButton: Bool = true,
+        showsLanguageMenu: Bool = true,
+        onClose: (() -> Void)? = nil
+    ) {
+        self.title = title
+        self.accentColor = accentColor
+        self.showsCloseButton = showsCloseButton
+        self.showsLanguageMenu = showsLanguageMenu
+        self.onClose = onClose
+    }
 
     func body(content: Content) -> some View {
-        content
-            .navigationTitle(title)
+        titled(content)
             .environment(\.locale, Locale(identifier: selectedLanguage))
             #if canImport(UIKit)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.visible, for: .navigationBar)
             #endif
             .toolbar {
-                if showsCloseButton {
+                // Na raiz de uma janela do Mac, o botão de fechar da própria janela substitui o X.
+                if showsCloseButton, !closer.closesWindow {
                     ToolbarItem(placement: .cancellationAction) {
                         Button(action: {
                             if let onClose {
                                 onClose()
                             } else {
-                                dismiss()
+                                closer()
                             }
                         }) {
+                            #if os(macOS)
+                            Text(verbatim: uappLocalized("navigation.close"))
+                            #else
                             Image(systemName: "xmark")
                                 .foregroundStyle(accentColor)
+                            #endif
                         }
                         .accessibilityLabel(Text(verbatim: uappLocalized("navigation.close")))
+                        #if os(macOS)
+                        .keyboardShortcut(.cancelAction)
+                        #endif
                     }
                 }
-                if showsLanguageMenu {
+                if showsLanguageMenu, !itemsHidden {
                     ToolbarItem(placement: .primaryAction) {
                         UAPPLanguageMenu(accentOverride: accentColor)
                     }
                 }
             }
             .tint(accentColor)
+            .background { closer.windowReader }
     }
 
     @AppStorage(UAPPLocalizationPreferences.presentationStorageKey)
     private var selectedLanguage = UAPPLocalizationPreferences.defaultIdentifier
+
+    @ViewBuilder
+    private func titled(_ content: Content) -> some View {
+        if isSplitDetail {
+            content
+        } else {
+            content.navigationTitle(title)
+        }
+    }
 }
 
 extension View {

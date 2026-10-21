@@ -11,12 +11,21 @@ private final class KeychainDouble: @unchecked Sendable {
     var updateStatus: OSStatus?
     var addStatus: OSStatus = errSecSuccess
     var deleteStatus: OSStatus?
+    /// Simula um app sem o direito de usar o Keychain moderno do Mac.
+    var rejectsDataProtection = false
     private(set) var addedAttributes: [String: Any] = [:]
+
+    private func rejects(_ query: CFDictionary) -> Bool {
+        rejectsDataProtection && (query as NSDictionary)[kSecUseDataProtectionKeychain as String] != nil
+    }
 
     var keychain: UAPPKeychain {
         UAPPKeychain(
-            copyMatching: { [self] _, result in
+            copyMatching: { [self] query, result in
                 lock.withLock {
+                    if rejects(query) {
+                        return errSecMissingEntitlement
+                    }
                     if let copyStatus {
                         return copyStatus
                     }
@@ -25,8 +34,11 @@ private final class KeychainDouble: @unchecked Sendable {
                     return errSecSuccess
                 }
             },
-            update: { [self] _, changes in
+            update: { [self] query, changes in
                 lock.withLock {
+                    if rejects(query) {
+                        return errSecMissingEntitlement
+                    }
                     if let updateStatus {
                         return updateStatus
                     }
@@ -37,14 +49,20 @@ private final class KeychainDouble: @unchecked Sendable {
             },
             add: { [self] attributes, _ in
                 lock.withLock {
+                    if rejects(attributes) {
+                        return errSecMissingEntitlement
+                    }
                     addedAttributes = attributes as? [String: Any] ?? [:]
                     guard addStatus == errSecSuccess else { return addStatus }
                     stored = (attributes as NSDictionary)[kSecValueData as String] as? Data
                     return errSecSuccess
                 }
             },
-            delete: { [self] _ in
+            delete: { [self] query in
                 lock.withLock {
+                    if rejects(query) {
+                        return errSecMissingEntitlement
+                    }
                     if let deleteStatus {
                         return deleteStatus
                     }
@@ -89,6 +107,26 @@ struct UAPPSessionStorageTests {
         double.deleteStatus = errSecParam
         #expect(throws: UAPPKeychainSessionStorage.StorageError(status: errSecParam)) { try storage.remove() }
     }
+
+    #if os(macOS)
+    @Test("No Mac, a sessão usa o Keychain moderno e volta ao clássico sem o direito de usá-lo")
+    func macDataProtectionKeychain() throws {
+        let modern = KeychainDouble()
+        let storage = UAPPKeychainSessionStorage(account: "conta", keychain: modern.keychain)
+        try storage.save(Data("sessão".utf8))
+        #expect(modern.addedAttributes[kSecUseDataProtectionKeychain as String] as? Bool == true)
+
+        let legacy = KeychainDouble()
+        legacy.rejectsDataProtection = true
+        let fallback = UAPPKeychainSessionStorage(account: "conta", keychain: legacy.keychain)
+        #expect(try fallback.read() == nil)
+        try fallback.save(Data("sessão".utf8))
+        #expect(legacy.addedAttributes[kSecUseDataProtectionKeychain as String] == nil)
+        #expect(try fallback.read() == Data("sessão".utf8))
+        try fallback.remove()
+        #expect(try fallback.read() == nil)
+    }
+    #endif
 
     @Test("Armazenamento transitório não guarda dados")
     func transientStorage() throws {

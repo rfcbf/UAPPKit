@@ -2,6 +2,11 @@ import Foundation
 import Testing
 @testable import UAPPKit
 
+#if os(macOS)
+import AppKit
+import SwiftUI
+#endif
+
 #if canImport(UIKit) && canImport(SwiftUI)
 import UIKit
 
@@ -42,7 +47,7 @@ struct UAPPKitTests {
             #expect(error as? UAPPKitError == .notConfigured)
         }
 
-        #if canImport(UIKit) && canImport(SwiftUI)
+        #if canImport(SwiftUI) && (canImport(UIKit) || os(macOS))
         let presentations: [@MainActor () throws -> Void] = [
             { try UAPPKit.showFeedback() },
             { try UAPPKit.showRoadmap() },
@@ -130,7 +135,6 @@ struct UAPPKitTests {
         #expect(defaults.string(forKey: key) == "pt-BR")
     }
 
-    #if canImport(UIKit) && canImport(SwiftUI)
     @Test("Avaliação na App Store abre o destino do projeto e informa falhas")
     @MainActor
     func appKitOpensAppStoreReview() async throws {
@@ -160,6 +164,74 @@ struct UAPPKitTests {
         UAPPKit.makeTransport = { StubTransport { _ in response(#"{"about":{"about_apps":[]}}"#) } }
         UAPPKit.setup(projectId: "review-empty", host: host)
         await #expect(throws: UAPPKitError.appStoreURLUnavailable) { try await UAPPKit.openAppStoreReview() }
+    }
+
+    #if os(macOS)
+    /// Fica nesta suíte serializada porque altera a configuração global do UAPPKit.
+    @Test("Cada item do menu Ajuda abre a janela correspondente")
+    @MainActor
+    func commandsOpenWindows() async throws {
+        let presenter = UAPPMacWindowPresenter()
+        presenter.ordersWindowsFront = false
+        let previousPresenter = UAPPKit.windowPresenter
+        let previousTransport = UAPPKit.makeTransport
+        let previousOpener = UAPPKit.urlOpener
+        defer {
+            presenter.closeAll()
+            UAPPKit.windowPresenter = previousPresenter
+            UAPPKit.makeTransport = previousTransport
+            UAPPKit.urlOpener = previousOpener
+            UAPPKit.reset()
+        }
+        UAPPKit.windowPresenter = presenter
+        UAPPKit.makeTransport = { StubTransport { _ in response("{}") } }
+        UAPPKit.urlOpener = { _ in true }
+        let host = try #require(URL(string: "https://commands.example"))
+        UAPPKit.setup(projectId: "commands-test", host: host)
+
+        for item in UAPPKitCommands.Item.allCases {
+            UAPPKitCommands.perform(item)
+        }
+        await Task.yield()
+        #expect(Set(presenter.windows.keys) == [.feedback, .roadmap, .changelog, .reviews, .developerAbout])
+    }
+
+    @Test("No Mac, UAPPKit abre cada tela pública em uma janela própria")
+    @MainActor
+    func appKitPresentsEveryScreenInMacWindows() async throws {
+        let presenter = UAPPMacWindowPresenter()
+        presenter.ordersWindowsFront = false
+        let previousPresenter = UAPPKit.windowPresenter
+        let previousTransport = UAPPKit.makeTransport
+        defer {
+            presenter.closeAll()
+            UAPPKit.windowPresenter = previousPresenter
+            UAPPKit.makeTransport = previousTransport
+            UAPPKit.reset()
+        }
+        UAPPKit.windowPresenter = presenter
+        UAPPKit.makeTransport = { StubTransport { _ in response("{}") } }
+        let host = try #require(URL(string: "https://mac-windows.example"))
+        UAPPKit.setup(projectId: "mac-windows-test", host: host, theme: .init(light: .init(accent: .purple)))
+        let authentication = StubAuthentication()
+        let session = UAPPAuthenticationSession(identity: .init(userId: "verified"), accessToken: "token")
+
+        try UAPPKit.showFeedback()
+        try await UAPPKit.showFeedback(authentication: authentication)
+        try await UAPPKit.showFeedback(accessTokenProvider: { "token" })
+        try UAPPKit.showRoadmap()
+        try await UAPPKit.showRoadmap(authentication: authentication)
+        try await UAPPKit.showRoadmap(accessTokenProvider: nil)
+        try UAPPKit.showChangelog()
+        try UAPPKit.showReviews(pageSize: 10)
+        try UAPPKit.showAbout(configuration: .init(showsChangelog: true))
+        try UAPPKit.showDeveloperAbout()
+        try UAPPKit.showUser(session: session, authentication: authentication)
+        try UAPPKit.showAuthentication(authentication: authentication)
+
+        #expect(Set(presenter.windows.keys) == Set(UAPPPresentedScreen.allCases))
+        let feedback = try #require(presenter.windows[.feedback])
+        #expect(feedback.contentViewController is NSHostingController<AnyView>)
     }
     #endif
 

@@ -118,26 +118,37 @@ struct UAPPParticipationModifier: ViewModifier {
     var searchAction: (() -> Void)?
     var searchPromptKey = "common.search"
     @Environment(\.uappTheme) private var theme
+    /// No detalhe ao lado da lista (Mac), idioma e conta já estão na barra da lista.
+    @Environment(\.uappIsSplitDetail) private var isSplitDetail
+    @Environment(\.uappToolbarItemsHidden) private var itemsHidden
 
     func body(content: Content) -> some View {
         content
             .toolbar {
-                ToolbarItemGroup(placement: .primaryAction) {
-                    if let searchAction {
-                        Button(action: searchAction) {
-                            Image(systemName: "magnifyingglass")
-                                .foregroundStyle(accentColor)
+                if !isSplitDetail, !itemsHidden {
+                    ToolbarItemGroup(placement: .primaryAction) {
+                        // No Mac a busca já fica visível na barra de ferramentas.
+                        #if !os(macOS)
+                        if let searchAction {
+                            Button(action: searchAction) {
+                                Image(systemName: "magnifyingglass")
+                                    .foregroundStyle(accentColor)
+                            }
+                            .accessibilityLabel(Text(verbatim: uappLocalized(searchPromptKey)))
                         }
-                        .accessibilityLabel(Text(verbatim: uappLocalized(searchPromptKey)))
-                    }
-                    UAPPLanguageMenu(accentOverride: accentColor)
-                    if enabled, model.isEnabled || model.identity != nil {
-                        Button {
-                            model.showsAccount = true
-                        } label: {
-                            accountImage
+                        #endif
+                        UAPPLanguageMenu(accentOverride: accentColor)
+                        if enabled, model.isEnabled || model.identity != nil {
+                            Button {
+                                model.showsAccount = true
+                            } label: {
+                                accountImage
+                            }
+                            .accessibilityLabel(Text(verbatim: uappLocalized(model.identity == nil ? "auth.title" : "user.account")))
+                            #if os(macOS)
+                            .help(Text(verbatim: uappLocalized(model.identity == nil ? "auth.title" : "user.account")))
+                            #endif
                         }
-                        .accessibilityLabel(Text(verbatim: uappLocalized(model.identity == nil ? "auth.title" : "user.account")))
                     }
                 }
             }
@@ -180,7 +191,7 @@ struct UAPPParticipationModifier: ViewModifier {
                 } else {
                     Image(systemName: "person.crop.circle.fill")
                         .resizable().scaledToFit()
-                        .foregroundStyle(accentColor)
+                        .foregroundStyle(Color.uappToolbarIcon(accentColor))
                 }
             }
             .frame(width: 28, height: 28)
@@ -188,7 +199,7 @@ struct UAPPParticipationModifier: ViewModifier {
             .accessibilityHidden(true)
         } else {
             Image(systemName: "person.badge.plus")
-                .foregroundStyle(accentColor)
+                .foregroundStyle(Color.uappToolbarIcon(accentColor))
                 .accessibilityHidden(true)
         }
     }

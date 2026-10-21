@@ -223,8 +223,15 @@ modelos, modos de tela, protocolo de transporte e erros.
 
 - iOS 18 ou posterior, incluindo iPadOS: cliente, views e apresentação nativa
   pelo view controller ativo.
-- macOS 13 ou posterior: cliente e views SwiftUI; a apresentação automática
-  de view controller é condicionada a UIKit e não existe no macOS.
+- macOS 13 ou posterior: cliente, views SwiftUI e apresentação em janelas
+  próprias (`UAPPMacWindowPresenter`, uma janela por tela, com
+  `NSHostingController`). A barra de ferramentas do SwiftUI é levada para a
+  janela a partir do macOS 14 (`sceneBridgingOptions`). No Mac, Feedback usa
+  `UAPPFeedbackSplitView` (lista e detalhe em colunas comuns, sem barra
+  lateral, para a barra de ferramentas ter uma cor só) e Roadmap usa
+  `UAPPRoadmapBoard` (quadro por status) com o detalhe em um inspetor.
+  `UAPPScreenCloser` lê a janela real da tela e fecha a janela do pacote.
+  `UAPPKitCommands` expõe as telas na barra de menus.
 - watchOS, tvOS e visionOS não são declarados como destinos suportados.
 
 ## Adaptação ao iPhone Duo

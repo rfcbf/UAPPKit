@@ -155,7 +155,7 @@ private struct UAPPReviewEmptyState: View {
         }
         .padding(24)
         .frame(maxWidth: 520)
-        .uappCardSurface(palette, cornerRadius: 28)
+        .uappEmptyStateSurface(palette)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(16)
     }

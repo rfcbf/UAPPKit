@@ -6,6 +6,7 @@ struct UAPPSupportTopicSheet: View {
     let palette: UAPPResolvedPalette
     let onSelect: (UAPPSupportTopic) -> Void
     @State private var contentHeight: CGFloat = 320
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -38,6 +39,19 @@ struct UAPPSupportTopicSheet: View {
             contentHeight = height
         }
         .frame(maxHeight: .infinity, alignment: .top)
+        #if os(macOS)
+        // A sheet do Mac não fecha com gesto: "Cancelar" (Esc) fica no rodapé.
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            HStack {
+                Spacer()
+                Button(uappLocalized("common.cancel")) { dismiss() }
+                    .keyboardShortcut(.cancelAction)
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 16)
+        }
+        .frame(width: 420)
+        #endif
         .background(palette.background.ignoresSafeArea())
         .presentationDetents([.height(contentHeight)])
         .presentationDragIndicator(.visible)

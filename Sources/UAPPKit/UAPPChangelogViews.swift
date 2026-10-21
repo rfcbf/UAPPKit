@@ -403,4 +403,22 @@ extension EnvironmentValues {
         set { self[UAPPChangelogImageFixtureKey.self] = newValue }
     }
 }
+
+struct UAPPChangelogDetailNavigation: ViewModifier {
+    let isEnabled: Bool
+    let isPresented: Binding<Bool>
+    let destination: UAPPChangelogDetailScreen?
+
+    func body(content: Content) -> some View {
+        if isEnabled {
+            content.navigationDestination(isPresented: isPresented) {
+                if let destination {
+                    destination
+                }
+            }
+        } else {
+            content
+        }
+    }
+}
 #endif

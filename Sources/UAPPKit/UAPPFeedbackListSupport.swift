@@ -82,7 +82,8 @@ struct UAPPFeedbackControls: View {
                     .foregroundStyle(palette.secondaryText)
             }
         }
-        .tint(accentColor)
+        // No Mac, filtro e ordenação na cor do sistema, como os demais controles da janela.
+        .tint(Color.uappToolbarIcon(accentColor))
         .padding(.horizontal, 24)
         .padding(.top, 12)
         .padding(.bottom, 12)
@@ -159,23 +160,7 @@ struct UAPPFeedbackItemNavigation: ViewModifier {
     private var selectedLanguage = UAPPLocalizationPreferences.defaultIdentifier
 
     func body(content: Content) -> some View {
-        content
-            .navigationDestination(isPresented: Binding(
-                get: { selectedFeedback != nil },
-                set: {
-                    if !$0 {
-                        selectedFeedback = nil
-                    }
-                }
-            )) {
-                if let selectedFeedback {
-                    UAPPFeedbackDetailScreen(
-                        client: client, item: selectedFeedback, accentColor: accentColor,
-                        status: statuses.first { $0.id == selectedFeedback.statusId },
-                        onUpdate: onUpdate
-                    )
-                }
-            }
+        detailNavigation(content)
             .uappToast(message: Binding(
                 get: { reactionError.map { uappLocalized($0) } },
                 set: {
@@ -193,6 +178,32 @@ struct UAPPFeedbackItemNavigation: ViewModifier {
                     .environment(\.locale, Locale(identifier: selectedLanguage))
                     .uappPresentationBackground(theme.resolved(for: colorScheme).background)
             }
+    }
+
+    /// No Mac o detalhe aparece ao lado da lista (`UAPPFeedbackSplitView`); nos demais
+    /// sistemas, é empilhado pela navegação.
+    private func detailNavigation(_ content: Content) -> some View {
+        #if os(macOS)
+        content
+        #else
+        content
+            .navigationDestination(isPresented: Binding(
+                get: { selectedFeedback != nil },
+                set: {
+                    if !$0 {
+                        selectedFeedback = nil
+                    }
+                }
+            )) {
+                if let selectedFeedback {
+                    UAPPFeedbackDetailScreen(
+                        client: client, item: selectedFeedback, accentColor: accentColor,
+                        status: statuses.first { $0.id == selectedFeedback.statusId },
+                        onUpdate: onUpdate
+                    )
+                }
+            }
+        #endif
     }
 }
 
@@ -238,11 +249,16 @@ struct UAPPFeedbackListSpacing: ViewModifier {
 
     func body(content: Content) -> some View {
         if enabled {
-            if #available(iOS 17, macOS 14, *) {
+            #if os(macOS)
+            // Na coluna da lista, o estilo de barra lateral do Mac seria aplicado por padrão.
+            content.listStyle(.inset)
+            #else
+            if #available(iOS 17, *) {
                 content.contentMargins(.top, 0, for: .scrollContent)
             } else {
                 content.listStyle(.plain)
             }
+            #endif
         } else {
             content
         }

@@ -125,11 +125,15 @@ struct UAPPFeedbackRemoteImage: View {
                         .background(.black.opacity(0.65), in: Circle())
                 }
                 .buttonStyle(.plain)
+                #if os(macOS)
+                .keyboardShortcut(.cancelAction)
+                #endif
                 .accessibilityLabel(Text(verbatim: uappLocalized("navigation.close", languageIdentifier: selectedLanguage)))
                 .padding(12)
             }
             .tint(.white)
             .preferredColorScheme(.dark)
+            .uappMacSheetFrame(width: 760, height: 600)
         }
         .task(id: url) {
             let identity = UAPPFeedbackAttachment(url: url).id
@@ -221,6 +225,12 @@ struct UAPPFeedbackImagePicker: View {
                     .font(.body).frame(width: 44, height: 44, alignment: .leading)
                     .contentShape(Rectangle())
             }
+            #if os(macOS)
+            // No Mac o seletor vira um botão com moldura na cor de destaque, pouco legível.
+            .buttonStyle(.plain)
+            .foregroundStyle(.primary)
+            .help(Text(verbatim: uappLocalized("feedback.image.attach")))
+            #endif
             .disabled(isProcessing || data.count >= 2)
             .task(id: selection) {
                 guard let selection, data.count < 2 else { return }
@@ -251,6 +261,15 @@ struct UAPPFeedbackImagePicker: View {
 struct UAPPFeedbackComposerAttachments: View {
     static let limit = 2
 
+    /// No Mac, miniaturas de largura fixa, menores que a coluna do formulário.
+    static var columns: [GridItem] {
+        #if os(macOS)
+        [GridItem(.fixed(150), spacing: 10), GridItem(.fixed(150), spacing: 10)]
+        #else
+        [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
+        #endif
+    }
+
     @Binding var data: [Data]
     @Binding var isProcessing: Bool
     let accent: Color
@@ -264,10 +283,7 @@ struct UAPPFeedbackComposerAttachments: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            LazyVGrid(
-                columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)],
-                spacing: 10
-            ) {
+            LazyVGrid(columns: Self.columns, alignment: .leading, spacing: 10) {
                 ForEach(data.indices, id: \.self) { index in
                     thumbnail(at: index)
                 }

@@ -9,6 +9,8 @@ struct UAPPFeedbackDetailScreen: View {
     @Environment(\.uappTheme) private var theme
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
+    /// No Mac, o detalhe fica ao lado da lista e não tem botão de voltar.
+    @Environment(\.uappIsSplitDetail) private var isSplitDetail
     @AppStorage(UAPPLocalizationPreferences.presentationStorageKey)
     private var selectedLanguage = UAPPLocalizationPreferences.defaultIdentifier
     @State private var translationCache = UAPPReviewTranslationCache()
@@ -145,15 +147,17 @@ struct UAPPFeedbackDetailScreen: View {
         )
         .navigationBarBackButtonHidden(true)
         .toolbar {
-            ToolbarItem(placement: backButtonPlacement) {
-                Button { dismiss() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundStyle(resolvedAccent)
+            if !isSplitDetail {
+                ToolbarItem(placement: backButtonPlacement) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                            .foregroundStyle(resolvedAccent)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(resolvedAccent)
+                    .tint(resolvedAccent)
+                    .accessibilityLabel(Text(verbatim: uappLocalized("account.back")))
                 }
-                .buttonStyle(.plain)
-                .foregroundStyle(resolvedAccent)
-                .tint(resolvedAccent)
-                .accessibilityLabel(Text(verbatim: uappLocalized("account.back")))
             }
         }
         .task(id: scenePhase) {
@@ -389,8 +393,14 @@ struct UAPPFeedbackDetailScreen: View {
                         HStack {
                             Button(uappLocalized("comments.reply")) { replyingTo = comment }
                                 .font(.subheadline).frame(minHeight: 44)
+                                #if os(macOS)
+                                // No Mac, texto simples na cor do sistema, sem a moldura do botão padrão.
+                                .buttonStyle(.plain)
+                                .foregroundStyle(palette.secondaryText)
+                                #else
                                 .foregroundStyle(resolvedAccent)
                                 .tint(resolvedAccent)
+                                #endif
                             Spacer()
                             Button { Task { await participation.perform { await toggleCommentVote(comment) } } } label: {
                                 reactionLabel(count: comment.voteCount, selected: comment.viewerVoted)
@@ -509,12 +519,18 @@ struct UAPPFeedbackDetailScreen: View {
 /// Textos e rótulos auxiliares do detalhe, fora do corpo principal para manter o tipo enxuto.
 extension UAPPFeedbackDetailScreen {
     private func reactionLabel(count: Int, selected: Bool) -> some View {
+        #if os(macOS)
+        // Mesmo voto da lista no Mac: preenchido com a cor de destaque quando a pessoa votou.
+        UAPPMacVoteLabel(count: count, isVoted: selected, accentColor: resolvedAccent)
+            .padding(.vertical, 6).contentShape(Rectangle())
+        #else
         Label(count.formatted(), systemImage: "arrow.up")
             .font(.caption.weight(.semibold)).monospacedDigit()
             .padding(.horizontal, 10).frame(height: 32)
             .background(selected ? resolvedAccent.opacity(0.12) : palette.cardBackground, in: Capsule())
             .overlay(Capsule().strokeBorder(palette.separator, lineWidth: 1))
             .padding(.vertical, 6).contentShape(Rectangle())
+        #endif
     }
 
     private func commentHeading(_ comment: UAPPComment) -> some View {

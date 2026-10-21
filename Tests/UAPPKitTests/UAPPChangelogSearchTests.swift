@@ -4,7 +4,7 @@ import Testing
 
 @MainActor
 struct UAPPChangelogSearchTests {
-    private func renderSearch(enabled: Bool, presented: Bool, query: String = "") async {
+    private func renderSearch(enabled: Bool, presented: Bool, query: String = "", persistent: Bool = false) async {
         var text = query
         var isPresented = presented
         await render(
@@ -15,7 +15,8 @@ struct UAPPChangelogSearchTests {
                         query: Binding(get: { text }, set: { text = $0 }),
                         isPresented: Binding(get: { isPresented }, set: { isPresented = $0 }),
                         accentColor: .purple,
-                        promptKey: "common.search"
+                        promptKey: "common.search",
+                        isPersistentOnMac: persistent
                     ))
             }
         )
@@ -26,5 +27,7 @@ struct UAPPChangelogSearchTests {
         await renderSearch(enabled: true, presented: true, query: "2.0")
         await renderSearch(enabled: true, presented: false)
         await renderSearch(enabled: false, presented: true)
+        // No Mac, Feedback e Roadmap mantêm o campo na barra mesmo sem o botão de lupa.
+        await renderSearch(enabled: true, presented: false, persistent: true)
     }
 }

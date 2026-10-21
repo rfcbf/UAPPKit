@@ -153,6 +153,23 @@ public struct UAPPFeedbackComposerScreen: View {
     }
 }
 
+extension UAPPFeedbackCategory {
+    /// Chave localizada exibida no seletor de tipo do compositor.
+    var composerTitleKey: String {
+        "category.\(rawValue)"
+    }
+
+    /// Símbolo SF associado ao tipo de feedback no compositor.
+    var composerSymbol: String {
+        switch self {
+        case .bug: "ladybug"
+        case .feature: "sparkles"
+        case .improvement: "wand.and.stars"
+        case .question: "questionmark.bubble"
+        }
+    }
+}
+
 #Preview("Compositor preenchido") {
     UAPPFeedbackComposerScreen(
         client: UAPPClient(configuration: UAPPConfiguration(projectId: "exemplo")),

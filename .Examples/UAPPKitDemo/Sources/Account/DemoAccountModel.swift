@@ -2,7 +2,9 @@ import CryptoKit
 import Foundation
 import SwiftUI
 import UAPPKit
+#if canImport(UIKit)
 import UIKit
+#endif
 
 /// Exemplo de conta do aplicativo: o mesmo provedor é entregue à área de participação.
 @MainActor
