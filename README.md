@@ -414,6 +414,10 @@ Veja [conta e participação global](Documentation/UserActivity.md) e
 As mesmas APIs funcionam no Mac, com telas pensadas para a plataforma e não
 uma adaptação da tela do iPad:
 
+<p align="center">
+  <img src="Documentation/Images/mac-feedback-light.png" width="760" alt="Feedback no Mac, com a lista à esquerda e o detalhe à direita, no modo claro">
+</p>
+
 - **Janelas próprias.** Cada `UAPPKit.show…` abre a tela em uma janela do Mac,
   com título, barra de ferramentas e botão de fechar do sistema, centralizada
   no monitor. Chamar de novo traz a mesma janela para a frente. Conta e Perfil abrem em janelas estreitas e fecham sozinhas depois
@@ -421,8 +425,8 @@ uma adaptação da tela do iPad:
 - **Lista e detalhe lado a lado.** No Feedback, como no Mail, a lista fica à
   esquerda e o item escolhido, à direita; o divisor é arrastável e a largura da
   lista é lembrada. Cada linha mostra autor (foto ou iniciais) e data, título,
-  descrição, status, prioridade, comentários e o voto, na mesma cápsula do
-  iPhone.
+  descrição, status, prioridade, comentários e o voto, que fica cheio na cor
+  de destaque quando é da pessoa.
 - **Roadmap em quadro.** Uma coluna por status, lado a lado, com a quantidade
   de itens; o item escolhido abre em um painel à direita (macOS 14+) ou em
   uma sheet (macOS 13).
@@ -436,6 +440,11 @@ uma adaptação da tela do iPad:
   cadastro, sem tela de boas-vindas nem botão de voltar.
 - **Foto de perfil.** O seletor oferece o app Fotos e arquivos do Finder, com
   recorte circular ajustável por arrasto e zoom. A câmera não é oferecida no Mac.
+
+<p align="center">
+  <img src="Documentation/Images/mac-roadmap-dark.png" width="540" alt="Roadmap no Mac em quadro, com uma coluna por status, no modo escuro">
+  <img src="Documentation/Images/mac-account-light.png" width="196" alt="Conta no Mac, aberta no login, no modo claro">
+</p>
 
 ### Menu Ajuda
 

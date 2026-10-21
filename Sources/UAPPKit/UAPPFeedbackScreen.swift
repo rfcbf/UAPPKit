@@ -451,6 +451,8 @@ extension UAPPFeedbackScreen {
         errorMascotState: UAPPMascotState = .unavailable,
         projectColor: Color? = nil,
         feedback: [UAPPFeedbackItem] = [],
+        statuses: [UAPPRoadmapColumn.Status] = [],
+        selectedFeedback: UAPPFeedbackItem? = nil,
         changelog: [UAPPChangelogEntry] = [],
         changelogNextCursor: String? = nil,
         isLoadingMoreChangelog: Bool = false,
@@ -469,6 +471,8 @@ extension UAPPFeedbackScreen {
         _errorMascotState = State(initialValue: errorMascotState)
         _projectColor = State(initialValue: projectColor)
         _feedback = State(initialValue: feedback)
+        _feedbackStatuses = State(initialValue: statuses)
+        _selectedFeedback = State(initialValue: selectedFeedback)
         _changelogQuery = State(initialValue: testingQuery)
         _changelogTranslationCache = State(initialValue: testingChangelogTranslationCache ?? UAPPReviewTranslationCache())
         _changelogModel = StateObject(wrappedValue: testingChangelogModel ?? UAPPChangelogModel(
