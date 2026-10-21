@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 private let publicFeedbackId = "00000000-0000-4000-8000-000000000001"
 private let publicProfileJSON = #"{"author":{"name":"Ana Maria Silva","avatar_url":"https://example.test/photo.jpg"},"totals":{"likes":3,"comments":2,"feedbacks":1}}"#

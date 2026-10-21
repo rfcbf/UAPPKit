@@ -42,13 +42,8 @@ extension ContentView {
     @MainActor
     func applyConfiguredTheme() {
         let slug = projectSlug.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard
-            !slug.isEmpty,
-            let server = URL(string: normalizedServer),
-            server.scheme != nil,
-            server.host != nil
-        else { return }
+        guard !slug.isEmpty else { return }
 
-        UAPPKit.setup(projectId: slug, host: server, theme: configuredTheme)
+        UAPPKit.setup(projectId: slug, theme: configuredTheme)
     }
 }

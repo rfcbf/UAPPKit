@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 @Test("Markdown do changelog preserva linhas, parágrafos e listas numeradas")
 func changelogMarkdownPreservesBlocks() {

@@ -1,6 +1,6 @@
 import SwiftUI
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 @Test("UAPPDeveloperAboutScreen constrói estados vazio, erro e conteúdo carregado")
 @MainActor

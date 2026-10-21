@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 private let searchItems = [
     UAPPFeedbackItem(id: "1", title: "Notificações", body: "Lembretes semanais", voteCount: 0, likeCount: 0, commentCount: 0),

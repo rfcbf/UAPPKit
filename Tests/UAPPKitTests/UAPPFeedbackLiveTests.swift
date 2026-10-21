@@ -6,7 +6,7 @@ import UIKit
 #elseif canImport(AppKit)
 import AppKit
 #endif
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 private let liveItemId = "00000000-0000-4000-8000-000000000001"
 

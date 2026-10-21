@@ -71,7 +71,7 @@ struct DemoAccountModelTests {
         let session = try await provider.verifyEmailCode(email: "visitor@example.test", code: "123456")
         model.updateSession(session)
         #expect(model.session?.identity.userId == "verified-user")
-        try model.configure(projectId: "another-app", host: #require(URL(string: "https://example.test")))
+        model.configure(projectId: "another-app")
         #expect(model.session == nil)
     }
 }

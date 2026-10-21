@@ -1,5 +1,5 @@
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 struct UAPPPasswordPolicyTests {
     @Test("Senha nova exige oito caracteres, maiúscula e símbolo", arguments: [

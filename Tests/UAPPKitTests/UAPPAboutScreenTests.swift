@@ -1,6 +1,6 @@
 import SwiftUI
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 @Test("UAPPAboutConfiguration mantém o conteúdo institucional do aplicativo")
 func aboutConfigurationKeepsAppContent() {

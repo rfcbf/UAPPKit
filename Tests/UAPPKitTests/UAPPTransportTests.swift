@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 private final class FailingURLProtocol: URLProtocol {
     override class func canInit(with _: URLRequest) -> Bool {

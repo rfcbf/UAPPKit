@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 @Test("enums públicos codificam os valores do contrato")
 func publicEnumsUseContractValues() throws {

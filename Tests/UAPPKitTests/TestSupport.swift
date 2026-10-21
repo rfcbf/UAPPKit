@@ -2,7 +2,7 @@ import Foundation
 import ImageIO
 import SwiftUI
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 #if canImport(UIKit)
 import UIKit

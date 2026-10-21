@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 @Test("Comentários aceitam datas ISO com e sem frações de segundo", arguments: [
     "2026-10-02T12:00:00Z",

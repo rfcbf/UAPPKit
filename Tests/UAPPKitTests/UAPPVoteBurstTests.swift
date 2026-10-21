@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 struct UAPPVoteBurstTests {
     @Test func symbolFollowsTheVote() {

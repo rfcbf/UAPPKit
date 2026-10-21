@@ -178,7 +178,6 @@ Não adiciona dependências externas.
 ```swift
 let feedbackAuthentication = UAPPAuthentication(
     configuration: UAPPAuthenticationConfiguration(
-        host: authenticationHost,
         publishableKey: authenticationPublicKey,
         callbackURL: URL(string: "meuapp://uapp-auth")!,
         methods: [.apple, .google, .github, .email]

@@ -2,7 +2,7 @@ import Foundation
 import ImageIO
 import SwiftUI
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 import UniformTypeIdentifiers
 
 @Test("Feedback e resposta enviam a imagem sem alterar o texto ou o pai")

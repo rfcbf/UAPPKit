@@ -1,5 +1,5 @@
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 @Test("erros expõem descrições localizadas")
 func errorsHaveLocalizedDescriptions() {

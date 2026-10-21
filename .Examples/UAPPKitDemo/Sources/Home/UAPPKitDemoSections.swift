@@ -175,11 +175,6 @@ extension ContentView {
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .textContentType(.URL)
-
-            TextField(localized("demo.server"), text: $supabaseServer)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .keyboardType(.URL)
         } header: {
             Text(verbatim: localized("demo.configuration"))
         } footer: {
@@ -395,7 +390,7 @@ extension ContentView {
                 do {
                     try await UAPPKit.openAppStoreReview()
                 } catch {
-                    appStoreReviewError = "\(error.localizedDescription)\n\nProjeto: \(projectSlug)\nServidor: \(normalizedServer)"
+                    appStoreReviewError = "\(error.localizedDescription)\n\nProjeto: \(projectSlug)"
                 }
             }
         } label: {
@@ -415,12 +410,5 @@ extension ContentView {
 
     var canSave: Bool {
         !projectSlug.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && URL(string: normalizedServer) != nil
-    }
-
-    var normalizedServer: String {
-        supabaseServer
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
     }
 }

@@ -1,6 +1,6 @@
 import SwiftUI
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 @Test("Suporte do Sobre usa o e-mail do servidor antes do link da configuração")
 func aboutSupportPrefersServerEmail() {

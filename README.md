@@ -55,12 +55,12 @@ No Xcode, escolha **File → Add Package Dependencies…** e informe:
 https://github.com/rfcbf/UAPPKit
 ```
 
-Selecione a versão `1.12.0` ou posterior e adicione o produto `UAPPKit` ao
+Selecione a versão `2.0.0` ou posterior e adicione o produto `UAPPKit` ao
 target do aplicativo. Em outro `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/rfcbf/UAPPKit", from: "1.12.0")
+    .package(url: "https://github.com/rfcbf/UAPPKit", from: "2.0.0")
 ],
 targets: [
     .target(name: "MeuApp", dependencies: ["UAPPKit"])
@@ -96,7 +96,6 @@ Todos os parâmetros além de `projectId` são opcionais:
 ```swift
 UAPPKit.setup(
     projectId: "meu-app",
-    host: URL(string: "https://api.exemplo.com")!,
     theme: .system,
     signatureProvider: nil,
     locale: Locale(identifier: "pt-BR")
@@ -106,12 +105,12 @@ UAPPKit.setup(
 | Parâmetro | Padrão | Descrição |
 | --- | --- | --- |
 | `projectId` | obrigatório | Identificador público do projeto (`public_slug`) configurado no UAPP. |
-| `host` | `UAPPConfiguration.defaultHost` | Endereço do serviço UAPP. Informe somente ao usar outro ambiente. |
 | `theme` | `.system` | Paleta das telas do kit. Veja [Tema](#tema). |
 | `signatureProvider` | `nil` | Closure assíncrona que retorna uma assinatura emitida pelo seu servidor. |
 | `locale` | idioma do app/sistema | Idioma inicial das telas. Veja [Idioma e tradução](#idioma-e-tradução). |
 
-O setup não inicia login nem acessa a autenticação. Antes dele, as APIs do kit
+O kit acessa sempre o servidor de produção do UAPP; o aplicativo não escolhe
+servidor. O setup não inicia login nem acessa a autenticação. Antes dele, as APIs do kit
 lançam `UAPPKitError.notConfigured`.
 
 ## Telas prontas
@@ -912,7 +911,7 @@ anteriores o botão fica como está.
 
 ## Segurança e privacidade
 
-- `projectId` e `host` identificam o projeto e não são segredos.
+- `projectId` identifica o projeto e não é segredo.
 - Não coloque chaves administrativas, segredos de backend, tokens APNs ou
   credenciais Apple no aplicativo.
 - As operações usam endpoints públicos do UAPP, que retornam somente conteúdo

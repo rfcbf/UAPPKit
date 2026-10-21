@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 @Test("data de lançamento segue idioma selecionado e mantém o dia civil")
 func changelogReleaseDateLocalization() {

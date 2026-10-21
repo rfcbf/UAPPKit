@@ -1,6 +1,6 @@
 import SwiftUI
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 private let statuses: [UAPPRoadmapColumn.Status] = [
     .init(id: "done", key: "shipped", name: "Concluído", position: 3, color: "#28734D"),

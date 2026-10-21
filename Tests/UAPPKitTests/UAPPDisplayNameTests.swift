@@ -1,5 +1,5 @@
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 struct UAPPDisplayNameTests {
     @Test("Preserva primeiro, segundo e último nome, sem abreviar partículas", arguments: [

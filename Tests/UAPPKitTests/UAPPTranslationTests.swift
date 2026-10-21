@@ -1,6 +1,6 @@
 import SwiftUI
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 @Test("Tradução existente mantém biografia e idiomas regionais ao renderizar")
 @MainActor

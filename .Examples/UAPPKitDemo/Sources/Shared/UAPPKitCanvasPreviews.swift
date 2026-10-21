@@ -57,10 +57,7 @@ private struct DemoCanvasNavigation<Content: View>: View {
 @MainActor
 enum DemoCanvasPreview {
     static let client = UAPPClient(
-        configuration: UAPPConfiguration(
-            projectId: "calcjuros-dev",
-            host: URL(string: "https://zmmdvtykqbpwkwddjeyb.supabase.co")!
-        ),
+        configuration: UAPPConfiguration(projectId: DemoSettings.defaultProjectSlug),
         transport: DemoCanvasPreviewTransport()
     )
 }

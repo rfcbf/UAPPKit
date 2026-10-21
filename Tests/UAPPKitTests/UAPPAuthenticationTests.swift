@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 private let sessionJSON = #"{"access_token":"access","refresh_token":"refresh","expires_in":3600,"user":{"id":"verified","email":"person@example.test","user_metadata":{"full_name":"Pessoa","avatar_url":"https://example.test/avatar.png","email_verified":true}}}"#
 

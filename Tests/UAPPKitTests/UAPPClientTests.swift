@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 @Test("cliente de atividade global não exige identificador de aplicativo")
 func clientForAccountActivityHasNoProjectScope() throws {

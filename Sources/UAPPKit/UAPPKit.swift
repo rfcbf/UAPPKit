@@ -33,9 +33,28 @@ public enum UAPPKit {
 
     // MARK: - Configuração
 
+    /// Configura o kit para o projeto `projectId` no servidor de produção do UAPP.
     public static func setup(
         projectId: String,
-        host: URL = UAPPConfiguration.defaultHost,
+        theme: UAPPTheme = .system,
+        signatureProvider: UAPPSignatureProvider? = nil,
+        locale: Locale? = nil
+    ) {
+        setup(
+            projectId: projectId,
+            host: UAPPConfiguration.defaultHost,
+            theme: theme,
+            signatureProvider: signatureProvider,
+            locale: locale
+        )
+    }
+
+    /// Variante interna para outro servidor do UAPP, usada pelas ferramentas da equipe, pelos
+    /// testes e pelos dados fictícios do Demo. Aplicativos publicados usam sempre produção.
+    @_spi(UAPPInternal)
+    public static func setup(
+        projectId: String,
+        host: URL,
         theme: UAPPTheme = .system,
         signatureProvider: UAPPSignatureProvider? = nil,
         locale: Locale? = nil

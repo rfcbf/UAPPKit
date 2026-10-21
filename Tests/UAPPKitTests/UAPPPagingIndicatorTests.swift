@@ -1,6 +1,6 @@
 import SwiftUI
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 @Test("cápsula ativa transfere largura e cor durante a rolagem")
 func pagingIndicatorInterpolatesProgress() {

@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 @Test("login automático é preguiçoso, descobre configuração pública e compartilha a sessão")
 func automaticAuthenticationLifecycle() async throws {

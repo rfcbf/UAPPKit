@@ -1,7 +1,7 @@
 import AuthenticationServices
 import Foundation
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 /// Sessão falsa que responde ao iniciar, sem abrir o navegador do sistema.
 private final class FakeWebSession: UAPPWebAuthenticationSession, @unchecked Sendable {

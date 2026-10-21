@@ -1,6 +1,6 @@
 import SwiftUI
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 private let roadmapItem = UAPPFeedbackItem(
     id: "item", title: "Modo escuro", body: "Descrição",

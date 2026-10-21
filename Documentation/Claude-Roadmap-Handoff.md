@@ -23,7 +23,7 @@ O checkout está em `/Users/renato/Desenv/Pessoal/UAPPKit`. Ele contém várias 
 - Swift tools 6.0, linguagem Swift 6; plataformas declaradas: iOS 18+ (inclui iPadOS) e macOS 13+.
 - `Sources/UAPPKit/` contém a biblioteca; `Tests/UAPPKitTests/`, os testes; `Documentation/`, arquitetura e decisões; `.Examples/UAPPKitDemo/`, o aplicativo de exemplo.
 - `UAPPKit.swift` é a entrada global `@MainActor`: setup, identidade, criação de clientes e apresentação das telas. No iOS, a apresentação usa `UIHostingController`.
-- `UAPPKit.setup(projectId:)` recebe o identificador público do projeto (`public_slug`). Configuração também permite host, idioma e tema. Não confunda esse identificador com uma credencial privada.
+- `UAPPKit.setup(projectId:)` recebe o identificador público do projeto (`public_slug`). Configuração também permite idioma e tema; o servidor é sempre o de produção. Não confunda esse identificador com uma credencial privada.
 - `UAPPClient` é um `actor` que concentra acesso à API e estado de identidade, idioma e instalação.
 - `UAPPTransport` é injetável; `URLSessionTransport` é o transporte padrão. Não adicione SDK externo sem necessidade documentada.
 - `UAPPModels.swift` define os modelos públicos e respostas internas. Preserve `CodingKeys` explícitas: o contrato mistura snake_case e camelCase.

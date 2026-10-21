@@ -4,12 +4,11 @@ import UAPPKit
 /// O modelo de conta compartilhado com o app do iPhone usa `DemoSettings`.
 typealias DemoSettings = DemoMacSettings
 
-/// Configuração salva do Demo para Mac: as mesmas chaves do Demo do iPhone e do iPad.
+/// Configuração salva do Demo para Mac: a mesma chave do Demo do iPhone e do iPad. O kit acessa
+/// sempre o servidor de produção do UAPP.
 enum DemoMacSettings {
-    static let projectSlug = "calcjuros-dev"
-    static let supabaseServer = "UAPPKitDemo.supabaseServer"
-    static let defaultProjectSlug = "calcjuros-dev"
-    static let defaultSupabaseServer = "https://zmmdvtykqbpwkwddjeyb.supabase.co"
+    static let projectSlug = "UAPPKitDemo.projectSlug"
+    static let defaultProjectSlug = "app-demo"
     static let callbackURL = URL(string: "uappkit://authentication")!
 
     /// Sobre com todas as opções ligadas e conteúdo fictício, para ver a tela completa.
@@ -34,12 +33,6 @@ enum DemoMacSettings {
     static var savedSlug: String {
         UserDefaults.standard.string(forKey: projectSlug) ?? defaultProjectSlug
     }
-
-    static var savedServer: String {
-        let saved = UserDefaults.standard.string(forKey: supabaseServer)?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        return saved.flatMap { $0.isEmpty ? nil : $0 } ?? defaultSupabaseServer
-    }
 }
 
 @main
@@ -48,15 +41,10 @@ struct UAPPKitDemoMacApp: App {
         DemoMockData.activateIfNeeded()
         // O kit começa no idioma do sistema; o globo das telas troca só a apresentação.
         let locale = Locale(identifier: Locale.preferredLanguages.first ?? "pt-BR")
-        if DemoMockData.isEnabled {
-            UAPPKit.setup(projectId: DemoMockData.projectSlug, host: DemoMockData.host, locale: locale)
-        } else {
-            UAPPKit.setup(
-                projectId: DemoMacSettings.savedSlug,
-                host: URL(string: DemoMacSettings.savedServer) ?? UAPPConfiguration.defaultHost,
-                locale: locale
-            )
-        }
+        UAPPKit.setup(
+            projectId: DemoMockData.isEnabled ? DemoMockData.projectSlug : DemoMacSettings.savedSlug,
+            locale: locale
+        )
     }
 
     var body: some Scene {

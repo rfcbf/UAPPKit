@@ -7,7 +7,6 @@ import UAPPKit
 enum DemoMockData {
     static let isEnabled = CommandLine.arguments.contains("--mock-data")
     static let projectSlug = "uapp-demo"
-    static let host = URL(string: "https://demo.uappkit.invalid")!
 
     static let profileName = "Lorem Ipsum"
     static let profileEmail = "lorem.ipsum@example.com"
@@ -50,10 +49,11 @@ enum DemoMockData {
     }
 }
 
-/// Intercepta as requisições ao host de demonstração feitas pela `URLSession.shared`.
+/// Com os dados fictícios ligados, responde às requisições que o kit faz ao servidor do UAPP
+/// pela `URLSession.shared`, sem chegar à rede.
 final class DemoMockURLProtocol: URLProtocol, @unchecked Sendable {
     override class func canInit(with request: URLRequest) -> Bool {
-        request.url?.host == DemoMockData.host.host
+        request.url?.host == UAPPConfiguration.defaultHost.host
     }
 
     override class func canonicalRequest(for request: URLRequest) -> URLRequest {

@@ -9,8 +9,6 @@ struct ContentView: View {
     var languageIdentifier = DemoSettings.defaultLanguage
     @AppStorage(DemoSettings.projectSlug)
     var projectSlug = DemoSettings.defaultProjectSlug
-    @AppStorage(DemoSettings.supabaseServer)
-    var supabaseServer = DemoSettings.defaultSupabaseServer
     @AppStorage(DemoSettings.appearance)
     var appearance = DemoAppearance.light.rawValue
     @Environment(\.colorScheme) var systemColorScheme

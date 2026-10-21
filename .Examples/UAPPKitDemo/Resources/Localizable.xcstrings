@@ -1418,79 +1418,79 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Gib den public_slug und die Basis-URL des Supabase-Servers ein, zum Beispiel https://dein-projekt.supabase.co."
+            "value" : "Gib den public_slug des Projekts ein. Das Kit verwendet immer den Produktionsserver von UAPP."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Enter the project public_slug and the Supabase server base URL, for example https://your-project.supabase.co."
+            "value" : "Enter the project public_slug. The kit always uses the UAPP production server."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Introduce el public_slug del proyecto y la URL base del servidor Supabase, por ejemplo https://tu-proyecto.supabase.co."
+            "value" : "Introduce el public_slug del proyecto. El kit usa siempre el servidor de producción de UAPP."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Saisissez le public_slug du projet et l'URL de base du serveur Supabase, par exemple https://votre-projet.supabase.co."
+            "value" : "Saisissez le public_slug du projet. Le kit utilise toujours le serveur de production d’UAPP."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "प्रोजेक्ट का public_slug और Supabase सर्वर का आधार URL दर्ज करें।"
+            "value" : "प्रोजेक्ट का public_slug दर्ज करें। किट हमेशा UAPP के प्रोडक्शन सर्वर का उपयोग करता है।"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Inserisci il public_slug del progetto e l'URL del server Supabase."
+            "value" : "Inserisci il public_slug del progetto. Il kit usa sempre il server di produzione di UAPP."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "プロジェクトのpublic_slugとSupabaseサーバーのURLを入力してください。"
+            "value" : "プロジェクトの public_slug を入力してください。キットは常に UAPP の本番サーバーを使用します。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "프로젝트 public_slug와 Supabase 서버 기본 URL을 입력하세요."
+            "value" : "프로젝트의 public_slug를 입력하세요. 키트는 항상 UAPP 프로덕션 서버를 사용합니다."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wpisz public_slug projektu i podstawowy adres serwera Supabase."
+            "value" : "Wpisz public_slug projektu. Zestaw zawsze korzysta z serwera produkcyjnego UAPP."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Informe o public_slug do projeto e a URL base do servidor Supabase, por exemplo https://seu-projeto.supabase.co."
+            "value" : "Informe o public_slug do projeto. O kit acessa sempre o servidor de produção do UAPP."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nhập public_slug của dự án và URL cơ sở của máy chủ Supabase."
+            "value" : "Nhập public_slug của dự án. Bộ công cụ luôn dùng máy chủ production của UAPP."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "输入项目的 public_slug 和 Supabase 服务器基础 URL。"
+            "value" : "输入项目的 public_slug。套件始终使用 UAPP 生产服务器。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "輸入專案的 public_slug 與 Supabase 伺服器基礎 URL。"
+            "value" : "輸入專案的 public_slug。套件一律使用 UAPP 正式環境伺服器。"
           }
         }
       }
@@ -1667,79 +1667,79 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Gib einen gültigen Slug und eine Server-URL ein."
+            "value" : "Gib den Slug des Projekts ein."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Enter a valid slug and server URL."
+            "value" : "Enter the project slug."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Introduce un slug y una URL de servidor válidos."
+            "value" : "Introduce el slug del proyecto."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Saisissez un slug et une URL de serveur valides."
+            "value" : "Saisissez le slug du projet."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "मान्य slug और सर्वर URL दर्ज करें।"
+            "value" : "प्रोजेक्ट का slug दर्ज करें।"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Inserisci uno slug e un URL del server validi."
+            "value" : "Inserisci lo slug del progetto."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "有効なスラッグとサーバーURLを入力してください。"
+            "value" : "プロジェクトの slug を入力してください。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "유효한 slug와 서버 URL을 입력하세요."
+            "value" : "프로젝트 slug를 입력하세요."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wpisz prawidłowy slug i adres serwera."
+            "value" : "Wpisz slug projektu."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Informe um slug e uma URL de servidor válidos."
+            "value" : "Informe o slug do projeto."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nhập slug và URL máy chủ hợp lệ."
+            "value" : "Nhập slug của dự án."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "请输入有效的 slug 和服务器 URL。"
+            "value" : "输入项目 slug。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "請輸入有效的 slug 與伺服器 URL。"
+            "value" : "輸入專案 slug。"
           }
         }
       }
@@ -2671,89 +2671,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "畫面"
-          }
-        }
-      }
-    },
-    "demo.server" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Supabase-Server"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Supabase server"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Servidor Supabase"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Serveur Supabase"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Supabase सर्वर"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Server Supabase"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Supabaseサーバー"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Supabase 서버"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Serwer Supabase"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Servidor Supabase"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Máy chủ Supabase"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Supabase 服务器"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Supabase 伺服器"
           }
         }
       }

@@ -5,29 +5,20 @@ extension ContentView {
     @MainActor
     func saveConfiguration(showSuccessMessage: Bool = true) -> Bool {
         if DemoMockData.isEnabled {
-            // Dados fictícios: não altera o projeto e o servidor salvos.
-            UAPPKit.setup(projectId: DemoMockData.projectSlug, host: DemoMockData.host, theme: configuredTheme)
-            account.configure(projectId: DemoMockData.projectSlug, host: DemoMockData.host)
+            // Dados fictícios: não altera o projeto salvo.
+            UAPPKit.setup(projectId: DemoMockData.projectSlug, theme: configuredTheme)
+            account.configure(projectId: DemoMockData.projectSlug)
             return true
         }
         let slug = projectSlug.trimmingCharacters(in: .whitespacesAndNewlines)
-        let serverString = normalizedServer
-
-        guard
-            !slug.isEmpty,
-            let server = URL(string: serverString),
-            let scheme = server.scheme,
-            !scheme.isEmpty,
-            server.host != nil
-        else {
+        guard !slug.isEmpty else {
             showStatus(localized("demo.invalid_configuration"), success: false)
             return false
         }
 
         projectSlug = slug
-        supabaseServer = serverString
-        UAPPKit.setup(projectId: slug, host: server, theme: configuredTheme)
-        account.configure(projectId: slug, host: server)
+        UAPPKit.setup(projectId: slug, theme: configuredTheme)
+        account.configure(projectId: slug)
 
         if showSuccessMessage {
             showStatus(localized("demo.configuration_saved"), success: true)

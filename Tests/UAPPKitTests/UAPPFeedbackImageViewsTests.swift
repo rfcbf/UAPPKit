@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 /// Telas de anexos do feedback renderizadas com imagens locais, sem rede.
 @MainActor

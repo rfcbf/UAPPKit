@@ -40,7 +40,7 @@ final class DemoAccountModel: ObservableObject {
         userId = defaults.string(forKey: "demo.profile.id") ?? UUID().uuidString
         defaults.set(userId, forKey: "demo.profile.id")
         self.authentication = authentication ?? UAPPAuthentication.automatic(
-            configuration: .init(projectId: DemoSettings.defaultProjectSlug, host: URL(string: DemoSettings.defaultSupabaseServer)!),
+            configuration: .init(projectId: DemoSettings.defaultProjectSlug),
             callbackURL: URL(string: "uappkit://authentication")!
         )
     }
@@ -77,13 +77,13 @@ final class DemoAccountModel: ObservableObject {
         }
     }
 
-    func configure(projectId: String, host: URL) {
-        let identifier = "\(host.absoluteString)|\(projectId)"
+    func configure(projectId: String) {
+        let identifier = projectId
         guard configurationID != identifier else { return }
         configurationID = identifier
         generation += 1
         authentication = UAPPAuthentication.automatic(
-            configuration: .init(projectId: projectId, host: host),
+            configuration: .init(projectId: projectId),
             callbackURL: URL(string: "uappkit://authentication")!
         )
         session = nil

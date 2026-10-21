@@ -1,5 +1,5 @@
 import Testing
-@testable import UAPPKit
+@_spi(UAPPInternal) @testable import UAPPKit
 
 @Test("Reviews reutiliza tradução após recriar linhas e alternar idiomas")
 @MainActor

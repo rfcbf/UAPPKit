@@ -3,9 +3,9 @@
 Aplicativo SwiftUI para testar as telas nativas de Feedback, Roadmap e
 Changelog do pacote durante o desenvolvimento.
 
-A tela inicial permite informar o `public_slug` do app e o servidor Supabase,
-salvar essas configurações no dispositivo e testar a conexão antes de abrir as
-telas do UAPPKit.
+A tela inicial permite informar o `public_slug` do app, salvá-lo no
+dispositivo e testar a conexão antes de abrir as telas do UAPPKit. O kit
+acessa sempre o servidor de produção do UAPP; o projeto padrão é o `app-demo`.
 
 A tela principal oferece duas opções, cada uma em uma sheet própria:
 
@@ -18,8 +18,8 @@ A tela principal oferece duas opções, cada uma em uma sheet própria:
 Perfil local não autentica uma conta. Se o visitante decidir participar, o kit
 pode pedir login para validar autoria. Sair da conta preserva o perfil local;
 o botão “Apagar perfil local” remove os dados salvos. Uma conta conectada
-precisa de novo login depois de reiniciar o app. Trocar projeto/servidor
-descarta a sessão anterior.
+precisa de novo login depois de reiniciar o app. Trocar o projeto descarta a
+sessão anterior.
 
 O provedor do kit descobre a configuração pública somente ao iniciar um login. O callback
 OAuth é `uappkit://authentication`, registrado no target; o servidor precisa
@@ -60,8 +60,8 @@ O target `UAPPKitDemoMac` (scheme de mesmo nome, macOS 14+) é um app Mac
 nativo para testar o kit no computador. A janela principal tem uma barra
 lateral com:
 
-- **Início**: projeto (`public_slug`) e servidor, salvos com as mesmas chaves do
-  app do iPhone; botões que abrem cada tela do kit em janela própria por
+- **Início**: projeto (`public_slug`), salvo com a mesma chave do app do
+  iPhone; botões que abrem cada tela do kit em janela própria por
   `UAPPKit.show…`; a conta (entrar, criar conta, abrir o perfil ou sair); e o
   perfil local (nome, e-mail e foto), com o mesmo modelo e as mesmas regras do
   app do iPhone.
