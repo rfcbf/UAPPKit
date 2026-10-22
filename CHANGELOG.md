@@ -8,10 +8,9 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## 2.3.0 - 2026-10-22
 
-- Sobre: `UAPPAboutConfiguration(showsKitVersion: true)` mostra, logo abaixo
-  da versão do aplicativo, a versão do UAPPKit em uso, em tom neutro para não
-  se confundir com a versão do app na cor de destaque. O padrão é `false`, então
-  a tela não muda para quem não pede. Texto nos 13 idiomas do kit.
+- Sobre: logo abaixo da versão do aplicativo, a tela mostra sempre a versão do
+  UAPPKit em uso, em tom neutro para não se confundir com a versão do app na
+  cor de destaque. Texto nos 13 idiomas do kit.
 - `UAPPKit.version` expõe a versão do pacote em tempo de execução; ela
   acompanha a tag e o primeiro título de versão deste arquivo.
 

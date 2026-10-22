@@ -71,9 +71,7 @@ struct UAPPAboutAppIdentity: View {
             .padding(.vertical, 6)
             .background(VersionPillBackground(accent: palette.accent ?? .accentColor))
 
-            if configuration.showsKitVersion {
-                kitVersionLabel
-            }
+            kitVersionLabel
         }
         .frame(maxWidth: .infinity)
     }
