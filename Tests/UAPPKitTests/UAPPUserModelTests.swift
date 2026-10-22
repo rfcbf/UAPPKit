@@ -223,6 +223,87 @@ struct UAPPUserModelTests {
         #expect(model.errorKey == nil)
         #expect(delivered)
     }
+
+    @Test("Excluir conta mantém o aviso final e só depois avisa o aplicativo", arguments: [false, true])
+    func deleteAccount(requiresAppleAccessRemoval: Bool) async throws {
+        let provider = DeletionProviderStub(outcome: .success(
+            UAPPAccountDeletion(requiresAppleAccessRemoval: requiresAppleAccessRemoval)
+        ))
+        let session = try #require(await provider.currentSession())
+        var delivered: [UAPPAuthenticationSession?] = []
+        let model = UAPPUserModel(session: session, authentication: provider) { delivered.append($0) }
+        #expect(model.supportsAccountDeletion)
+        await model.deleteAccount()
+        #expect(model.accountDeletion?.requiresAppleAccessRemoval == requiresAppleAccessRemoval)
+        #expect(model.session == session)
+        #expect(delivered.isEmpty)
+        #expect(!model.isBusy)
+        #expect(!model.isDeletingAccount)
+        #expect(model.errorKey == nil)
+        await model.deleteAccount()
+        #expect(await provider.deletionAttempts == 1)
+        model.finishAccountDeletion()
+        #expect(model.accountDeletion == nil)
+        #expect(model.session == nil)
+        #expect(!model.supportsAccountDeletion)
+        #expect(delivered.count == 1)
+        #expect(delivered.first == .some(nil))
+        model.finishAccountDeletion()
+        #expect(delivered.count == 1)
+    }
+
+    @Test("Recusas e falhas da exclusão mantêm a conta e explicam o motivo", arguments: [
+        (UAPPAccountDeletionError.activeAppStoreSubscription as any Error, "user.delete_account.subscription_error"),
+        (UAPPAccountDeletionError.organizationOwnershipTransferRequired as any Error, "user.delete_account.owner_error"),
+        (UAPPKitError.http(status: 500, message: nil) as any Error, "user.delete_account.error")
+    ])
+    func deleteAccountFailure(error: any Error, key: String) async throws {
+        let provider = DeletionProviderStub(outcome: .failure(error))
+        let session = try #require(await provider.currentSession())
+        var delivered = false
+        let model = UAPPUserModel(session: session, authentication: provider) { _ in delivered = true }
+        await model.deleteAccount()
+        #expect(model.errorKey == key)
+        #expect(model.session == session)
+        #expect(model.accountDeletion == nil)
+        #expect(!model.isBusy)
+        #expect(!delivered)
+        #expect(await provider.currentSession() == session)
+        await provider.setOutcome(.success(UAPPAccountDeletion()))
+        await model.deleteAccount()
+        #expect(model.errorKey == nil)
+        #expect(model.accountDeletion != nil)
+    }
+
+    @Test("Tela fechada durante a exclusão avisa o aplicativo assim que o servidor confirma")
+    func deleteAccountAfterScreenClosed() async throws {
+        let provider = DeletionProviderStub()
+        let session = try #require(await provider.currentSession())
+        var delivered: [UAPPAuthenticationSession?] = []
+        let model = UAPPUserModel(session: session, authentication: provider) { delivered.append($0) }
+        model.screenDidDisappear()
+        #expect(delivered.isEmpty)
+        await model.deleteAccount()
+        #expect(model.accountDeletion == nil)
+        #expect(model.session == nil)
+        #expect(delivered.count == 1)
+    }
+
+    @Test("Provedor do aplicativo sem exclusão não mostra nem executa a ação")
+    func deleteAccountUnsupported() async throws {
+        let provider = UserProviderStub(mode: .success)
+        let session = try #require(await provider.currentSession())
+        let model = UAPPUserModel(session: session, authentication: provider) { _ in }
+        #expect(!model.supportsAccountDeletion)
+        await model.deleteAccount()
+        #expect(model.session == session)
+        #expect(model.errorKey == nil)
+        #expect(model.accountDeletion == nil)
+        #expect(!UAPPUserModel().supportsAccountDeletion)
+        await #expect(throws: UAPPAuthenticationError.unsupportedMethod) {
+            try await provider.deleteAccount()
+        }
+    }
 }
 
 private actor UserProviderStub: UAPPAuthenticationProvider {

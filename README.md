@@ -55,12 +55,12 @@ No Xcode, escolha **File → Add Package Dependencies…** e informe:
 https://github.com/rfcbf/UAPPKit
 ```
 
-Selecione a versão `2.1.0` ou posterior e adicione o produto `UAPPKit` ao
+Selecione a versão `2.2.0` ou posterior e adicione o produto `UAPPKit` ao
 target do aplicativo. Em outro `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/rfcbf/UAPPKit", from: "2.1.0")
+    .package(url: "https://github.com/rfcbf/UAPPKit", from: "2.2.0")
 ],
 targets: [
     .target(name: "MeuApp", dependencies: ["UAPPKit"])
@@ -388,6 +388,9 @@ Em SwiftUI:
 sair e o histórico de participação em todos os aplicativos vinculados ao mesmo
 usuário. Com `onEditProfile`, a barra de navegação oferece o botão de editar perfil,
 entre sair e o idioma, que abre o editor do próprio aplicativo.
+Com o provedor do kit, a tela termina com **Excluir conta**: um alerta destrutivo
+explica o que será apagado, o servidor exclui a conta, o kit limpa a sessão e o
+`onSessionChange` recebe `nil`. Veja [excluir conta](Documentation/Authentication.md#excluir-conta).
 
 ```swift
 try UAPPKit.showUser(

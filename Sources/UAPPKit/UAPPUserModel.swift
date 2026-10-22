@@ -18,6 +18,11 @@ final class UAPPUserModel: ObservableObject {
     /// Última foto definida nesta tela, exibida antes que a URL da sessão seja carregada.
     @Published private(set) var profilePhoto: Data?
     @Published private(set) var isUploadingPhoto = false
+    @Published private(set) var isDeletingAccount = false
+    /// Exclusão já concluída no servidor, à espera de a pessoa ler o aviso final.
+    @Published private(set) var accountDeletion: UAPPAccountDeletion?
+    /// Falso depois que a tela sai (por exemplo, a janela do Mac fechada durante a exclusão).
+    private var isOnScreen = true
     private let publicFeedbackId: String?
     private let usesInstallationProfile: Bool
     private let client: UAPPClient?
@@ -228,6 +233,53 @@ final class UAPPUserModel: ObservableObject {
               current.identity.userId == updated.identity.userId,
               current != updated else { return }
         session = updated
+    }
+
+    var supportsAccountDeletion: Bool {
+        session != nil && authentication?.supportsAccountDeletion == true
+    }
+
+    /// Exclui a conta no servidor. A tela continua aberta com o aviso final; o aplicativo só recebe
+    /// `nil` em `finishAccountDeletion()`, para que trocar de tela não esconda esse aviso.
+    func deleteAccount() async {
+        guard !isBusy, !isUploadingPhoto, accountDeletion == nil, supportsAccountDeletion,
+              let authentication else { return }
+        isBusy = true
+        isDeletingAccount = true
+        errorKey = nil
+        defer {
+            isBusy = false
+            isDeletingAccount = false
+        }
+        do {
+            accountDeletion = try await authentication.deleteAccount()
+            if !isOnScreen {
+                finishAccountDeletion()
+            }
+        } catch UAPPAccountDeletionError.activeAppStoreSubscription {
+            errorKey = "user.delete_account.subscription_error"
+        } catch UAPPAccountDeletionError.organizationOwnershipTransferRequired {
+            errorKey = "user.delete_account.owner_error"
+        } catch {
+            errorKey = "user.delete_account.error"
+        }
+    }
+
+    /// A tela saiu: sem aviso para mostrar, a exclusão concluída avisa o aplicativo na hora.
+    func screenDidDisappear() {
+        isOnScreen = false
+        finishAccountDeletion()
+    }
+
+    /// Conclui a exclusão: volta ao estado sem conta e avisa o aplicativo.
+    func finishAccountDeletion() {
+        guard accountDeletion != nil else { return }
+        accountDeletion = nil
+        session = nil
+        profilePhoto = nil
+        history = []
+        activity = nil
+        onSessionChange(nil)
     }
 
     func signOut() async {

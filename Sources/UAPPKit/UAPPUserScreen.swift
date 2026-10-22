@@ -21,6 +21,7 @@ public struct UAPPUserScreen: View {
     @State private var hasPreparedLanguage = false
     @State private var selectedFeedbackId: String?
     @State private var photoErrorKey: String?
+    @State private var isConfirmingAccountDeletion = false
     #if os(iOS)
     @State private var profileDetent: PresentationDetent = .medium
     #endif
@@ -132,6 +133,9 @@ public struct UAPPUserScreen: View {
                         publicActivityContent
                     } else {
                         activityContent
+                        if model.supportsAccountDeletion {
+                            deleteAccountButton
+                        }
                     }
                 }
                 .padding(.horizontal, 24)
@@ -212,6 +216,45 @@ public struct UAPPUserScreen: View {
                 model.adoptSession(session)
             }
         }
+        .alert(
+            Text(verbatim: localized("user.delete_account.title")),
+            isPresented: $isConfirmingAccountDeletion
+        ) {
+            Button(role: .destructive) {
+                Task { await model.deleteAccount() }
+            } label: {
+                Text(verbatim: localized("user.delete_account.confirm"))
+            }
+            Button(role: .cancel) {} label: {
+                Text(verbatim: localized("common.cancel"))
+            }
+        } message: {
+            Text(verbatim: localized("user.delete_account.message"))
+        }
+        .alert(
+            Text(verbatim: localized("user.delete_account.done_title")),
+            isPresented: Binding(
+                get: { model.accountDeletion != nil },
+                set: {
+                    if !$0 {
+                        model.finishAccountDeletion()
+                    }
+                }
+            )
+        ) {
+            Button {
+                model.finishAccountDeletion()
+            } label: {
+                Text(verbatim: localized("user.delete_account.done_action"))
+            }
+        } message: {
+            Text(verbatim: localized(
+                model.accountDeletion?.requiresAppleAccessRemoval == true
+                    ? "user.delete_account.done_apple_message"
+                    : "user.delete_account.done_message"
+            ))
+        }
+        .onDisappear { model.screenDidDisappear() }
         .uappOnChange(of: model.session == nil) { signedOut in
             if signedOut, !isPublicProfile {
                 dismiss()
@@ -223,6 +266,28 @@ public struct UAPPUserScreen: View {
         #endif
         .uappMacSheetFrame(width: 480, height: 620)
         .background { dismiss.windowReader }
+    }
+
+    /// Ao fim da conta conectada, longe das ações do dia a dia, como pede a App Store.
+    private var deleteAccountButton: some View {
+        Button(role: .destructive) {
+            isConfirmingAccountDeletion = true
+        } label: {
+            HStack(spacing: 8) {
+                if model.isDeletingAccount {
+                    ProgressView().tint(.red)
+                }
+                Text(verbatim: localized(
+                    model.isDeletingAccount ? "user.delete_account.progress" : "user.delete_account"
+                ))
+            }
+            .foregroundStyle(Color.red)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(model.isBusy || model.isUploadingPhoto)
+        .accessibilityHint(Text(verbatim: localized("user.delete_account.hint")))
     }
 
     private var editProfileButton: some View {

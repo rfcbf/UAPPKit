@@ -33,6 +33,25 @@ public enum UAPPRegistrationResult: Sendable, Equatable {
     case confirmationRequired
 }
 
+/// Resultado da exclusão definitiva da conta pelo servidor.
+public struct UAPPAccountDeletion: Sendable, Equatable {
+    /// A conta usava "Iniciar sessão com a Apple" e o servidor não conseguiu revogar o acesso.
+    /// A pessoa precisa remover o app nos ajustes da conta Apple, em "Iniciar sessão com a Apple".
+    public let requiresAppleAccessRemoval: Bool
+
+    public init(requiresAppleAccessRemoval: Bool = false) {
+        self.requiresAppleAccessRemoval = requiresAppleAccessRemoval
+    }
+}
+
+/// Recusas do servidor que impedem a exclusão da conta até a pessoa agir.
+public enum UAPPAccountDeletionError: Error, Sendable, Equatable {
+    /// Há uma assinatura da App Store ainda renovando ligada à conta: cancelar antes de excluir.
+    case activeAppStoreSubscription
+    /// A conta é proprietária de uma empresa no UAPP: transferir ou encerrar a empresa antes de excluir.
+    case organizationOwnershipTransferRequired
+}
+
 /// Adaptador da sessão do aplicativo ou do login próprio de participação.
 /// Nenhum método é chamado pelo setup ou pelas telas Sobre/Reviews/Changelog.
 public protocol UAPPAuthenticationProvider: Sendable {
@@ -51,11 +70,24 @@ public protocol UAPPAuthenticationProvider: Sendable {
     func requestEmailCode(email: String) async throws
     func verifyEmailCode(email: String, code: String) async throws -> UAPPAuthenticationSession
     func signOut() async throws
+    /// Indica se a tela da conta oferece "Excluir conta".
+    var supportsAccountDeletion: Bool { get }
+    /// Exclui a conta conectada de forma definitiva e limpa a sessão local.
+    func deleteAccount() async throws -> UAPPAccountDeletion
 }
 
 public extension UAPPAuthenticationProvider {
     var supportsProfilePhoto: Bool {
         false
+    }
+
+    /// Provedores do próprio aplicativo cuidam da exclusão da conta fora do kit.
+    var supportsAccountDeletion: Bool {
+        false
+    }
+
+    func deleteAccount() async throws -> UAPPAccountDeletion {
+        throw UAPPAuthenticationError.unsupportedMethod
     }
 
     func uploadProfilePhoto(_: Data) async throws -> UAPPAuthenticationSession {

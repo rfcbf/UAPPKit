@@ -40,6 +40,42 @@ a sessão, informa `nil` pelo callback e fecha a sheet. Se houver falha e a
 sessão continuar ativa, a tela apresenta uma mensagem e permite tentar novamente.
 No Demo, toque na conta conectada na tela principal para abrir suas informações.
 
+### Excluir conta
+
+Com o provedor do kit (`UAPPKit.makeAuthentication()`), `UAPPUserScreen` termina
+com a ação **Excluir conta**, no iPhone, no iPad e no Mac. Ela atende à exigência
+da App Store de excluir dentro do app a conta que o app permite criar.
+
+1. Um alerta explica o que sai: a conta, o nome, a foto e os votos, de forma
+   definitiva, e o mesmo login deixa de funcionar nos outros apps que o usam.
+   Requisições e comentários publicados continuam visíveis, sem autor. O botão
+   de confirmar é destrutivo.
+2. Durante a exclusão, a ação mostra o progresso e a tela não pode ser fechada.
+3. O kit chama a função `delete-account` do UAPP, a mesma do painel web: o
+   servidor apaga a foto, revoga o "Iniciar sessão com a Apple" (com o token
+   guardado no login com a Apple), encerra as sessões e remove o usuário.
+4. Confirmada a exclusão, o kit apaga a sessão do Keychain e mostra o aviso
+   final. Se o servidor não conseguiu revogar o acesso da Apple, o aviso orienta
+   a remover o app em "Iniciar sessão com a Apple", nos ajustes da conta Apple.
+5. Ao fechar o aviso (ou a tela), o callback recebe `nil`, como em **Sair**, e a
+   tela fecha. O aplicativo só recebe o aviso nesse momento para que, ao trocar
+   de tela, não esconda a mensagem final.
+
+O servidor recusa a exclusão em dois casos, e a tela explica o que fazer:
+
+| Recusa | Erro do provedor | Orientação na tela |
+| --- | --- | --- |
+| Assinatura da App Store ainda renovando ligada à conta | `UAPPAccountDeletionError.activeAppStoreSubscription` | cancelar a assinatura nos ajustes da conta Apple e tentar de novo |
+| A conta é proprietária de uma empresa no UAPP | `UAPPAccountDeletionError.organizationOwnershipTransferRequired` | transferir ou encerrar a empresa no UAPP |
+
+Outras falhas mantêm a conta conectada e permitem tentar novamente.
+
+A exclusão também está disponível fora da tela, em
+`authentication.deleteAccount()`, que devolve `UAPPAccountDeletion`. Provedores
+do próprio aplicativo informam `supportsAccountDeletion == false` por padrão:
+a ação não aparece e o aplicativo continua responsável por oferecer a exclusão
+da própria conta.
+
 Depois do setup, crie e conserve o provedor na camada de conta do aplicativo:
 
 ```swift

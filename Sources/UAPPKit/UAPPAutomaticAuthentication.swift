@@ -4,6 +4,7 @@ import Foundation
 actor UAPPAutomaticAuthentication: UAPPAuthenticationProvider {
     nonisolated let methods: [UAPPLoginMethod]
     nonisolated let supportsProfilePhoto = true
+    nonisolated let supportsAccountDeletion = true
     private let callbackURL: URL
     private let configuration: UAPPConfiguration
     private let transport: UAPPTransport
@@ -89,6 +90,10 @@ actor UAPPAutomaticAuthentication: UAPPAuthenticationProvider {
         } else {
             try sessionStorage.remove()
         }
+    }
+
+    func deleteAccount() async throws -> UAPPAccountDeletion {
+        try await resolve().deleteAccount()
     }
 
     private func resolve() async throws -> UAPPAuthentication {

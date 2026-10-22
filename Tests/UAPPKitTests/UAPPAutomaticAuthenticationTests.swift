@@ -76,3 +76,32 @@ func automaticAuthenticationInvalidSettings() async throws {
 private func response(_: URLRequest, body: String, status: Int = 200) -> (Int, Data) {
     (status, Data(body.utf8))
 }
+
+@Test("login automático exclui a conta com a chave descoberta e limpa a sessão")
+func automaticAuthenticationDeletesAccount() async throws {
+    let recorder = RequestRecorder()
+    let host = try #require(URL(string: "https://login.example"))
+    let auth = UAPPAutomaticAuthentication(
+        configuration: UAPPConfiguration(projectId: "demo", host: host),
+        transport: StubTransport { request in
+            recorder.record(request)
+            switch request.url?.path {
+            case "/functions/v1/public-feedback":
+                return response(request, body: #"{"publishableKey":"public-test-key"}"#)
+            case "/auth/v1/verify":
+                return response(request, body: #"{"access_token":"access","refresh_token":"refresh","expires_in":3600,"user":{"id":"account","email":"visitor@example.test"}}"#)
+            case "/functions/v1/delete-account":
+                #expect(request.value(forHTTPHeaderField: "apikey") == "public-test-key")
+                #expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer access")
+                return response(request, body: #"{"deleted":true,"appleRevocation":"not_needed"}"#)
+            default:
+                return response(request, body: "{}")
+            }
+        }
+    )
+    #expect(auth.supportsAccountDeletion)
+    _ = try await auth.verifyEmailCode(email: "visitor@example.test", code: "123456")
+    #expect(try await auth.deleteAccount() == UAPPAccountDeletion())
+    #expect(try await auth.currentSession() == nil)
+    #expect(recorder.requests.contains { $0.url?.path == "/functions/v1/delete-account" })
+}

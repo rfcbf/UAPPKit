@@ -113,6 +113,57 @@ actor StubAuthentication: UAPPAuthenticationProvider {
     }
 }
 
+/// Provedor com exclusão de conta: devolve o resultado ou a falha configurada.
+actor DeletionProviderStub: UAPPAuthenticationProvider {
+    nonisolated let methods: [UAPPLoginMethod] = [.email]
+    nonisolated let supportsAccountDeletion = true
+    private(set) var session: UAPPAuthenticationSession? = .init(
+        identity: .init(userId: "deleting-user", email: "person@example.test", displayName: "Pessoa"),
+        accessToken: "fake-token"
+    )
+    private(set) var deletionAttempts = 0
+    private var outcome: Result<UAPPAccountDeletion, any Error>
+
+    init(outcome: Result<UAPPAccountDeletion, any Error> = .success(UAPPAccountDeletion())) {
+        self.outcome = outcome
+    }
+
+    func setOutcome(_ outcome: Result<UAPPAccountDeletion, any Error>) {
+        self.outcome = outcome
+    }
+
+    func deleteAccount() async throws -> UAPPAccountDeletion {
+        deletionAttempts += 1
+        let deletion = try outcome.get()
+        session = nil
+        return deletion
+    }
+
+    func currentSession() async -> UAPPAuthenticationSession? {
+        session
+    }
+
+    func signOut() async throws {
+        session = nil
+    }
+
+    func signIn(method _: UAPPLoginMethod) async throws -> UAPPAuthenticationSession {
+        throw UAPPAuthenticationError.unsupportedMethod
+    }
+
+    func signIn(email _: String, password _: String) async throws -> UAPPAuthenticationSession {
+        throw UAPPAuthenticationError.unsupportedMethod
+    }
+
+    func requestEmailCode(email _: String) async throws {
+        throw UAPPAuthenticationError.unsupportedMethod
+    }
+
+    func verifyEmailCode(email _: String, code _: String) async throws -> UAPPAuthenticationSession {
+        throw UAPPAuthenticationError.unsupportedMethod
+    }
+}
+
 final class AuthenticationClock: @unchecked Sendable {
     private let lock = NSLock()
     private var date = Date(timeIntervalSince1970: 1000)
