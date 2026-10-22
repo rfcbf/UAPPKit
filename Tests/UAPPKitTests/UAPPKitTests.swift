@@ -339,3 +339,22 @@ struct UAPPKitTests {
     }
     #endif
 }
+
+@Test("UAPPKit.version acompanha a versão atual do CHANGELOG.md")
+func kitVersionMatchesChangelog() throws {
+    let changelogURL = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+        .appendingPathComponent("CHANGELOG.md")
+    let changelog = try String(contentsOf: changelogURL, encoding: .utf8)
+    // Mesma regra do workflow de tag: o primeiro título `## X.Y.Z` é a versão atual.
+    let current = changelog.split(separator: "\n").lazy.compactMap { line -> String? in
+        guard line.hasPrefix("## ") else { return nil }
+        let version = line.dropFirst(3).split(separator: " ").first.map(String.init) ?? ""
+        let parts = version.split(separator: ".")
+        guard parts.count == 3, parts.allSatisfy({ Int($0) != nil }) else { return nil }
+        return version
+    }.first
+    #expect(UAPPKit.version == current)
+}

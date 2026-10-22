@@ -55,12 +55,12 @@ No Xcode, escolha **File → Add Package Dependencies…** e informe:
 https://github.com/rfcbf/UAPPKit
 ```
 
-Selecione a versão `2.2.0` ou posterior e adicione o produto `UAPPKit` ao
+Selecione a versão `2.3.0` ou posterior e adicione o produto `UAPPKit` ao
 target do aplicativo. Em outro `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/rfcbf/UAPPKit", from: "2.2.0")
+    .package(url: "https://github.com/rfcbf/UAPPKit", from: "2.3.0")
 ],
 targets: [
     .target(name: "MeuApp", dependencies: ["UAPPKit"])
@@ -142,7 +142,8 @@ Feedback e Roadmap pedem login somente quando a pessoa participa.
 </p>
 
 Apresenta o aplicativo hospedeiro: ícone, nome e versão são descobertos
-automaticamente. Descrição, links institucionais e licença são parâmetros.
+automaticamente. Logo abaixo da versão do aplicativo, a tela mostra a versão do
+UAPPKit em uso (`UAPPKit.version`). Descrição, links institucionais e licença são parâmetros.
 
 ```swift
 try UAPPKit.showAbout(configuration: UAPPAboutConfiguration(

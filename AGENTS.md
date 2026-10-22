@@ -136,7 +136,8 @@ ferramenta sugere incluir por padrão:
 ### Versionamento e tags
 
 Um pacote Swift não tem arquivo de versão: a versão é a tag. A fonte da versão
-é o `CHANGELOG.md`. O primeiro título no formato `## X.Y.Z - AAAA-MM-DD`,
+é o `CHANGELOG.md`, espelhada em `UAPPKit.version` para o kit mostrar a própria
+versão em tempo de execução. O primeiro título no formato `## X.Y.Z - AAAA-MM-DD`,
 logo abaixo de `## Não lançado`, é a versão atual. A primeira versão do pacote
 é `1.0.0`.
 
@@ -164,10 +165,12 @@ o Pull Request para a `main`, o agente deve, sem pedir confirmação:
    pela tabela acima, a partir da versão que está no `CHANGELOG.md` da `main`.
 2. No `CHANGELOG.md`, mover as entradas de `## Não lançado` para um novo
    título `## X.Y.Z - AAAA-MM-DD`, mantendo `## Não lançado` vazio no topo.
-3. Atualizar os exemplos de instalação do README que citam a versão, quando
+3. Atualizar `UAPPKit.version` em `Sources/UAPPKit/UAPPKit.swift` para a
+   nova versão; um teste confere que ela é igual à do `CHANGELOG.md`.
+4. Atualizar os exemplos de instalação do README que citam a versão, quando
    houver.
-4. Incluir essas alterações no commit da branch, antes de abrir o Pull Request.
-5. Informar ao proprietário a versão anterior, a nova e o motivo da casa
+5. Incluir essas alterações no commit da branch, antes de abrir o Pull Request.
+6. Informar ao proprietário a versão anterior, a nova e o motivo da casa
    escolhida.
 
 Se a branch já tiver criado a versão em relação à `main`, não crie outra.
