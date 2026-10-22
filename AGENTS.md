@@ -180,6 +180,8 @@ Nunca altere a versão direto na `main`.
 
 Toda versão nova do UAPP Web, do UAPPKit ou do UAPP Pulse ganha, no mesmo ciclo da publicação, uma entrada no changelog do produto interno correspondente (tabela `changelogs` do aplicativo "UAPP", "UAPPKit" ou "UAPP Pulse"), em PRD e em DEV, nessa ordem. Título e versão são o número da versão, `released_at` é a data da publicação, o texto abre com um resumo de uma linha e traz só as seções com conteúdo (`new`, `improved`, `fixed`, `security`), em pt-BR e no mesmo formato das entradas existentes. Não duplicar uma versão já registrada. Isso vale além do `CHANGELOG.md` do repositório, quando ele existir.
 
+Requisição entregue também vai para o changelog. Quando uma requisição de um produto interno (UAPP, UAPPKit ou UAPP Pulse) for atendida, ela passa para "Concluídos" (`shipped`) e é vinculada, em `changelog_feedback_items`, à entrada do changelog da versão que a entregou; com a entrada publicada, o banco a move sozinho para "Entregue" (`delivered`). Fazer isso no mesmo ciclo da entrega, sem esperar pedido. Se a correção não saiu numa versão do próprio produto (por exemplo, uma mudança só no servidor do UAPP que atende uma requisição do UAPPKit), vincular à versão publicada mais recente desse produto e avisar o proprietário.
+
 #### Tag automática no merge
 
 A tag não é criada na mão. O workflow `.github/workflows/release-tag.yml` roda
