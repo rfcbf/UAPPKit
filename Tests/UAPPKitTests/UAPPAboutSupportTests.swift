@@ -40,6 +40,20 @@ func aboutConfigurationKeepsReviewOptions() {
     #expect(custom != standard)
 }
 
+@Test("Sobre mostra a versão do UAPPKit só quando a configuração pede")
+@MainActor
+func aboutConfigurationKeepsKitVersionOption() async {
+    let standard = UAPPAboutConfiguration()
+    #expect(!standard.showsKitVersion)
+
+    let withKit = UAPPAboutConfiguration(showsKitVersion: true)
+    #expect(withKit.showsKitVersion)
+    #expect(withKit != standard)
+    #expect(UAPPAboutAppIdentity.kitVersionText.contains(UAPPKit.version))
+
+    await render(UAPPAboutScreen(configuration: withKit))
+}
+
 @Test("Sobre monta a ação de avaliações e o suporte por e-mail")
 @MainActor
 func aboutRendersReviewsAndSupportRows() async {

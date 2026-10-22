@@ -55,12 +55,12 @@ No Xcode, escolha **File → Add Package Dependencies…** e informe:
 https://github.com/rfcbf/UAPPKit
 ```
 
-Selecione a versão `2.2.0` ou posterior e adicione o produto `UAPPKit` ao
+Selecione a versão `2.3.0` ou posterior e adicione o produto `UAPPKit` ao
 target do aplicativo. Em outro `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/rfcbf/UAPPKit", from: "2.2.0")
+    .package(url: "https://github.com/rfcbf/UAPPKit", from: "2.3.0")
 ],
 targets: [
     .target(name: "MeuApp", dependencies: ["UAPPKit"])
@@ -157,7 +157,8 @@ try UAPPKit.showAbout(configuration: UAPPAboutConfiguration(
     showsAppStoreReview: true,
     changelogConfiguration: .init(automaticallyScrolls: true, interval: 5, pageSize: 10),
     showsReviews: true,
-    reviewsPageSize: 10
+    reviewsPageSize: 10,
+    showsKitVersion: true
 ))
 ```
 
@@ -170,6 +171,8 @@ try UAPPKit.showAbout(configuration: UAPPAboutConfiguration(
 - `showsAppStoreReview: true` adiciona a ação para avaliar o app na App Store.
 - `showsReviews: true` adiciona a ação que abre a lista de avaliações do
   aplicativo em uma sheet sobre a tela Sobre, com páginas de `reviewsPageSize`.
+- `showsKitVersion: true` mostra a versão do UAPPKit em uso (`UAPPKit.version`)
+  logo abaixo da versão do aplicativo, em tom neutro. O padrão é `false`.
 - A linha Suporte abre `supportURL`. Quando o projeto tem um e-mail de suporte
   configurado em Sobre no UAPP, ele tem precedência e a linha abre uma mensagem
   para esse endereço, sem precisar publicar uma nova versão do aplicativo.

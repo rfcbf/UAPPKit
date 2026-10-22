@@ -70,8 +70,33 @@ struct UAPPAboutAppIdentity: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(VersionPillBackground(accent: palette.accent ?? .accentColor))
+
+            if configuration.showsKitVersion {
+                kitVersionLabel
+            }
         }
         .frame(maxWidth: .infinity)
+    }
+
+    /// Versão do UAPPKit em tom neutro, para não se confundir com a versão do aplicativo na cor de destaque.
+    private var kitVersionLabel: some View {
+        Label {
+            Text(verbatim: Self.kitVersionText)
+        } icon: {
+            Image(systemName: "shippingbox.fill")
+                .accessibilityHidden(true)
+        }
+        .font(.caption.weight(.semibold))
+        .monospacedDigit()
+        .foregroundStyle(palette.secondaryText)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 4)
+        .background(Capsule().fill(palette.secondaryText.opacity(0.12)))
+        .padding(.top, -6)
+    }
+
+    static var kitVersionText: String {
+        uappLocalizedFormat("about.kit_version", UAPPKit.version)
     }
 }
 

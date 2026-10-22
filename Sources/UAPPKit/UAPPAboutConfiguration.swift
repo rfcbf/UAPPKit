@@ -24,6 +24,8 @@ public struct UAPPAboutConfiguration: Sendable, Equatable {
     public let reviewsPageSize: Int
     /// Opções do carrossel ao abrir o changelog pela tela Sobre.
     public let changelogConfiguration: UAPPChangelogConfiguration
+    /// Mostra, logo abaixo da versão do aplicativo, a versão do UAPPKit em uso (`UAPPKit.version`).
+    public let showsKitVersion: Bool
 
     public init(
         shortDescription: String? = nil,
@@ -37,7 +39,8 @@ public struct UAPPAboutConfiguration: Sendable, Equatable {
         showsAppStoreReview: Bool = false,
         changelogConfiguration: UAPPChangelogConfiguration = .init(),
         showsReviews: Bool = false,
-        reviewsPageSize: Int = 10
+        reviewsPageSize: Int = 10,
+        showsKitVersion: Bool = false
     ) {
         self.shortDescription = shortDescription
         self.descriptionLanguageIdentifier = descriptionLanguageIdentifier
@@ -51,6 +54,7 @@ public struct UAPPAboutConfiguration: Sendable, Equatable {
         self.changelogConfiguration = changelogConfiguration
         self.showsReviews = showsReviews
         self.reviewsPageSize = reviewsPageSize
+        self.showsKitVersion = showsKitVersion
     }
 }
 
