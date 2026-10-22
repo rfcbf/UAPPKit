@@ -55,12 +55,12 @@ No Xcode, escolha **File → Add Package Dependencies…** e informe:
 https://github.com/rfcbf/UAPPKit
 ```
 
-Selecione a versão `2.3.0` ou posterior e adicione o produto `UAPPKit` ao
+Selecione a versão `2.4.0` ou posterior e adicione o produto `UAPPKit` ao
 target do aplicativo. Em outro `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/rfcbf/UAPPKit", from: "2.3.0")
+    .package(url: "https://github.com/rfcbf/UAPPKit", from: "2.4.0")
 ],
 targets: [
     .target(name: "MeuApp", dependencies: ["UAPPKit"])
@@ -679,6 +679,10 @@ apresente `UAPPFeedbackComposerScreen` com um `UAPPFeedbackDraft`:
     }
 }
 ```
+
+Com `isCategoryLocked: true`, o compositor mostra só o tipo do rascunho e a
+pessoa não consegue trocá-lo, por exemplo para uma requisição aberta a partir
+de um erro chegar sempre como `bug`.
 
 Quando o aplicativo envia a requisição pelo próprio backend, use o mesmo
 compositor sem `client`, informando `submit`. Ele recebe um

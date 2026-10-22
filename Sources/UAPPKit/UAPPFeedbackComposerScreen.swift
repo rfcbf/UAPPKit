@@ -3,20 +3,33 @@ import SwiftUI
 
 /// Conteúdo inicial do compositor de feedback, para o aplicativo abrir o envio
 /// já preenchido com o contexto que tem em mãos. A pessoa pode revisar e
-/// alterar tudo antes de enviar.
+/// alterar tudo antes de enviar, menos o tipo quando `isCategoryLocked` é
+/// verdadeiro.
 public struct UAPPFeedbackDraft: Sendable, Equatable {
     public var title: String
     public var details: String
     public var category: UAPPFeedbackCategory
+    /// Mantém o tipo escolhido pelo aplicativo: o compositor mostra só esse
+    /// tipo, sem deixar trocar. Útil quando o envio nasce de um erro e precisa
+    /// chegar como `bug`.
+    public var isCategoryLocked: Bool
 
     public init(
         title: String = "",
         details: String = "",
-        category: UAPPFeedbackCategory = .feature
+        category: UAPPFeedbackCategory = .feature,
+        isCategoryLocked: Bool = false
     ) {
         self.title = title
         self.details = details
         self.category = category
+        self.isCategoryLocked = isCategoryLocked
+    }
+
+    /// Tipos oferecidos no compositor: todos, ou só o do rascunho quando ele
+    /// está travado.
+    var selectableCategories: [UAPPFeedbackCategory] {
+        isCategoryLocked ? [category] : UAPPFeedbackCategory.allCases
     }
 }
 
@@ -176,7 +189,8 @@ extension UAPPFeedbackCategory {
         draft: UAPPFeedbackDraft(
             title: "Falha ao importar relatórios",
             details: "A importação parou no terceiro mês.",
-            category: .bug
+            category: .bug,
+            isCategoryLocked: true
         ),
         onComplete: {}
     )

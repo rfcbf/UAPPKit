@@ -24,6 +24,7 @@ struct UAPPSubmitFeedbackScreen: View {
     @State private var imageData: [Data] = []
     @State private var isProcessingImage = false
     @State private var category: UAPPFeedbackCategory = .feature
+    @State private var selectableCategories = UAPPFeedbackCategory.allCases
     @State private var isSending = false
     @State private var errorMessage: UAPPFeedbackSubmitFailure?
     @FocusState private var focusedField: Field?
@@ -57,7 +58,7 @@ struct UAPPSubmitFeedbackScreen: View {
         Form {
             Section {
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
-                    ForEach(UAPPFeedbackCategory.allCases, id: \.self) { option in
+                    ForEach(selectableCategories, id: \.self) { option in
                         macCategoryChip(option)
                     }
                 }
@@ -293,7 +294,7 @@ struct UAPPSubmitFeedbackScreen: View {
                 alignment: .leading,
                 spacing: 10
             ) {
-                ForEach(UAPPFeedbackCategory.allCases, id: \.self) { option in
+                ForEach(selectableCategories, id: \.self) { option in
                     categoryChip(option)
                 }
             }
@@ -549,6 +550,7 @@ extension UAPPSubmitFeedbackScreen {
         _title = State(initialValue: draft.title)
         _details = State(initialValue: draft.details)
         _category = State(initialValue: draft.category)
+        _selectableCategories = State(initialValue: draft.selectableCategories)
     }
 }
 #endif

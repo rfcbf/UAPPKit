@@ -76,3 +76,21 @@ func feedbackComposerScreenRendersCustomSender() async {
     await render(UAPPFeedbackComposerScreen(draft: draft, submit: { _ in }, onComplete: {}))
     await render(UAPPSubmitFeedbackScreen(sender: .custom { _ in }, draft: draft, onComplete: {}))
 }
+
+@Test("UAPPFeedbackDraft travado oferece só o tipo escolhido")
+func feedbackDraftLockedCategoryOffersOnlyItsCategory() {
+    let free = UAPPFeedbackDraft(title: "Exportar planilha", category: .feature)
+    #expect(!free.isCategoryLocked)
+    #expect(free.selectableCategories == UAPPFeedbackCategory.allCases)
+
+    let locked = UAPPFeedbackDraft(title: "Erro ao salvar", category: .bug, isCategoryLocked: true)
+    #expect(locked.selectableCategories == [.bug])
+    #expect(locked != UAPPFeedbackDraft(title: "Erro ao salvar", category: .bug))
+}
+
+@Test("UAPPFeedbackComposerScreen abre com o tipo travado")
+@MainActor
+func feedbackComposerScreenRendersLockedCategory() async {
+    let draft = UAPPFeedbackDraft(title: "Erro ao salvar", category: .bug, isCategoryLocked: true)
+    await render(UAPPFeedbackComposerScreen(draft: draft, submit: { _ in }, onComplete: {}))
+}

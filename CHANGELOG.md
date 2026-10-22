@@ -6,6 +6,14 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+## 2.4.0 - 2026-10-22
+
+- Compositor de feedback: `UAPPFeedbackDraft` ganha `isCategoryLocked`. Com ele
+  verdadeiro, `UAPPFeedbackComposerScreen` mostra só o tipo do rascunho e a
+  pessoa não consegue trocá-lo, no iPhone, no iPad e no Mac. Serve para o
+  aplicativo abrir uma requisição a partir de um erro já como `bug`. O valor
+  padrão é falso, então quem já usa o rascunho continua igual.
+
 ## 2.3.0 - 2026-10-22
 
 - Sobre: logo abaixo da versão do aplicativo, a tela mostra sempre a versão do
