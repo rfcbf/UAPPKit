@@ -11,9 +11,14 @@ import SwiftUI
 ///
 /// ```swift
 /// UAPPKit.setup(projectId: "meu-app")
-/// UAPPKit.identify(userId: "user-123")
-/// try await UAPPKit.showFeedback()
 /// try UAPPKit.showReviews(pageSize: 20)
+///
+/// // Feedback com login por código enviado por e-mail, feito pelo kit:
+/// try UAPPKit.showFeedback()
+///
+/// // Feedback com a conta própria do aplicativo, sem login no kit:
+/// UAPPKit.identify(userId: "user-123", email: "pessoa@example.com")
+/// try await UAPPKit.showFeedback(identity: nil, accessTokenProvider: nil)
 /// ```
 ///
 /// A V1 apresenta telas SwiftUI **nativas** (nada de WebView). O contrato
@@ -103,6 +108,15 @@ public enum UAPPKit {
         UAPPLocalizationPreferences.storageKey
     }
 
+    /// Informa o perfil da pessoa conectada na conta do aplicativo. Não cria nem autentica uma
+    /// conta no UAPP.
+    ///
+    /// O perfil é usado pelo cliente de `makeClient()` e pelas telas abertas com
+    /// `showFeedback(identity: nil, accessTokenProvider: nil)` e
+    /// `showRoadmap(identity: nil, accessTokenProvider: nil)`, que participam sem login no kit.
+    /// `showFeedback()` e `showRoadmap()` sem argumentos continuam pedindo o código por e-mail
+    /// mesmo depois desta chamada. Para a foto ser enviada, `avatarURL` deve ser um arquivo local
+    /// JPEG ou PNG de até 512 KiB.
     public static func identify(
         userId: String,
         email: String? = nil,
@@ -124,6 +138,7 @@ public enum UAPPKit {
         }
     }
 
+    /// Remove o perfil informado em `identify`. Chame quando a pessoa sair da conta do aplicativo.
     public static func reset() {
         participationIdentity = nil
         Task { [client, participationClient] in
@@ -139,7 +154,9 @@ public enum UAPPKit {
     }
 
     /// Cliente com login automático por e-mail, para Feedback/Roadmap em navegação própria.
-    /// Não solicita login nem acessa autenticação durante o setup.
+    /// Não solicita login nem acessa autenticação durante o setup. Ao participar, pede o código
+    /// por e-mail mesmo depois de `identify`; para usar a conta própria do aplicativo, use
+    /// `makeClient(identity: nil, accessTokenProvider: nil)`.
     public static func makeParticipationClient() throws -> UAPPClient {
         if let participationClient {
             return participationClient
@@ -162,8 +179,13 @@ public enum UAPPKit {
         return client
     }
 
-    /// Cliente isolado de Feedback/Roadmap, criado depois do setup e do login.
+    /// Cliente isolado de Feedback/Roadmap, criado depois do setup e do login do aplicativo.
     /// O perfil é opcional e não representa comprovação de autenticação.
+    ///
+    /// Com `identity: nil`, usa o perfil informado em `identify` no momento da chamada. Com
+    /// `accessTokenProvider: nil`, participa sem login no kit e sem token: é a forma para
+    /// aplicativos com conta própria (Firebase, servidor próprio). Um provedor só deve devolver
+    /// access tokens aceitos pelo UAPP.
     public static func makeClient(
         identity: UAPPIdentity? = nil,
         accessTokenProvider: UAPPAccessTokenProvider?
@@ -209,6 +231,10 @@ public enum UAPPKit {
     static var windowPresenter = UAPPMacWindowPresenter()
     #endif
 
+    /// Apresenta o Feedback com o login automático do kit: ao participar, a pessoa recebe um
+    /// código por e-mail, mesmo depois de `identify`. Para aplicativos com conta própria, use
+    /// `showFeedback(identity: nil, accessTokenProvider: nil)`.
+    ///
     /// No iPhone e no iPad, apresenta em uma sheet grande. No Mac, abre em uma janela própria,
     /// trazida para a frente se já estiver aberta.
     public static func showFeedback() throws {
@@ -238,6 +264,7 @@ public enum UAPPKit {
         ), screen: .account)
     }
 
+    /// Apresenta o Feedback com a sessão de `authentication`, que conduz o login quando necessário.
     public static func showFeedback(
         identity: UAPPIdentity? = nil,
         authentication: any UAPPAuthenticationProvider
@@ -246,6 +273,9 @@ public enum UAPPKit {
         present(UAPPFeedbackScreen(client: client, mode: .feedback), screen: .feedback)
     }
 
+    /// Apresenta o Feedback sem login no kit. Com `identity: nil` e `accessTokenProvider: nil`,
+    /// participa com o perfil informado em `identify`: é a forma para aplicativos com conta própria.
+    /// Veja `makeClient(identity:accessTokenProvider:)`.
     public static func showFeedback(
         identity: UAPPIdentity? = nil,
         accessTokenProvider: UAPPAccessTokenProvider?
@@ -254,10 +284,14 @@ public enum UAPPKit {
         present(UAPPFeedbackScreen(client: client, mode: .feedback), screen: .feedback)
     }
 
+    /// Apresenta o Roadmap com o login automático do kit: ao participar, a pessoa recebe um
+    /// código por e-mail, mesmo depois de `identify`. Para aplicativos com conta própria, use
+    /// `showRoadmap(identity: nil, accessTokenProvider: nil)`.
     public static func showRoadmap() throws {
         try present(UAPPRoadmapScreen(client: makeParticipationClient()), screen: .roadmap)
     }
 
+    /// Apresenta o Roadmap com a sessão de `authentication`, que conduz o login quando necessário.
     public static func showRoadmap(
         identity: UAPPIdentity? = nil,
         authentication: any UAPPAuthenticationProvider
@@ -266,6 +300,8 @@ public enum UAPPKit {
         present(UAPPRoadmapScreen(client: client), screen: .roadmap)
     }
 
+    /// Apresenta o Roadmap sem login no kit. Com `identity: nil` e `accessTokenProvider: nil`,
+    /// participa com o perfil informado em `identify`: é a forma para aplicativos com conta própria.
     public static func showRoadmap(
         identity: UAPPIdentity? = nil,
         accessTokenProvider: UAPPAccessTokenProvider?

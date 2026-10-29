@@ -18,6 +18,8 @@ do detalhe.
 - [Requisitos](#requisitos)
 - [Instalação](#instalação)
 - [Setup](#setup)
+- [App com conta própria](#app-com-conta-própria)
+  - [Qual sobrecarga usar](#qual-sobrecarga-usar)
 - [Telas prontas](#telas-prontas)
   - [Sobre](#sobre)
   - [Desenvolvedor](#desenvolvedor)
@@ -113,6 +115,125 @@ O kit acessa sempre o servidor de produção do UAPP; o aplicativo não escolhe
 servidor. O setup não inicia login nem acessa a autenticação. Antes dele, as APIs do kit
 lançam `UAPPKitError.notConfigured`.
 
+## App com conta própria
+
+Use este caminho quando o aplicativo já tem login próprio (Firebase, Sign in
+with Apple, um servidor próprio etc.) e Feedback e Roadmap devem usar o nome, o
+e-mail e a foto da pessoa conectada no aplicativo, sem pedir outro login.
+
+> [!IMPORTANT]
+> `UAPPKit.showFeedback()` e `UAPPKit.showRoadmap()` **sem argumentos** usam o
+> login do próprio kit: quando a pessoa vota, comenta ou envia um feedback, a
+> tela pede um **código enviado por e-mail**. Isso acontece **mesmo depois de
+> `UAPPKit.identify(...)`**, porque `identify` só informa o perfil; ele não abre
+> sessão no kit. Em app com conta própria, abra as telas com
+> `showFeedback(identity: nil, accessTokenProvider: nil)` e
+> `showRoadmap(identity: nil, accessTokenProvider: nil)`.
+
+São quatro pontos de integração, todos no código do aplicativo:
+
+```swift
+import Foundation
+import UAPPKit
+
+/// Ponto único de integração com o UAPPKit.
+@MainActor
+enum Suporte {
+    /// 1. Uma vez, na inicialização do aplicativo (por exemplo, no `init` do `App`).
+    static func configurar() {
+        UAPPKit.setup(projectId: "meu-app")
+    }
+
+    /// 2. Quando a pessoa entra na conta do aplicativo e também ao abrir o
+    /// aplicativo com uma sessão já salva.
+    static func entrou(userId: String, email: String?, nome: String?, foto: URL?) {
+        UAPPKit.identify(
+            userId: userId,
+            email: email,
+            displayName: nome,
+            avatarURL: foto
+        )
+    }
+
+    /// 3. Quando a pessoa sai da conta do aplicativo.
+    static func saiu() {
+        UAPPKit.reset()
+    }
+
+    /// 4. Botões "Feedback" e "Roadmap" da interface do aplicativo.
+    static func abrirFeedback() throws {
+        _ = try UAPPKit.makeClient() // lança UAPPKitError.notConfigured antes do setup
+        Task { try? await UAPPKit.showFeedback(identity: nil, accessTokenProvider: nil) }
+    }
+
+    static func abrirRoadmap() throws {
+        _ = try UAPPKit.makeClient()
+        Task { try? await UAPPKit.showRoadmap(identity: nil, accessTokenProvider: nil) }
+    }
+}
+```
+
+Com Firebase Authentication, os passos 2 e 3 cabem no observador de sessão:
+
+```swift
+import FirebaseAuth
+
+let observador = Auth.auth().addStateDidChangeListener { _, user in
+    let conta = user.map { (id: $0.uid, email: $0.email, nome: $0.displayName) }
+    Task { @MainActor in
+        if let conta {
+            Suporte.entrou(userId: conta.id, email: conta.email, nome: conta.nome, foto: nil)
+        } else {
+            Suporte.saiu()
+        }
+    }
+}
+```
+
+O que cada parte faz:
+
+- `identity: nil` faz a tela usar o perfil informado em `identify`. Para usar
+  outro perfil só nesta abertura, passe um `UAPPIdentity` no lugar de `nil`.
+- `accessTokenProvider: nil` diz que o aplicativo não tem um token aceito pelo
+  UAPP. O parâmetro não tem valor padrão, por isso é escrito por extenso; é ele
+  que separa esta chamada de `showFeedback()`, a versão com login por código.
+  Não passe aqui o token do Firebase nem um ID token da Apple ou do Google: o
+  UAPP não os aceita.
+- `showFeedback(identity:accessTokenProvider:)` é assíncrona; por isso a
+  chamada fica dentro de um `Task`. A linha `_ = try UAPPKit.makeClient()` faz o
+  botão receber o erro `UAPPKitError.notConfigured` na hora, em vez de o erro se
+  perder no `try?` do `Task`.
+- A tela copia o perfil no momento em que abre. Chame `identify` (ou `reset`)
+  antes de abrir Feedback e Roadmap; uma mudança de conta vale para a próxima
+  abertura.
+- Sem `identify`, ou depois de `reset`, as telas continuam abertas a quem não
+  entrou na conta, e a participação vai sem nome nem e-mail. Se o aplicativo
+  quer participação só de quem entrou, esconda ou desabilite os botões nesse
+  estado.
+- Para a foto chegar ao autor do feedback, `avatarURL` deve ser um arquivo
+  local JPEG ou PNG de até 512 KiB. Uma URL da internet, como a `photoURL` do
+  Firebase, não é enviada: baixe a imagem para o cache do aplicativo antes de
+  chamar `identify`, ou passe `nil`.
+- O perfil informado não comprova autenticação: o aplicativo é responsável por
+  só chamar `identify` com os dados da conta conectada.
+
+### Qual sobrecarga usar
+
+As mesmas regras valem para `showFeedback` e `showRoadmap`:
+
+| O aplicativo tem | Chamada | Login na hora de participar |
+| --- | --- | --- |
+| Nenhuma conta | `showFeedback()` | Código enviado por e-mail, pelo kit, mesmo depois de `identify`. |
+| Conta própria (Firebase, servidor próprio etc.) | `showFeedback(identity: nil, accessTokenProvider: nil)` | Nenhum. Usa o perfil de `identify`. |
+| Conta própria com token aceito pelo UAPP | `showFeedback(identity: nil, accessTokenProvider: { try await conta.token() })` | Nenhum. O token vai em cada operação. |
+| Conta do UAPP criada pelo kit (Apple, Google, GitHub, e-mail) | `showFeedback(authentication: authentication)` | O do provedor, se a sessão não estiver ativa. |
+| Login próprio adaptado ao protocolo do kit | `showFeedback(authentication: MeuProvedor())` | O fluxo do aplicativo, chamado por `signIn(method:)`. |
+
+As três últimas são assíncronas (`try await`). Os detalhes de cada forma estão
+em [Autenticação](#autenticação). Na navegação do próprio aplicativo, o mesmo
+cliente da linha "Conta própria" sai de
+`try await UAPPKit.makeClient(identity: nil, accessTokenProvider: nil)`.
+
 ## Telas prontas
 
 Os métodos `UAPPKit.show…` apresentam a tela pronta: no iPhone e no iPad, como
@@ -126,13 +247,15 @@ SwiftUI correspondente.
 | Desenvolvedor | `UAPPKit.showDeveloperAbout()` | `UAPPDeveloperAboutScreen` |
 | Changelog | `UAPPKit.showChangelog(configuration:)` | `UAPPFeedbackScreen(mode: .changelog)` |
 | Reviews | `UAPPKit.showReviews(pageSize:)` | `UAPPReviewsScreen` |
-| Feedback | `UAPPKit.showFeedback()` | `UAPPFeedbackScreen(mode: .feedback)` |
-| Roadmap | `UAPPKit.showRoadmap()` | `UAPPRoadmapScreen` |
+| Feedback | `UAPPKit.showFeedback()` ou, com conta própria, `showFeedback(identity:accessTokenProvider:)` | `UAPPFeedbackScreen(mode: .feedback)` |
+| Roadmap | `UAPPKit.showRoadmap()` ou, com conta própria, `showRoadmap(identity:accessTokenProvider:)` | `UAPPRoadmapScreen` |
 | Conta | `UAPPKit.showAuthentication(authentication:)` | `UAPPAccountScreen` |
 | Perfil | `UAPPKit.showUser(session:authentication:)` | `UAPPUserScreen` |
 
 Sobre, Desenvolvedor, Changelog e Reviews são públicas e não usam sessão.
-Feedback e Roadmap pedem login somente quando a pessoa participa.
+Feedback e Roadmap pedem login somente quando a pessoa participa. Na forma sem
+argumentos da tabela, esse login é o código por e-mail do kit; se o aplicativo
+já tem conta própria, veja [App com conta própria](#app-com-conta-própria).
 
 ### Sobre
 
@@ -315,8 +438,11 @@ No Mac, a tela já monta a lista ao lado do detalhe. Ao incorporá-la, coloque-a
 direto na janela, sem envolvê-la em `NavigationStack`.
 
 Sem nenhuma configuração adicional, o kit oferece login por código enviado
-por e-mail apenas no momento de participar. Para reutilizar a conta do
-aplicativo, veja [Autenticação](#autenticação) e
+por e-mail apenas no momento de participar. `showFeedback()` pede esse código
+mesmo depois de `UAPPKit.identify(...)`. Para participar com a conta que o
+aplicativo já tem, use `showFeedback(identity: nil, accessTokenProvider: nil)`;
+veja [App com conta própria](#app-com-conta-própria),
+[Autenticação](#autenticação) e
 [Feedback e autenticação](Documentation/Feedback.md).
 
 ### Roadmap
@@ -342,6 +468,11 @@ NavigationStack {
 
 `UAPPFeedbackScreen(client:mode: .roadmap)` continua disponível e apresenta a
 mesma `UAPPRoadmapScreen`.
+
+Como no Feedback, `showRoadmap()` pede o código por e-mail ao participar. Em
+aplicativo com conta própria, use
+`showRoadmap(identity: nil, accessTokenProvider: nil)`; veja
+[App com conta própria](#app-com-conta-própria).
 
 ### Conta e Perfil
 
@@ -490,14 +621,17 @@ aplicativo pelo esquema de URL configurado no target, como no iOS.
 ## Autenticação
 
 Somente Feedback, Roadmap, Conta e Perfil usam sessão. Há três formas de
-integrar, da mais simples à mais controlada.
+integrar, da mais simples à mais controlada. Aplicativo que já tem login
+próprio e só quer mostrar o perfil da pessoa não precisa de nenhuma delas: veja
+[App com conta própria](#app-com-conta-própria).
 
 ### 1. Automática
 
 Nada a configurar. `UAPPKit.showFeedback()`, `UAPPKit.showRoadmap()` e
 `UAPPKit.makeParticipationClient()` oferecem login por código enviado por
 e-mail somente quando a pessoa vota, comenta ou envia um feedback. A sessão
-fica no Keychain do aplicativo.
+fica no Keychain do aplicativo. Essa forma pede o código mesmo que o
+aplicativo tenha chamado `UAPPKit.identify(...)`.
 
 ### 2. Provedor do kit
 
@@ -591,10 +725,18 @@ try await UAPPKit.showFeedback(
 )
 ```
 
+O token precisa ser um access token aceito pelo UAPP. Tokens do Firebase ou de
+outro serviço, e ID tokens da Apple ou do Google, não servem; nesse caso, passe
+`accessTokenProvider: nil`, como em [App com conta própria](#app-com-conta-própria).
+
 ### Identidade opcional
 
 `identify` associa ações a um usuário final informado pelo aplicativo. Não
-cria nem autentica uma conta.
+cria nem autentica uma conta, e não dispensa o código por e-mail de
+`showFeedback()` e `showRoadmap()` sem argumentos. O perfil é usado pelas
+telas abertas com `identity: nil, accessTokenProvider: nil` (veja
+[App com conta própria](#app-com-conta-própria)) e pelo cliente de
+`makeClient()`.
 
 ```swift
 UAPPKit.identify(
