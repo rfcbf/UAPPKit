@@ -6,6 +6,11 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+- Exclusão de conta: o aviso nos 13 idiomas explica a remoção das requisições,
+  comentários e anexos. Somente requisitos independentes, escritos e revisados
+  pela equipe, podem permanecer sem vínculo com a pessoa. A limpeza ocorre no
+  servidor antes da remoção da conta; a integração HTTP continua compatível.
+
 ## 2.4.0 - 2026-10-22
 
 - Compositor de feedback: `UAPPFeedbackDraft` ganha `isCategoryLocked`. Com ele

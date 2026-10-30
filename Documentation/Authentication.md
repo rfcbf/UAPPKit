@@ -46,13 +46,17 @@ Com o provedor do kit (`UAPPKit.makeAuthentication()`), `UAPPUserScreen` termina
 com a ação **Excluir conta**, no iPhone, no iPad e no Mac. Ela atende à exigência
 da App Store de excluir dentro do app a conta que o app permite criar.
 
-1. Um alerta explica o que sai: a conta, o nome, a foto e os votos, de forma
+1. Um alerta explica o que sai: a conta, o nome, a foto, as requisições,
+   os comentários, os anexos e os votos, de forma
    definitiva, e o mesmo login deixa de funcionar nos outros apps que o usam.
-   Requisições e comentários publicados continuam visíveis, sem autor. O botão
+   Requisitos independentes, escritos e revisados pela equipe, podem permanecer
+   sem o relato original nem vínculo com a pessoa. O botão
    de confirmar é destrutivo.
 2. Durante a exclusão, a ação mostra o progresso e a tela não pode ser fechada.
 3. O kit chama a função `delete-account` do UAPP, a mesma do painel web: o
-   servidor apaga a foto, revoga o "Iniciar sessão com a Apple" (com o token
+   servidor apaga contribuições e anexos antes de remover a identidade,
+   preserva apenas os requisitos editoriais independentes, apaga a foto,
+   revoga o "Iniciar sessão com a Apple" (com o token
    guardado no login com a Apple), encerra as sessões e remove o usuário.
 4. Confirmada a exclusão, o kit apaga a sessão do Keychain e mostra o aviso
    final. Se o servidor não conseguiu revogar o acesso da Apple, o aviso orienta

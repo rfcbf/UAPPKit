@@ -21057,79 +21057,79 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Konto, Name, Foto und Stimmen werden endgültig gelöscht. Dieselbe Anmeldung funktioniert dann auch in anderen Apps nicht mehr, in denen du sie nutzt. Veröffentlichte Anfragen und Kommentare bleiben ohne Autor sichtbar. Dies kann nicht rückgängig gemacht werden."
+            "value" : "Konto, Name, Foto, Anfragen, Kommentare, Anhänge und Stimmen werden endgültig gelöscht. Dieselbe Anmeldung funktioniert dann auch in anderen Apps nicht mehr. Vom Team verfasste und geprüfte Produktanforderungen können erhalten bleiben, ohne deinen ursprünglichen Bericht oder eine Verbindung zu dir. Dies kann nicht rückgängig gemacht werden."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Your account, name, photo and votes will be permanently deleted. The same sign-in will stop working in any other apps where you use it. Published requests and comments remain visible without an author. This can’t be undone."
+            "value" : "Your account, name, photo, requests, comments, attachments and votes will be permanently deleted. The same sign-in will stop working in other apps where you use it. Product requirements written and reviewed by the team may remain, without your original report or a link to you. This can’t be undone."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La cuenta, el nombre, la foto y los votos se eliminarán de forma definitiva. El mismo inicio de sesión dejará de funcionar en las otras apps donde lo uses. Las solicitudes y los comentarios publicados seguirán visibles, sin autor. No se puede deshacer."
+            "value" : "Tu cuenta, nombre, foto, solicitudes, comentarios, archivos adjuntos y votos se eliminarán definitivamente. El mismo inicio de sesión dejará de funcionar en las otras apps donde lo uses. Los requisitos del producto redactados y revisados por el equipo pueden conservarse, sin tu relato original ni un vínculo contigo. No se puede deshacer."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Le compte, le nom, la photo et les votes seront définitivement supprimés. La même connexion cessera de fonctionner dans les autres apps où vous l’utilisez. Les demandes et commentaires publiés restent visibles, sans auteur. Cette action est irréversible."
+            "value" : "Votre compte, nom, photo, demandes, commentaires, pièces jointes et votes seront définitivement supprimés. La même connexion cessera de fonctionner dans les autres apps. Les exigences produit rédigées et vérifiées par l’équipe peuvent être conservées, sans votre récit d’origine ni lien avec vous. Cette action est irréversible."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "खाता, नाम, फ़ोटो और वोट स्थायी रूप से हटा दिए जाएँगे। यही साइन-इन उन दूसरे ऐप्स में भी काम करना बंद कर देगा जहाँ आप इसका उपयोग करते हैं। प्रकाशित अनुरोध और टिप्पणियाँ बिना लेखक के दिखती रहेंगी। इसे पूर्ववत नहीं किया जा सकता।"
+            "value" : "आपका खाता, नाम, फ़ोटो, अनुरोध, टिप्पणियाँ, संलग्नक और वोट स्थायी रूप से हटा दिए जाएँगे। यही साइन-इन दूसरे ऐप्स में भी काम करना बंद कर देगा। टीम द्वारा लिखी और समीक्षा की गई उत्पाद आवश्यकताएँ आपके मूल विवरण या आपसे किसी संबंध के बिना रह सकती हैं। इसे पूर्ववत नहीं किया जा सकता।"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "L’account, il nome, la foto e i voti verranno eliminati definitivamente. Lo stesso accesso smetterà di funzionare nelle altre app in cui lo usi. Le richieste e i commenti pubblicati restano visibili, senza autore. L’operazione non può essere annullata."
+            "value" : "Account, nome, foto, richieste, commenti, allegati e voti verranno eliminati definitivamente. Lo stesso accesso smetterà di funzionare nelle altre app. I requisiti del prodotto scritti e rivisti dal team possono essere conservati, senza il tuo resoconto originale né un collegamento a te. L’operazione non può essere annullata."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "アカウント、名前、写真、投票は完全に削除されます。同じログインを使っているほかのアプリでも使えなくなります。公開済みのリクエストとコメントは投稿者なしで表示されたままになります。この操作は取り消せません。"
+            "value" : "アカウント、名前、写真、リクエスト、コメント、添付ファイル、投票は完全に削除されます。同じログインを使うほかのアプリでも使えなくなります。チームが独自に記述し確認した製品要件は、元の報告やあなたとの関連を残さず保持される場合があります。この操作は取り消せません。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "계정, 이름, 사진, 투표가 영구적으로 삭제됩니다. 같은 로그인을 사용하는 다른 앱에서도 더 이상 사용할 수 없습니다. 게시된 요청과 댓글은 작성자 없이 계속 표시됩니다. 이 작업은 되돌릴 수 없습니다."
+            "value" : "계정, 이름, 사진, 요청, 댓글, 첨부 파일 및 투표가 영구적으로 삭제됩니다. 같은 로그인을 사용하는 다른 앱에서도 사용할 수 없습니다. 팀에서 직접 작성하고 검토한 제품 요구사항은 원래 보고 내용이나 사용자와의 연결 없이 유지될 수 있습니다. 이 작업은 되돌릴 수 없습니다."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Konto, imię, zdjęcie i głosy zostaną trwale usunięte. To samo logowanie przestanie działać w innych aplikacjach, w których go używasz. Opublikowane prośby i komentarze pozostaną widoczne bez autora. Tej operacji nie można cofnąć."
+            "value" : "Konto, imię, zdjęcie, prośby, komentarze, załączniki i głosy zostaną trwale usunięte. To samo logowanie przestanie działać w innych aplikacjach. Wymagania produktu napisane i sprawdzone przez zespół mogą pozostać, bez oryginalnego zgłoszenia ani powiązania z Tobą. Tej operacji nie można cofnąć."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A conta, o nome, a foto e os votos serão apagados de forma definitiva. O mesmo login deixa de funcionar nos outros apps em que você o usa. Requisições e comentários publicados continuam visíveis, sem autor. Não é possível desfazer."
+            "value" : "Sua conta, nome, foto, requisições, comentários, anexos e votos serão apagados definitivamente. O mesmo login deixará de funcionar nos outros apps em que você o usa. Requisitos do produto escritos e revisados pela equipe podem permanecer, sem seu relato original nem vínculo com você. Não é possível desfazer."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tài khoản, tên, ảnh và lượt bình chọn sẽ bị xóa vĩnh viễn. Cùng thông tin đăng nhập này cũng sẽ ngừng hoạt động trong các ứng dụng khác mà bạn dùng. Các yêu cầu và bình luận đã đăng vẫn hiển thị nhưng không có tác giả. Không thể hoàn tác thao tác này."
+            "value" : "Tài khoản, tên, ảnh, yêu cầu, bình luận, tệp đính kèm và lượt bình chọn của bạn sẽ bị xóa vĩnh viễn. Cùng thông tin đăng nhập này sẽ ngừng hoạt động trong các ứng dụng khác. Yêu cầu sản phẩm do nhóm viết và xem xét có thể được giữ lại, không kèm báo cáo gốc hay liên kết đến bạn. Không thể hoàn tác."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "账户、姓名、照片和投票将被永久删除。你在其他 App 中使用的同一登录方式也将无法使用。已发布的请求和评论仍会显示，但不再显示作者。此操作无法撤销。"
+            "value" : "你的账户、姓名、照片、请求、评论、附件和投票将被永久删除。同一登录方式在其他 App 中也将无法使用。团队独立编写并审核的产品需求可以保留，但不会包含你的原始报告或与你的关联。此操作无法撤销。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "帳戶、名稱、照片和投票將被永久刪除。你在其他 App 中使用的同一登入方式也將無法使用。已發佈的請求和留言仍會顯示，但不再顯示作者。此操作無法復原。"
+            "value" : "你的帳戶、名稱、照片、請求、留言、附件和投票將被永久刪除。同一登入方式在其他 App 中也將無法使用。團隊獨立撰寫並審閱的產品需求可以保留，但不會包含你的原始報告或與你的關聯。此操作無法復原。"
           }
         }
       }
