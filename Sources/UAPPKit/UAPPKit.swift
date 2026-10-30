@@ -29,7 +29,7 @@ public enum UAPPKit {
     /// Versão do pacote, igual à tag publicada e ao primeiro título de versão do `CHANGELOG.md`.
     /// Um pacote Swift não expõe a própria tag em tempo de execução; por isso o valor é mantido aqui
     /// e atualizado junto com o `CHANGELOG.md` a cada versão.
-    public nonisolated static let version = "2.4.0"
+    public nonisolated static let version = "2.4.1"
 
     private static var client: UAPPClient?
     private static var configuration: UAPPConfiguration?
