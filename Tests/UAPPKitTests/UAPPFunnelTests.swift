@@ -198,9 +198,9 @@ struct UAPPFunnelTrackerTests {
 
     @MainActor
     @Test("fixed-project trackers are reused per project and host")
-    func fixedProjectTrackers() {
-        let host = URL(string: "https://example.supabase.co")!
-        let other = URL(string: "https://other.supabase.co")!
+    func fixedProjectTrackers() throws {
+        let host = try #require(URL(string: "https://example.supabase.co"))
+        let other = try #require(URL(string: "https://other.supabase.co"))
         let first = UAPPKit.funnelTracker(projectId: "uapp-pulse", host: host)
         #expect(UAPPKit.funnelTracker(projectId: "uapp-pulse", host: host) === first)
         #expect(UAPPKit.funnelTracker(projectId: "calcjuros", host: host) !== first)

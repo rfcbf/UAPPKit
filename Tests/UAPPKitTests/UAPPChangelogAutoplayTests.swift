@@ -1,5 +1,6 @@
 import SwiftUI
 import Testing
+@_spi(UAPPInternal) @testable import UAPPKit
 #if canImport(UIKit)
 import UIKit
 
@@ -11,7 +12,6 @@ import AppKit
 private let becameActive = NSApplication.didBecomeActiveNotification
 private let resignedActive = NSApplication.didResignActiveNotification
 #endif
-@_spi(UAPPInternal) @testable import UAPPKit
 
 @Test("autoplay depende do aplicativo ativo, visibilidade, configuração e acessibilidade")
 func changelogAutoplayConditions() {

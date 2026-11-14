@@ -1,8 +1,8 @@
 import Testing
+@_spi(UAPPInternal) @testable import UAPPKit
 #if canImport(Translation)
 import SwiftUI
 #endif
-@_spi(UAPPInternal) @testable import UAPPKit
 
 @Test("Reviews detecta idiomas e evita traduzir texto no idioma selecionado")
 func reviewTranslationDetectsLanguages() {

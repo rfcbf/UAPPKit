@@ -198,8 +198,7 @@ actor UAPPFunnelTracker {
 
         while true {
             let batch = Array(pendingEvents().prefix(Self.batchSize))
-            guard !batch.isEmpty else { return }
-            guard let status = await send(batch) else { return }
+            guard !batch.isEmpty, let status = await send(batch) else { return }
             // 2xx: aceitos ou descartados pelo servidor. 4xx que não seja limite: o lote nunca
             // vai passar, então também sai da fila para não travar os próximos.
             let isPermanent = (200 ..< 300).contains(status)

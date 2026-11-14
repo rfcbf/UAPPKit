@@ -56,11 +56,8 @@ final class UAPPReviewsModel: ObservableObject {
     /// A tela chama depois da primeira página; não altera a lista nem a paginação.
     func loadSummaryIfNeeded() async {
         guard computedSummary == nil, (serverSummary?.count ?? 0) == 0, nextCursor != nil,
-              pageSize < Self.summaryPageSize
-        else {
-            return
-        }
-        guard let page = try? await client.reviewsPage(limit: Self.summaryPageSize) else { return }
+              pageSize < Self.summaryPageSize,
+              let page = try? await client.reviewsPage(limit: Self.summaryPageSize) else { return }
         if let summary = page.summary, summary.count > 0 {
             serverSummary = summary
         } else if page.nextCursor == nil, !page.reviews.isEmpty {

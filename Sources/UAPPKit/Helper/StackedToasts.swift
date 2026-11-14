@@ -352,10 +352,10 @@ private struct UAPPToastModifier: ViewModifier {
     }
 }
 
+@MainActor
 public extension View {
     /// Presents a localized notification. Dismissal clears the originating state.
     /// Full-screen loading failures should keep their persistent retry state.
-    @MainActor
     func uappToast(
         message: Binding<String?>,
         kind: UAPPToastKind = .error,
@@ -367,9 +367,9 @@ public extension View {
     }
 }
 
+@MainActor
 extension View {
     /// Aviso que fecha sozinho depois de `duration`, com a contagem no anel.
-    @MainActor
     func uappToast(
         message: Binding<String?>,
         kind: UAPPToastKind,

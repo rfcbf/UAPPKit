@@ -32,13 +32,13 @@ func uappOpenExternalURLAndReportSuccess(
 @MainActor
 func uappSystemOpenURL(_ url: URL) async -> Bool {
     #if canImport(UIKit)
-    return await withCheckedContinuation { continuation in
+    await withCheckedContinuation { continuation in
         UIApplication.shared.open(url, options: [:]) { continuation.resume(returning: $0) }
     }
     #elseif canImport(AppKit)
-    return NSWorkspace.shared.open(url)
+    NSWorkspace.shared.open(url)
     #else
-    return false
+    false
     #endif
 }
 
