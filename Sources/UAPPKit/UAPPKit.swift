@@ -29,12 +29,13 @@ public enum UAPPKit {
     /// Versão do pacote, igual à tag publicada e ao primeiro título de versão do `CHANGELOG.md`.
     /// Um pacote Swift não expõe a própria tag em tempo de execução; por isso o valor é mantido aqui
     /// e atualizado junto com o `CHANGELOG.md` a cada versão.
-    public nonisolated static let version = "2.4.1"
+    public nonisolated static let version = "2.5.0"
 
     private static var client: UAPPClient?
     private static var configuration: UAPPConfiguration?
     private static var participationClient: UAPPClient?
     private static var participationIdentity: UAPPIdentity?
+    private static var funnelTracker: UAPPFunnelTracker?
     private static var theme: UAPPTheme = .system
     private static var hostLocaleIdentifier = UAPPLocalizationPreferences.defaultIdentifier
     /// Transporte e abertura de links substituíveis nos testes, sem rede nem apps externos.
@@ -86,8 +87,35 @@ public enum UAPPKit {
         self.configuration = configuration
         self.theme = theme
         client = UAPPClient(configuration: configuration, transport: makeTransport())
+        let tracker = UAPPFunnelTracker(configuration: configuration, transport: makeTransport())
+        funnelTracker = tracker
         Task { [participationClient] in
             await participationClient?.setLocale(Locale(identifier: localeIdentifier))
+        }
+        // Envia o que ficou na fila de uma abertura anterior sem rede.
+        Task { await tracker.flush() }
+    }
+
+    // MARK: - Funil de assinatura
+
+    /// Registra um passo do funil de assinatura e o envia ao UAPP em segundo plano.
+    ///
+    /// ```swift
+    /// .onChange(of: scenePhase) { _, phase in
+    ///     if phase == .active { UAPPKit.track(.appOpened) }
+    /// }
+    /// UAPPKit.track(.paywallViewed(source: "limit_reached"))
+    /// UAPPKit.track(.purchaseStarted(productId: product.id))
+    /// ```
+    ///
+    /// Sem `setup`, a chamada não faz nada. Sem rede, o evento fica guardado no aparelho (até 200)
+    /// e vai na próxima chamada ou no próximo `setup`. Nunca lança erro nem bloqueia a interface.
+    public static func track(_ event: UAPPFunnelEvent) {
+        guard let tracker = funnelTracker else { return }
+        Task {
+            if await tracker.record(event) {
+                await tracker.flush()
+            }
         }
     }
 

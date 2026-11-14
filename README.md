@@ -33,6 +33,7 @@ do detalhe.
 - [Cliente para interface própria](#cliente-para-interface-própria)
 - [Idioma e tradução](#idioma-e-tradução)
 - [Tema](#tema)
+- [Funil de assinatura](#funil-de-assinatura)
 - [Componentes auxiliares](#componentes-auxiliares)
 - [Segurança e privacidade](#segurança-e-privacidade)
 - [Documentação](#documentação)
@@ -57,12 +58,12 @@ No Xcode, escolha **File → Add Package Dependencies…** e informe:
 https://github.com/rfcbf/UAPPKit
 ```
 
-Selecione a versão `2.4.1` ou posterior e adicione o produto `UAPPKit` ao
+Selecione a versão `2.5.0` ou posterior e adicione o produto `UAPPKit` ao
 target do aplicativo. Em outro `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/rfcbf/UAPPKit", from: "2.4.1")
+    .package(url: "https://github.com/rfcbf/UAPPKit", from: "2.5.0")
 ],
 targets: [
     .target(name: "MeuApp", dependencies: ["UAPPKit"])
@@ -953,6 +954,39 @@ UAPPReviewsScreen(client: client, pageSize: 20)
     .preferredColorScheme(.dark)
 ```
 
+## Funil de assinatura
+
+Mede quantas pessoas abrem o app, veem o paywall, tocam em assinar e concluem a
+compra. O painel do UAPP mostra o funil por app, no App Analytics.
+
+```swift
+// Na raiz do app: conta a abertura (no máximo uma vez a cada 30 minutos).
+.onChange(of: scenePhase) { _, phase in
+    if phase == .active { UAPPKit.track(.appOpened) }
+}
+
+// Quando o paywall aparece, dizendo de onde veio.
+.onAppear { UAPPKit.track(.paywallViewed(source: "limit_reached")) }
+
+// Na compra com StoreKit 2.
+UAPPKit.track(.purchaseStarted(productId: product.id))
+switch try await product.purchase() {
+case .success: UAPPKit.track(.purchaseCompleted(productId: product.id))
+case .userCancelled: UAPPKit.track(.purchaseCancelled(productId: product.id))
+case .pending: UAPPKit.track(.purchasePending(productId: product.id))
+@unknown default: break
+}
+```
+
+- `track` nunca lança erro nem bloqueia a interface. Sem `setup`, não faz nada.
+- Sem rede, os eventos ficam no aparelho (até 200) e vão na próxima chamada ou
+  no próximo `setup`.
+- A origem do paywall aceita letras minúsculas, números, `_`, `.` e `-`, até 64
+  caracteres; o kit normaliza o resto.
+- É anônimo: vai só o UUID de instalação, a versão do app, a data, o Product ID
+  e a origem. Declare **Interação com o produto** (não vinculada à pessoa, sem
+  rastreamento) na privacidade do app no App Store Connect.
+
 ## Componentes auxiliares
 
 ### Imagens com cache
@@ -1077,7 +1111,8 @@ anteriores o botão fica como está.
   público. O backend aplica publicação, visibilidade, moderação e limites de
   envio.
 - O SDK cria e persiste um UUID de instalação por projeto em `UserDefaults`
-  para identificar reações e dar suporte a chaves de idempotência.
+  para identificar reações e dar suporte a chaves de idempotência. O funil de
+  assinatura usa o mesmo UUID; o servidor guarda só o hash dele.
 - Sessões ficam no Keychain do aplicativo; senhas não são armazenadas.
 - `identify` envia os dados opcionais informados pelo aplicativo em ações de
   feedback. Use-o conforme a política de privacidade e o consentimento do seu

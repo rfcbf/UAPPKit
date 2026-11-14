@@ -197,6 +197,12 @@ a apresentação nativa mesmo nesse estado.
   Também inclui installation ID,
   identificador do item e chave de idempotência. Comentários podem incluir
   comentário pai e nome de exibição e entram em moderação.
+- `POST /public-app-events` envia eventos do funil de assinatura
+  (`UAPPKit.track`): `slug`, installation ID e até 50 eventos com `id`, `name`,
+  `source`, `productId`, `appVersion` e `occurredAt`. A fila fica em
+  `UserDefaults` (`uapp.funnel.queue.<projectId>`) até uma resposta 2xx; um
+  4xx diferente de 408/429 também tira o lote da fila, porque ele nunca vai
+  passar.
 
 Reviews são somente leitura no SDK. Sua sincronização e disponibilidade pública
 são controladas no UAPP. A tela Sobre também é somente leitura; campos que não
