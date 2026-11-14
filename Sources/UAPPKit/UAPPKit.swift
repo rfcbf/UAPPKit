@@ -36,6 +36,8 @@ public enum UAPPKit {
     private static var participationClient: UAPPClient?
     private static var participationIdentity: UAPPIdentity?
     private static var funnelTracker: UAPPFunnelTracker?
+    /// Filas do funil de projetos fixos (`track(_:projectId:host:)`), uma por projeto e servidor.
+    private static var projectFunnelTrackers: [String: UAPPFunnelTracker] = [:]
     private static var theme: UAPPTheme = .system
     private static var hostLocaleIdentifier = UAPPLocalizationPreferences.defaultIdentifier
     /// Transporte e abertura de links substituíveis nos testes, sem rede nem apps externos.
@@ -117,6 +119,33 @@ public enum UAPPKit {
                 await tracker.flush()
             }
         }
+    }
+
+    /// Registra um passo do funil de um projeto fixo, sem depender do `setup` atual. Para as
+    /// ferramentas da equipe que trocam o projeto do kit, como o UAPP Pulse, que abre as telas do
+    /// kit de cada aplicativo administrado e mede o próprio paywall.
+    @_spi(UAPPInternal)
+    public static func track(_ event: UAPPFunnelEvent, projectId: String, host: URL) {
+        let tracker = funnelTracker(projectId: projectId, host: host)
+        Task {
+            if await tracker.record(event) {
+                await tracker.flush()
+            }
+        }
+    }
+
+    /// Fila do funil de um projeto fixo, criada uma vez por projeto e servidor.
+    static func funnelTracker(projectId: String, host: URL) -> UAPPFunnelTracker {
+        let key = "\(projectId)|\(host.absoluteString)"
+        if let tracker = projectFunnelTrackers[key] {
+            return tracker
+        }
+        let tracker = UAPPFunnelTracker(
+            configuration: UAPPConfiguration(projectId: projectId, host: host),
+            transport: makeTransport()
+        )
+        projectFunnelTrackers[key] = tracker
+        return tracker
     }
 
     /// Atualiza o idioma principal informado pelo aplicativo hospedeiro.
