@@ -156,7 +156,6 @@ extension View {
 
     /// Fundo dos estados vazios e de erro: um cartão no iPhone e no iPad; no Mac, sem caixa nem
     /// contorno, direto sobre o fundo da janela.
-    @ViewBuilder
     func uappEmptyStateSurface(_ palette: UAPPResolvedPalette) -> some View {
         #if os(macOS)
         self
@@ -167,7 +166,6 @@ extension View {
 
     /// Tamanho de uma sheet no Mac, que se ajusta ao conteúdo e ficaria estreita com listas e
     /// rolagens. No iPhone e no iPad não muda nada.
-    @ViewBuilder
     func uappMacSheetFrame(width: CGFloat, height: CGFloat, minHeight: CGFloat? = nil) -> some View {
         #if os(macOS)
         frame(minWidth: width, idealWidth: width, minHeight: minHeight ?? height, idealHeight: height)

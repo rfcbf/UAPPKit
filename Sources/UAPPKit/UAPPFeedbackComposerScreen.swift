@@ -82,7 +82,7 @@ enum UAPPFeedbackSender {
     func failure(for error: any Error) -> UAPPFeedbackSubmitFailure {
         guard case .custom = self,
               let description = (error as? any LocalizedError)?.errorDescription?
-              .trimmingCharacters(in: .whitespacesAndNewlines),
+                  .trimmingCharacters(in: .whitespacesAndNewlines),
               !description.isEmpty
         else { return .generic }
         return .described(description)

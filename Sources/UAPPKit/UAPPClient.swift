@@ -677,7 +677,8 @@ public actor UAPPClient {
         }
     }
 
-    private static func loadInstallationId(projectId: String) -> String {
+    /// Identificador pseudônimo da instalação, compartilhado pelo Feedback e pelo funil.
+    static func loadInstallationId(projectId: String) -> String {
         let key = "uapp.installation.\(projectId)"
         if let stored = UserDefaults.standard.string(forKey: key), UUID(uuidString: stored) != nil {
             return stored

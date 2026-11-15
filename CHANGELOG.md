@@ -6,6 +6,19 @@ As alterações públicas do UAPPKit serão registradas aqui. O formato segue
 
 ## Não lançado
 
+## 2.5.0 - 2026-11-14
+
+- Funil de assinatura: `UAPPKit.track(_:)` registra `UAPPFunnelEvent`
+  (`appOpened`, `paywallViewed(source:)`, `purchaseStarted`,
+  `purchaseCompleted`, `purchaseCancelled`, `purchaseFailed`,
+  `purchasePending` e `purchaseRestored`) e envia ao UAPP em lotes pela função
+  pública `public-app-events`. A fila fica no aparelho até o servidor
+  confirmar (até 200 eventos); `appOpened` conta no máximo uma vez a cada 30
+  minutos. Anônimo, pelo UUID de instalação já usado no Feedback. Nada muda
+  para quem não chama `track`. Para as ferramentas da equipe que trocam o
+  projeto do kit (como o UAPP Pulse), `track(_:projectId:host:)` (SPI
+  `UAPPInternal`) mede um projeto fixo, com fila própria.
+
 ## 2.4.1 - 2026-10-30
 
 - Exclusão de conta: o aviso nos 13 idiomas explica a remoção das requisições,

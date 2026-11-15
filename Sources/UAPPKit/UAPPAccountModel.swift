@@ -190,8 +190,7 @@ final class UAPPAccountModel: ObservableObject {
     }
 
     func cancelRecovery() async {
-        guard session == nil else { return }
-        guard recoveryVerified || (isBusy && (step == .verifyRecovery || step == .newPassword)) else { return }
+        guard session == nil, recoveryVerified || (isBusy && (step == .verifyRecovery || step == .newPassword)) else { return }
         recoveryVerified = false
         try? await provider.signOut()
         clearSecrets()

@@ -863,8 +863,7 @@ private extension UAPPAccountScreen {
     }
 
     private func loadAppIdentity() async {
-        guard let client else { return }
-        guard let about = try? await client.about() else { return }
+        guard let client, let about = try? await client.about() else { return }
         let project = await client.currentProject()
         discoveredAppName = project?.displayName
         remoteIconURL = project?.iconURL ?? about.apps.first {
